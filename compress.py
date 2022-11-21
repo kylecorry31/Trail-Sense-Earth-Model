@@ -7,9 +7,9 @@ import struct
 
 compress = True
 # inputFile = 'temperatures.csv'
-# outputFile = 'temperatures-compress'
+# outputFile = 'temperatures.txt'
 inputFile = 'diurnal_range.csv'
-outputFile = 'diurnal_range-compress'
+outputFile = 'diurnal_range.txt'
 compress_format = '>B'
 value_format = '>h'
 max_compress = 0xff
