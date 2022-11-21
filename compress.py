@@ -5,11 +5,11 @@ import struct
 # The output will be either the byte values for the locations or the count, value if compress is on
 # This is a work in progress
 
-compress = True
-# inputFile = 'temperatures.csv'
-# outputFile = 'temperatures.txt'
-inputFile = 'diurnal_range.csv'
-outputFile = 'diurnal_range.txt'
+compress = False
+inputFile = 'temperatures.csv'
+outputFile = 'temperatures.txt'
+# inputFile = 'diurnal_range.csv'
+# outputFile = 'temperature_range.txt'
 compress_format = '>B'
 value_format = '>h'
 max_compress = 0xff
