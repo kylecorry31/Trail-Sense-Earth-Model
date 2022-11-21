@@ -1,7 +1,7 @@
 # Trail-Sense-Temperature-Model
  A temperature model generator for Trail Sense.
 
- Generates a csv file where each row is a latitude (-90 to 90) for each month (1 - 12). Ex. June average for lat 40 would be 5 * 181 + (40 + 90)
+ Generates a csv file where each row is a latitude (-90 to 90) for each month (1 - 12) - and in Fahrenheit to get extra precision. Ex. June average for lat 40 would be 5 * 181 + (40 + 90)
 
 # Credits
 Temperature readings are from https://www.worldclim.org/data/worldclim21.html

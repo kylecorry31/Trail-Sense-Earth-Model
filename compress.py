@@ -6,8 +6,10 @@ import struct
 # This is a work in progress
 
 compress = True
-inputFile = 'temperatures.csv'
-outputFile = 'temperatures-compress'
+# inputFile = 'temperatures.csv'
+# outputFile = 'temperatures-compress'
+inputFile = 'diurnal_range.csv'
+outputFile = 'diurnal_range-compress'
 compress_format = '>B'
 value_format = '>h'
 max_compress = 0xff
