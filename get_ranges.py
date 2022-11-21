@@ -23,7 +23,7 @@ def get_average_temperature(y, dataset):
     if count > 0:
         return total / count
     else:
-        return -40
+        return 0
 
 def get_average_temperature_for_lat(lat, dataset):
     l = 180 - (lat + 90)
@@ -39,7 +39,15 @@ for month in range(1, 13):
 
     averages = []
     for lat in range(-90, 91):
-        averages.append(get_average_temperature_for_lat(lat, highs) - get_average_temperature_for_lat(lat, lows))
+        low = get_average_temperature_for_lat(lat, lows)
+        high = get_average_temperature_for_lat(lat, highs)
+
+        if high == low and high == 0:
+            daily = 6
+        else:
+            daily = high - low
+
+        averages.append(daily)
     csv = ''
     for lat in range(-90, 91):
         csv += f'\n{int(round(averages[lat + 90] * 9/5))}'
