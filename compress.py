@@ -6,12 +6,12 @@ import struct
 # This is a work in progress
 
 compress = False
-inputFile = 'isothermality.csv'
-outputFile = 'isothermality.txt'
 # inputFile = 'temperatures.csv'
 # outputFile = 'temperatures.txt'
-# inputFile = 'diurnal_range.csv'
-# outputFile = 'temperature_range.txt'
+# inputFile = 'average_temperature_range.csv'
+# outputFile = 'average_temperature_range.txt'
+inputFile = 'temperature_range.csv'
+outputFile = 'temperature_range.txt'
 compress_format = '>B'
 value_format = '>h'
 max_compress = 0xff

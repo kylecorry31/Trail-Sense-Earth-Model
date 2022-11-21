@@ -44,6 +44,6 @@ for lat in range(-90, 91):
 all += csv
 # plt.plot(range(-90, 91), averages)
 # plt.show()
-f = open('diurnal_range.csv', 'w')
+f = open('average_temperature_range.csv', 'w')
 f.write(all.strip())
 f.close()
