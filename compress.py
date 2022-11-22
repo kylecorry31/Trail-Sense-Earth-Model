@@ -6,14 +6,17 @@ import struct
 # This is a work in progress
 
 compress = False
+name = 'low_temperatures'
+inputFile = f'{name}.csv'
+outputFile = f'{name}.txt'
 # inputFile = 'temperatures.csv'
 # outputFile = 'temperatures.txt'
 # inputFile = 'average_temperature_range.csv'
 # outputFile = 'average_temperature_range.txt'
 # inputFile = 'temperature_range.csv'
 # outputFile = 'temperature_range.txt'
-inputFile = 'vapor_pressures.csv'
-outputFile = 'vapor_pressures.txt'
+# inputFile = 'vapor_pressures.csv'
+# outputFile = 'vapor_pressures.txt'
 compress_format = '>B'
 value_format = '>h'
 max_compress = 0xff
