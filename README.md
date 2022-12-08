@@ -8,4 +8,6 @@ Temperature readings are from https://www.worldclim.org/data/worldclim21.html
 
 Fick, S.E. and R.J. Hijmans, 2017. WorldClim 2: new 1km spatial resolution climate surfaces for global land areas. International Journal of Climatology 37 (12): 4302-4315.
 
-(previously licensed under CC Attribution - ShareAlike 4.0)
+Licensed under CC Attribution - ShareAlike 4.0: https://creativecommons.org/licenses/by-sa/4.0/
+
+Changes made from original: Used data to calculate averages for regions of the world, original files not included in this repo, but can be foun don worldclim.org.
