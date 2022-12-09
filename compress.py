@@ -6,7 +6,7 @@ import struct
 # This is a work in progress
 
 compress = False
-name = 'high_temperatures_global'
+name = 'low_temperatures_global'
 inputFile = f'{name}.csv'
 outputFile = f'{name}.txt'
 # inputFile = 'temperatures.csv'
