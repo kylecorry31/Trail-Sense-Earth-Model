@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 from matplotlib import pyplot as plt
 
-lon_step = 3
+lon_step = 2
 lat_step = 1
 min_lat = -60
 max_lat = 84
