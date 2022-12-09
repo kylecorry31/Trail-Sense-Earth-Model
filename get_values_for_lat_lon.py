@@ -37,19 +37,16 @@ def get_average_temperature_for_lat_lon(lat, lon, dataset):
     x = int((lon + 180) * 60 / 10) - 1
     return get_temperature(x, y, dataset)
 
-# lows = get_data(f'wc2.1_10m_tmax_12.tif')
-# print(get_average_temperature_for_lat_lon(42, -72, lows))
-
-# exit()
-
 # Lows
 all = ''
 
+# total = 0
 for month in range(1, 13):
     lows = get_data(f'wc2.1_10m_tmin_{str(month).zfill(2)}.tif')
 
     averages = []
     for lat in range(min_lat, max_lat + 1, lat_step):
+        # lon_idx = 0
         for lon in range(-180, 181, lon_step):
             low = get_average_temperature_for_lat_lon(lat, lon, lows)
             if low < -1000:
@@ -60,6 +57,10 @@ for month in range(1, 13):
                 averages.append(0)
             else:
                 averages.append(low)
+            # total += 1
+            # if lat == 42 and lon == -72:
+            #     print(total)
+            # lon_idx += 1
     csv = ''
     for value in averages:
         csv += f'\n{int(round(value * 9/5 + 32))}'
@@ -75,7 +76,7 @@ for month in range(1, 13):
     lows = get_data(f'wc2.1_10m_tmax_{str(month).zfill(2)}.tif')
 
     averages = []
-    for lat in range(min_lat, max_lat, lat_step):
+    for lat in range(min_lat, max_lat + 1, lat_step):
         for lon in range(-180, 181, lon_step):
             low = get_average_temperature_for_lat_lon(lat, lon, lows)
             if low < -1000:
