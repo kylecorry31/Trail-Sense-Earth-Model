@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 from matplotlib import pyplot as plt
 
-lon_step = 9
+lon_step = 3
 lat_step = 1
 
 def get_temperature(x, y, dataset):

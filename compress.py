@@ -6,7 +6,7 @@ import struct
 # This is a work in progress
 
 compress = False
-name = 'low_temperatures_global'
+name = 'high_temperatures_global'
 inputFile = f'{name}.csv'
 outputFile = f'{name}.txt'
 # inputFile = 'temperatures.csv'
@@ -18,7 +18,7 @@ outputFile = f'{name}.txt'
 # inputFile = 'vapor_pressures.csv'
 # outputFile = 'vapor_pressures.txt'
 compress_format = '>B'
-value_format = '>h'
+value_format = '>b'
 max_compress = 0xff
 
 f = open(inputFile, 'r')
