@@ -47,7 +47,7 @@ for month in range(1, 13):
     lows = get_data(f'wc2.1_10m_tmin_{str(month).zfill(2)}.tif')
 
     averages = []
-    for lat in range(-90, 91, lat_step):
+    for lat in range(-85, 86, lat_step):
         for lon in range(-180, 181, lon_step):
             low = get_average_temperature_for_lat_lon(lat, lon, lows)
             if low < -1000:
@@ -73,7 +73,7 @@ for month in range(1, 13):
     lows = get_data(f'wc2.1_10m_tmax_{str(month).zfill(2)}.tif')
 
     averages = []
-    for lat in range(-90, 91, lat_step):
+    for lat in range(-85, 86, lat_step):
         for lon in range(-180, 181, lon_step):
             low = get_average_temperature_for_lat_lon(lat, lon, lows)
             if low < -1000:

@@ -22,8 +22,8 @@ def get_temperature_for_lat_lon(lat, lon, elevation, dataset):
 def format_kotlin(arr):
     return 'arrayOf(' + ', '.join(map(lambda a: str(a) + 'f', arr)) + ')'
 
-location = [19.61491,-155.45654]
-elevation = 2243
+location = [-53.40102,-71.54297]
+elevation = 636
 
 lat = location[0]
 lon = location[1]
