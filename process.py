@@ -7,8 +7,8 @@ lat_step = 1
 min_lat = -60
 max_lat = 84
 pixels_per_degree = 2
-filename_format = 'images/1991-2021-{month}-dtr.tif'
-output_filename = 'dtr.csv'
+filename_format = 'images/1991-2021-{month}-tmx.tif'
+output_filename = 'tmx.csv'
 
 # temperature, range, or none
 output_transform = 'range'
