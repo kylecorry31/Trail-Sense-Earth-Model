@@ -6,10 +6,13 @@ lon_step = 2
 lat_step = 1
 min_lat = -60
 max_lat = 84
-pixels_per_degree = 60 / 10
+pixels_per_degree = 2 #60 / 10
 
 def get_temperature(x, y, dataset):
-    return dataset[y, x]
+    t = dataset[y, x]
+    if t < -80:
+        return -1000
+    return t
 
 def get_data(path):
     im = Image.open(path)
@@ -43,7 +46,7 @@ all = ''
 
 # total = 0
 for month in range(1, 13):
-    lows = get_data(f'wc2.1_10m_tmin_{str(month).zfill(2)}.tif')
+    lows = get_data(f'images/1991-2021-{str(month)}-tmn.tif')
 
     averages = []
     for lat in range(min_lat, max_lat + 1, lat_step):
@@ -58,10 +61,6 @@ for month in range(1, 13):
                 averages.append(0)
             else:
                 averages.append(low)
-            # total += 1
-            # if lat == 42 and lon == -72:
-            #     print(total)
-            # lon_idx += 1
     csv = ''
     for value in averages:
         csv += f'\n{int(round(value * 9/5 + 32))}'
@@ -74,7 +73,7 @@ f.close()
 all = ''
 
 for month in range(1, 13):
-    lows = get_data(f'wc2.1_10m_tmax_{str(month).zfill(2)}.tif')
+    lows = get_data(f'images/1991-2021-{str(month)}-tmx.tif')
 
     averages = []
     for lat in range(min_lat, max_lat + 1, lat_step):

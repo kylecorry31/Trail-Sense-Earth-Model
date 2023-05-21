@@ -4,7 +4,7 @@ import os
 
 start_year = 1991
 end_year = 2021
-data_point = 'tmn'
+data_point = 'tmx'
 write_images = False
 years = float(end_year - start_year)
 lines = []
@@ -26,26 +26,19 @@ def get_data(year, month, lines):
     temperatures = []
     for line in lines[start:end]:
         values = re.split(r'\s+', line.strip())
-        temperatures.append([float(value) for value in values])
+        temperatures.append([float(value) / 10 for value in values])
     return temperatures
 
 def write_img(year, month, temperatures):
-    img = Image.new('L', (len(temperatures[0]), len(temperatures)), color='black')
+    img = Image.new('F', (len(temperatures[0]), len(temperatures)), color='black')
     pixels = img.load()
     for x in range(img.size[0]):
         for y in range(img.size[1]):
             t = temperatures[y][x]
-            pixels[x, img.size[1] - y - 1] = int(t * 9/5 + 32)
+            pixels[x, img.size[1] - y - 1] = t
     if not os.path.exists('images'):
         os.mkdir('images')
     img.save(f'images/{year}-{month}-{data_point}.tif')
-
-def write_csv(year, month, temperatures):
-    if not os.path.exists('csv'):
-        os.mkdir('csv')
-    with open(f'csv/{year}-{month}-{data_point}.csv', 'w') as csvfile:
-        for row in temperatures:
-            csvfile.write(','.join(map(str, row)) + '\n')
 
 def divide(temperatures, value):
     return [[t / value for t in row] for row in temperatures]
@@ -71,6 +64,5 @@ for month in range(1, 13):
 # Write the average temperatures to a TIF file
 for month in range(1, 13):
     write_img(f'{start_year}-{end_year}', month, global_temperatures[month - 1])
-    write_csv(f'{start_year}-{end_year}', month, global_temperatures[month - 1])
 
 # -999 = no data
