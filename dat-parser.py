@@ -2,10 +2,14 @@ import PIL.Image as Image
 import re
 import os
 
+# Input
 start_year = 1991
 end_year = 2021
 data_point = 'tmx'
 write_images = False
+
+
+# Program, don't modify
 years = float(end_year - start_year)
 lines = []
 global_temperatures = []

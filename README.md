@@ -1,13 +1,12 @@
 # Trail-Sense-Temperature-Model
- A temperature model generator for Trail Sense.
+A temperature model generator for Trail Sense.
 
- Generates a csv file where each row is a latitude (-90 to 90) for each month (1 - 12) - and in Fahrenheit to get extra precision. Ex. June average for lat 40 would be 5 * 181 + (40 + 90)
+# How to run
+1. Extract .dat files from https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/ into the datfiles folder
+2. Update the Input section of the dat-parser.py script with the dates, datapoint type, and whether to generate images (for each year/month)
+2. Run the get_values_for_lat_lon.py to generate the high and low temperature files
+3. Run the compress.py script, setting the name of the file to compress
+4. Copy the output .txt files into Trail Sense
 
 # Credits
-Temperature readings are from https://www.worldclim.org/data/worldclim21.html
-
-Fick, S.E. and R.J. Hijmans, 2017. WorldClim 2: new 1km spatial resolution climate surfaces for global land areas. International Journal of Climatology 37 (12): 4302-4315.
-
-Licensed under CC Attribution - ShareAlike 4.0: https://creativecommons.org/licenses/by-sa/4.0/
-
-Changes made from original: Used data to calculate averages for regions of the world, original files not included in this repo, but can be foun don worldclim.org.
+Dataset is from Climatic Research Unit (University of East Anglia) and Met Office (https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/). Listed under the Open Government Licence: http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/

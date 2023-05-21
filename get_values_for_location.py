@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 
-pixels_per_degree = 2#60 / 10
+pixels_per_degree = 2
 
 def get_temperature(x, y, dataset):
     return dataset[y, x]
