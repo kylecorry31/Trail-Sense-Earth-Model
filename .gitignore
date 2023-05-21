@@ -2,4 +2,5 @@
 *.zip
 *.dat
 *.gz
-csv/*
+*.csv
+*.txt
