@@ -7,11 +7,11 @@ lat_step = 1
 min_lat = -60
 max_lat = 84
 pixels_per_degree = 2
-filename_format = 'images/1991-2021-{month}-tmx.tif'
-output_filename = 'high_temperatures_global.csv'
+filename_format = 'images/1991-2021-{month}-dtr.tif'
+output_filename = 'dtr.csv'
 
-# temperature or none
-output_transform = 'temperature'
+# temperature, range, or none
+output_transform = 'range'
 
 
 ######## Program, don't modify ########
@@ -59,6 +59,8 @@ for month in range(1, 13):
     for value in parsed_values:
         if output_transform == 'temperature':
             output_value = int(round(value * 9/5 + 32))
+        elif output_transform == 'range':
+            output_value = int(round(value / 2 * 9/5))
         else:
             output_value = int(round(value))
         csv += f'\n{output_value}'
