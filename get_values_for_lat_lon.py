@@ -6,6 +6,7 @@ lon_step = 2
 lat_step = 1
 min_lat = -60
 max_lat = 84
+pixels_per_degree = 60 / 10
 
 def get_temperature(x, y, dataset):
     return dataset[y, x]
@@ -21,8 +22,8 @@ def has_value(x, y, dataset):
 def get_average_temperature(x, y, dataset):
     total = 0
     count = 0
-    for x1 in range(x, x + (60 / 10) * lat_step + 1):
-        for y1 in range(y, y + (60 / 10) * lon_step + 1):
+    for x1 in range(x, x + pixels_per_degree * lat_step + 1):
+        for y1 in range(y, y + pixels_per_degree * lon_step + 1):
             if has_value(x, y, dataset):
                 total += get_temperature(x1, y1, dataset)
                 count += 1
@@ -33,8 +34,8 @@ def get_average_temperature(x, y, dataset):
 
 def get_average_temperature_for_lat_lon(lat, lon, dataset):
     l = 180 - (lat + 90)
-    y = int(l * 60 / 10) - 1
-    x = int((lon + 180) * 60 / 10) - 1
+    y = int(l * pixels_per_degree) - 1
+    x = int((lon + 180) * pixels_per_degree) - 1
     return get_temperature(x, y, dataset)
 
 # Lows
