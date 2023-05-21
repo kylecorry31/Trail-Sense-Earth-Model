@@ -11,7 +11,7 @@ filename_format = 'images/1991-2020-{month}-tmx.tif'
 output_filename = 'tmx.csv'
 
 # temperature, range, or none
-output_transform = 'range'
+output_transform = 'temperature'
 
 
 ######## Program, don't modify ########
@@ -30,16 +30,35 @@ def get_data(path):
     return np.array(im)
 
 def has_value(x, y, dataset):
-    return dataset[y, x] > -1000
+    return y > 0 and y < dataset.shape[0] and x > 0 and x < dataset.shape[1] and dataset[y, x] != -999
 
 def get_value_lat_lon(lat, lon, dataset):
     l = 180 - (lat + 90)
     y = int(l * pixels_per_degree) - 1
     x = int((lon + 180) * pixels_per_degree) - 1
-    return get_value(x, y, dataset)
+    value =  get_value(x, y, dataset)
+    if value is None:
+        return get_neighbor_value(x, y, dataset, 1, 5)
+    return value
+
+def get_neighbor_value(x, y, dataset, search, max_search):
+    # Get all points at the given search distance
+    points = []
+    for i in range(-search, search + 1):
+        for j in range(-search, search + 1):
+            if abs(i) == search or abs(j) == search:
+                if has_value(x + i, y + j, dataset):
+                    points.append(get_value(x + i, y + j, dataset))
+    if len(points) > 0:
+        return sum(points) / len(points)
+    if search < max_search:
+        return get_neighbor_value(x, y, dataset, search + 1, max_search)
+    return None
 
 # Lows
 all = ''
+
+count_none = 0
 
 # total = 0
 for month in range(1, 13):
@@ -50,8 +69,10 @@ for month in range(1, 13):
         for lon in range(-180, 181, lon_step):
             value = get_value_lat_lon(lat, lon, values)
             if value is None and len(parsed_values) > 0:
+                count_none += 1
                 parsed_values.append(parsed_values[-1])
             elif value is None:
+                count_none += 1
                 parsed_values.append(0)
             else:
                 parsed_values.append(value)
@@ -73,5 +94,7 @@ f = open(output_filename, 'w')
 f.write(all.strip())
 f.close()
 
+#213528
+print(f'None: {count_none}')
 print(f'Min: {min_value}')
 print(f'Max: {max_value}')

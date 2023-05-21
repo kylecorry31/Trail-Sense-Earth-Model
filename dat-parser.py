@@ -3,6 +3,7 @@ import re
 import os
 
 # Input
+# TODO: Load start and end from filename by default
 start_year = 1991
 end_year = 2020
 data_point = 'tmx'
