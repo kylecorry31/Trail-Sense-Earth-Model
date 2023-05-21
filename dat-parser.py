@@ -4,12 +4,11 @@ import os
 
 # Input
 start_year = 1991
-end_year = 2021
+end_year = 2020
 data_point = 'tmx'
 scale = 10
 
 ############ Program, don't modify ############
-years = float(end_year - start_year)
 lines = []
 sum_values = []
 count_values = []
@@ -56,7 +55,7 @@ def replace_invalid(arr, value):
 def count(arr):
     return [[1 if int(t) != -999 else 0 for t in row] for row in arr]
 
-for year in range(start_year, end_year):
+for year in range(start_year, end_year + 1):
     for month in range(1, 13):
         print(f'Processing {year}-{month}')
         values = get_data(year, month, lines)
@@ -74,14 +73,5 @@ for month in range(1, 13):
 # Write the average values to a TIF file
 for month in range(1, 13):
     write_img(f'{start_year}-{end_year}', month, sum_values[month - 1])
-
-# Print the min count
-min_count = 100000
-for month in range(1, 13):
-    for row in count_values[month - 1]:
-        for value in row:
-            if value < min_count and value > 0:
-                min_count = value
-print(f'Min count: {min_count}')
 
 # -999 = no data

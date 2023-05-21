@@ -33,11 +33,11 @@ low_temps = []
 high_temps = []
 
 for month in range(1, 13):
-    lows = get_data(f'images/1991-2021-{str(month)}-tmn.tif')
+    lows = get_data(f'images/1991-2020-{str(month)}-tmn.tif')
     low_temps.append(get_temperature_for_lat_lon(lat, lon, elevation, lows))
 
 for month in range(1, 13):
-    highs = get_data(f'images/1991-2021-{str(month)}-tmx.tif')
+    highs = get_data(f'images/1991-2020-{str(month)}-tmx.tif')
     high_temps.append(get_temperature_for_lat_lon(lat, lon, elevation, highs))
 
 print(low_temps)
