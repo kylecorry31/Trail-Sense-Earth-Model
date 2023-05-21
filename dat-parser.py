@@ -5,7 +5,7 @@ import os
 # Input
 start_year = 1991
 end_year = 2021
-data_point = 'dtr'
+data_point = 'tmx'
 scale = 10
 
 ############ Program, don't modify ############
