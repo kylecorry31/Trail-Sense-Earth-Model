@@ -7,9 +7,9 @@ start_year = 1991
 end_year = 2021
 data_point = 'tmx'
 write_images = False
+scale = 10
 
-
-# Program, don't modify
+############ Program, don't modify ############
 years = float(end_year - start_year)
 lines = []
 global_temperatures = []
@@ -30,7 +30,7 @@ def get_data(year, month, lines):
     temperatures = []
     for line in lines[start:end]:
         values = re.split(r'\s+', line.strip())
-        temperatures.append([float(value) / 10 for value in values])
+        temperatures.append([-999 if int(value) == -999 else (float(value) / scale) for value in values])
     return temperatures
 
 def write_img(year, month, temperatures):
