@@ -6,9 +6,11 @@ lon_step = 2
 lat_step = 1
 min_lat = -60
 max_lat = 84
-pixels_per_degree = 2
-filename_format = 'images/1991-2020-{month}-tmx.tif'
-output_filename = 'tmx.csv'
+latitude_pixels_per_degree = 2
+longitude_pixels_per_degree = 1.6 # NASA 1.6, CRU 2
+data_point = 'T2MMAX'
+filename_format = 'images/1991-2020-{month}-{data_point}.tif'
+output_filename = f'{data_point}.csv'
 
 # temperature, range, or none
 output_transform = 'temperature'
@@ -34,8 +36,8 @@ def has_value(x, y, dataset):
 
 def get_value_lat_lon(lat, lon, dataset):
     l = 180 - (lat + 90)
-    y = int(l * pixels_per_degree) - 1
-    x = int((lon + 180) * pixels_per_degree) - 1
+    y = int(l * latitude_pixels_per_degree) - 1
+    x = int((lon + 180) * longitude_pixels_per_degree) - 1
     value =  get_value(x, y, dataset)
     if value is None:
         return get_neighbor_value(x, y, dataset, 1, 5)
@@ -62,7 +64,7 @@ count_none = 0
 
 # total = 0
 for month in range(1, 13):
-    values = get_data(filename_format.format(month=month))
+    values = get_data(filename_format.format(month=month, data_point=data_point))
 
     parsed_values = []
     for lat in range(min_lat, max_lat + 1, lat_step):

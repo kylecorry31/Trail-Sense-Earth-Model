@@ -6,7 +6,7 @@ import struct
 # This is a work in progress
 
 compress = False
-name = 'tmx'
+name = 'T2MMAX'
 inputFile = f'{name}.csv'
 outputFile = f'{name}.txt'
 compress_format = '>B'
