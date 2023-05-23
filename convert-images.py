@@ -4,9 +4,9 @@ from matplotlib import pyplot as plt
 import os
 
 latitude_pixels_per_degree = 2
-longitude_pixels_per_degree = 2 # NASA 1.6, CRU 2
-data_point_min = 'tmn'
-data_point_max = 'tmx'
+longitude_pixels_per_degree = 1.6 # NASA 1.6, CRU 2
+data_point_min = 'T2MMIN'
+data_point_max = 'T2MMAX'
 filename_format = 'images/1991-2020-{month}-{data_point}.tif'
 output_dir = 'output'
 quality = 100
@@ -19,6 +19,7 @@ map_point = lambda x: int(x * 9/5 + 32)
 
 def get_offset(paths):
     min_value = 1000
+    max_value = -1000
     for path in paths:
         im = Image.open(path)
         for x in range(im.size[0]):
@@ -26,7 +27,8 @@ def get_offset(paths):
                 t = im.getpixel((x, y))
                 if t != -999:
                     min_value = min(min_value, map_point(t))
-    return min_value
+                    max_value = max(max_value, map_point(t))
+    return (min_value, max_value)
 
 def create_image(paths, offset, output):
     images = [Image.open(path) for path in paths]
@@ -53,13 +55,13 @@ def minify(data_point):
     files = [filename_format.format(month=month, data_point=data_point) for month in range(1, 13)]
     offset = get_offset(files)
 
-    print(f'Offset: {-offset} for {data_point}')
+    print(f'Offset: {-offset[0]} for {data_point} (Min: {offset[0]}, Max: {offset[1]})')
 
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
     
     for i in range(0, len(files), grouping):
-        create_image(files[i:i+grouping], offset, f'{output_dir}/{data_point}-{i + 1}-{i + grouping}.webp')
+        create_image(files[i:i+grouping], offset[0], f'{output_dir}/{data_point}-{i + 1}-{i + grouping}.webp')
 
 
 minify(data_point_max)
