@@ -2,9 +2,9 @@ from PIL import Image
 import numpy as np
 
 latitude_pixels_per_degree = 2
-longitude_pixels_per_degree = 1.6
-high = 'T2MMAX'
-low = 'T2MMIN'
+longitude_pixels_per_degree = 2
+high = 'tmx'
+low = 'tmn'
 
 def get_temperature(x, y, dataset):
     return dataset[y, x]
@@ -27,8 +27,8 @@ def get_temperature_for_lat_lon(lat, lon, elevation, dataset):
 def format_kotlin(arr):
     return 'arrayOf(' + ', '.join(map(lambda a: str(a) + 'f', arr)) + ')'
 
-location = [42, -72]
-elevation = 0
+location = [33.448, -112.074]
+elevation = 300
 
 lat = location[0]
 lon = location[1]
