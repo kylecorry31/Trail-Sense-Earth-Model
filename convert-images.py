@@ -3,6 +3,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 
+# INPUT
+
 latitude_pixels_per_degree = 2
 longitude_pixels_per_degree = 1.6 # NASA 1.6, CRU 2
 data_point_min = 'T2MMIN'
