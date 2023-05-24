@@ -7,4 +7,6 @@
 *.nc4
 *.jpg
 *.webp
+*.png
+*.pyc
 nasa-credentials.txt

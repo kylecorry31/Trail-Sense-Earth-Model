@@ -1,6 +1,6 @@
 import PIL.Image as Image
-import os
 import numpy as np
+from scripts import to_tif
 
 # Input
 # TODO: Load start and end from filename by default
@@ -14,19 +14,11 @@ sum_values = []
 count_values = []
 
 def get_data(year, month):
-    image = Image.open(f'nasa-images/{year}-{month}-{data_point}.tif')
+    image = Image.open(f'source/{year}-{month}-{data_point}.tif')
     return np.array(image)
 
 def write_img(year, month, values):
-    img = Image.new('F', (len(values[0]), len(values)), color='black')
-    pixels = img.load()
-    for x in range(img.size[0]):
-        for y in range(img.size[1]):
-            t = values[y][x]
-            pixels[x, y] = t
-    if not os.path.exists('images'):
-        os.mkdir('images')
-    img.save(f'images/{year}-{month}-{data_point}.tif')
+    to_tif(values, f'images/{year}-{month}-{data_point}.tif')
 
 def average(arr, counts):
     return [[arr[i][j] / counts[i][j] if counts[i][j] > 0 else invalid_value for j in range(len(arr[0]))] for i in range(len(arr))]
@@ -58,5 +50,3 @@ for month in range(1, 13):
 # Write the average values to a TIF file
 for month in range(1, 13):
     write_img(f'{start_year}-{end_year}', month, sum_values[month - 1])
-
-# invalid_value = no data

@@ -1,6 +1,6 @@
-import PIL.Image as Image
 import re
 import os
+from scripts import to_tif
 
 # Input
 # TODO: Load start and end from filename by default
@@ -14,11 +14,11 @@ lines = []
 sum_values = []
 count_values = []
 
-files = list(filter(lambda x: x.endswith(f'.{data_point}.dat'), os.listdir('datfiles')))
+files = list(filter(lambda x: x.endswith(f'.{data_point}.dat'), os.listdir('source')))
 files.sort()
 
 for file in files:
-    with open(f'datfiles/{file}', 'r') as datfile:
+    with open(f'source/{file}', 'r') as datfile:
         lines += datfile.readlines()
 
 
@@ -34,15 +34,7 @@ def get_data(year, month, lines):
     return temperatures
 
 def write_img(year, month, values):
-    img = Image.new('F', (len(values[0]), len(values)), color='black')
-    pixels = img.load()
-    for x in range(img.size[0]):
-        for y in range(img.size[1]):
-            t = values[y][x]
-            pixels[x, img.size[1] - y - 1] = t
-    if not os.path.exists('images'):
-        os.mkdir('images')
-    img.save(f'images/{year}-{month}-{data_point}.tif')
+    to_tif(values, f'images/{year}-{month}-{data_point}.tif', is_inverted=True)
 
 def average(arr, counts):
     return [[arr[i][j] / counts[i][j] if counts[i][j] > 0 else -999 for j in range(len(arr[0]))] for i in range(len(arr))]
@@ -74,5 +66,3 @@ for month in range(1, 13):
 # Write the average values to a TIF file
 for month in range(1, 13):
     write_img(f'{start_year}-{end_year}', month, sum_values[month - 1])
-
-# -999 = no data

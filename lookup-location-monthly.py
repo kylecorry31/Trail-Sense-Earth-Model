@@ -19,16 +19,16 @@ def truncate(n, places):
 
 def get_temperature_for_lat_lon(lat, lon, elevation, dataset):
     l = 180 - (lat + 90)
-    y = int(l * latitude_pixels_per_degree) - 1
-    x = int((lon + 180) * longitude_pixels_per_degree) - 1
+    y = int(l * latitude_pixels_per_degree)
+    x = int((lon + 180) * longitude_pixels_per_degree)
     c = get_temperature(x, y, dataset)
     return truncate(c - 0.0065 * elevation, 1) * 9/5 + 32
 
 def format_kotlin(arr):
     return 'arrayOf(' + ', '.join(map(lambda a: str(a) + 'f', arr)) + ')'
 
-location = [33.448, -112.074]
-elevation = 300
+location = [42, -72]
+elevation = 151
 
 lat = location[0]
 lon = location[1]
