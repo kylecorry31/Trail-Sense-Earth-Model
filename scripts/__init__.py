@@ -1,5 +1,6 @@
 from PIL import Image
 import os
+import numpy as np
 
 def load(path, resize=None):
     im = Image.open(path)
@@ -7,8 +8,12 @@ def load(path, resize=None):
         im = im.resize(resize, Image.ANTIALIAS)
     return im
 
-def compress_to_webp(paths, output_filename, map_point=lambda x: x, offset=0, invalid_value=-999, quality=100, lossless=False, resize_source=None, resize_target=None):
-    if not os.path.exists(output_filename.rsplit('/', 1)[0]):
+def load_pixels(path, resize=None):
+    im = load(path, resize)
+    return np.array(im)
+
+def compress_to_webp(paths, output_filename, map_point=lambda x: x, offset=0, invalid_value=-999, quality=100, lossless=False, resize_source=None):
+    if '/' in output_filename and not os.path.exists(output_filename.rsplit('/', 1)[0]):
         os.makedirs(output_filename.rsplit('/', 1)[0])
     images = [load(path, resize_source) for path in paths]
     new_im = Image.new('RGB' if len(images) == 3 else 'L', (images[0].size[0], images[0].size[1]), color='black')
