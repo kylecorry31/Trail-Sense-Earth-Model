@@ -12,7 +12,7 @@ image_filename_format = 'source/etopo/ETOPO_2022_v1_{grid_size}s_{latitude}{long
 # 240 pixels per degree
 
 ######## Program, don't modify ########
-output_filename = 'images/dem.tif'
+output_filename = 'images/dem-etopo.tif'
 new_image = np.array(Image.new('F', new_size))
 
 pixels_per_degree = 3600 / resolution

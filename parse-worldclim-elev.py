@@ -6,7 +6,7 @@ elevation_filename = 'source/worldclim/wc2.1_10m_elev.tif'
 new_size = (576, 361)
 
 ######## Program, don't modify ########
-output_filename = 'images/dem.tif'
+output_filename = 'images/dem-worldclim.tif'
 
 def get_data(path):
     im = load(path)

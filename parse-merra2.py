@@ -8,7 +8,7 @@ start_year = 1991
 end_year = 2020
 data_point = 'T2MMAX'
 invalid_value = -999
-elevation_image = 'images/dem.tif'
+elevation_image = 'images/dem-etopo.tif'
 elevation_invalid_value = -32768
 
 ############ Program, don't modify ############
