@@ -18,7 +18,7 @@ files = list(filter(lambda x: x.endswith(f'.{data_point}.dat'), os.listdir('sour
 files.sort()
 
 for file in files:
-    with open(f'source/{file}', 'r') as datfile:
+    with open(f'source/cru/{file}', 'r') as datfile:
         lines += datfile.readlines()
 
 

@@ -1,10 +1,16 @@
 from PIL import Image
 import os
 
-def compress_to_webp(paths, output_filename, map_point=lambda x: x, offset=0, invalid_value=-999, quality=100, lossless=False):
+def load(path, resize=None):
+    im = Image.open(path)
+    if resize is not None:
+        im = im.resize(resize, Image.ANTIALIAS)
+    return im
+
+def compress_to_webp(paths, output_filename, map_point=lambda x: x, offset=0, invalid_value=-999, quality=100, lossless=False, resize_source=None, resize_target=None):
     if not os.path.exists(output_filename.rsplit('/', 1)[0]):
         os.makedirs(output_filename.rsplit('/', 1)[0])
-    images = [Image.open(path) for path in paths]
+    images = [load(path, resize_source) for path in paths]
     new_im = Image.new('RGB' if len(images) == 3 else 'L', (images[0].size[0], images[0].size[1]), color='black')
     pixels = new_im.load()
 
@@ -24,11 +30,11 @@ def compress_to_webp(paths, output_filename, map_point=lambda x: x, offset=0, in
                     pixels[x, y] = (mapped[0], mapped[1], mapped[2])
     new_im.save(output_filename, quality=quality, lossless=lossless, format='WEBP')
 
-def get_min_max(paths, map_point=lambda x: x, invalid_value=-999):
+def get_min_max(paths, map_point=lambda x: x, invalid_value=-999, resize=None):
     min_value = 100000
     max_value = -100000
     for path in paths:
-        im = Image.open(path)
+        im = load(path, resize)
         for x in range(im.size[0]):
             for y in range(im.size[1]):
                 t = im.getpixel((x, y))

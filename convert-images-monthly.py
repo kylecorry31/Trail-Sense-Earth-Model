@@ -1,8 +1,7 @@
 from scripts import compress_to_webp, get_min_max
 
 # INPUT
-data_point_min = 'T2MMIN'
-data_point_max = 'T2MMAX'
+data_point = 'T2MMAX'
 filename_format = 'images/1991-2020-{month}-{data_point}.tif'
 output_dir = 'output'
 quality = 100
@@ -28,5 +27,4 @@ def minify(data_point):
         create_image(files[i:i+grouping], offset[0], f'{output_dir}/{data_point}-{i + 1}-{i + grouping}.webp')
 
 
-minify(data_point_max)
-minify(data_point_min)
+minify(data_point)

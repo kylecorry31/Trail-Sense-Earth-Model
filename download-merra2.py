@@ -2,6 +2,7 @@ import PIL.Image as Image
 import os
 from pydap.client import open_url
 from pydap.cas.urs import setup_session
+from scripts import to_tif
 
 # Input
 start_year = 1991
@@ -39,15 +40,7 @@ def get_data(year, month):
     return values
 
 def write_img(year, month, values):
-    img = Image.new('F', (len(values[0]), len(values)), color='black')
-    pixels = img.load()
-    for x in range(img.size[0]):
-        for y in range(img.size[1]):
-            t = values[y][x]
-            pixels[x, img.size[1] - y - 1] = t
-    if not os.path.exists('nasa-images'):
-        os.mkdir('nasa-images')
-    img.save(f'nasa-images/{year}-{month}-{data_point}.tif')
+    to_tif(values, f'source/merra2/{year}-{month}-{data_point}.tif', is_inverted=True)
 
 for year in range(start_year, end_year + 1):
     for month in range(1, 13):
