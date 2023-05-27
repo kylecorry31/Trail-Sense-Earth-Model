@@ -1,8 +1,9 @@
 import os
 import requests
+from scripts.progress import progress
 
 grid = 60
-redownload = True
+redownload = False
 
 ############ Program, don't modify ############
 
@@ -17,7 +18,6 @@ def download(url):
     if not os.path.exists(f'source/etopo'):
         os.makedirs(f'source/etopo')
     if not os.path.exists(f'source/etopo/{filename}') or redownload:
-        print(f'Downloading {url}')
         r = requests.get(url)
         if r.status_code == 200:
             with open(f'source/etopo/{filename}', 'wb') as f:
@@ -25,5 +25,8 @@ def download(url):
         else:
             raise Exception(f'Error {r.status_code} downloading {url}')
 
-download(get_url(90, -180, 'geoid'))
-download(get_url(90, -180, 'surface'))
+with progress("Downloading ETOPO data", 2) as pbar:
+    download(get_url(90, -180, 'geoid'))
+    pbar.update(1)
+    download(get_url(90, -180, 'surface'))
+    pbar.update(1)

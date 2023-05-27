@@ -3,6 +3,7 @@ import os
 from pydap.client import open_url
 from pydap.cas.urs import setup_session
 from scripts import to_tif
+from scripts.progress import progress
 
 # Input
 start_year = 1991
@@ -42,9 +43,10 @@ def get_data(year, month):
 def write_img(year, month, values):
     to_tif(values, f'source/merra2/{year}-{month}-{data_point}.tif', is_inverted=True)
 
-for year in range(start_year, end_year + 1):
-    for month in range(1, 13):
-        print(f'Processing {year}-{month}')
-        if not os.path.exists(f'source/merra2/{year}-{month}-{data_point}.tif'):
-            values = get_data(year, month)
-            write_img(year, month, values)
+with progress("Downloading MERRA-2 data", (end_year - start_year + 1) * 12) as pbar:
+    for year in range(start_year, end_year + 1):
+        for month in range(1, 13):
+            if not os.path.exists(f'source/merra2/{year}-{month}-{data_point}.tif'):
+                values = get_data(year, month)
+                write_img(year, month, values)
+            pbar.update(1)

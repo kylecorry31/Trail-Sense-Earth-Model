@@ -1,8 +1,7 @@
 from PIL import Image
 import os
 import numpy as np
-import rasterio
-from rasterio.enums import Resampling
+
 
 def load(path, resize=None):
     im = Image.open(path)
