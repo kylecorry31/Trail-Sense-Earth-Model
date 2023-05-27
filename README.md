@@ -1,14 +1,9 @@
 # Trail-Sense-Earth-Model
 A generator for Trail Sense which generates Earth models such as historic temperatures and geoids.
 
-# Using CRU
-1. Extract .dat files from https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/ into the source folder
-2. Update the Input section of the parse-cru.py script with the dates, datapoint type, and scale of the data (ex. C x 10), run the script
-3. Update the Input section of the convert-images-monthly.py script to match the data (ex. tmn, tmx as data_point types and 2 degrees per pixel), run the script
-4. Images will appear in the output directory
+**generate-temperature-merra.py**: The script to generate the global temperature model. This will generate 8 WEBP files in the output directory for the min/max monthly temperatures. Resolution is 576x361.
 
-# Using MERRA-2
-1. Run the generate-temperature-merra.py script
+**generate-geoid.py**: The script to generate the geoid model. This will generate 1 WEBP file in the output directory. Resolution is 361x181.
 
 # Credits
 ## CRU
