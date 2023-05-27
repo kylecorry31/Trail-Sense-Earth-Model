@@ -8,12 +8,7 @@ A generator for Trail Sense which generates Earth models such as historic temper
 4. Images will appear in the output directory
 
 # Using MERRA-2
-1. Add a text file titled "nasa-credentials.txt" to the root directory. The first line is your username, the second line is your password for the NASA GESDISC data server.
-2. Update the Input section of the download-merra2.py script to match the data you want to retrieve (ex. T2MMIN, T2MMAX), run the script
-3. Download the 60-arc second resolution surface elevation and geoid file from https://www.ncei.noaa.gov/products/etopo-global-relief-model - put in the source/etopo folder
-4. Update the Input section of the parse-merra2.py script to match the downloaded data (ex. T2MMIN, T2MMAX), run the script
-5. Update the Input section of the convert-images-monthly.py script to match the data (ex. T2MMIN, T2MMAX as data_point types and 2 and 1.6 degrees per pixel for latitude and longitude respectively), run the script
-6. Images will appear in the output directory
+1. Run the generate-temperature-merra.py script
 
 # Credits
 ## CRU

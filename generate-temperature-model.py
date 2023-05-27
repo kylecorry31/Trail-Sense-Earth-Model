@@ -4,8 +4,8 @@ merra2.download()
 etopo.download()
 natural_earth.download()
 
-etopo.process()
-merra2.process()
+etopo.process_dem()
+merra2.process_temperatures()
 
 high_files = [f'images/1991-2020-{month}-T2MMAX.tif' for month in range(1, 13)]
 low_files = [f'images/1991-2020-{month}-T2MMIN.tif' for month in range(1, 13)]

@@ -1,0 +1,8 @@
+tqdm
+pillow
+numpy
+pandas
+geopandas
+rasterio
+requests
+pydap

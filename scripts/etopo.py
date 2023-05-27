@@ -38,7 +38,7 @@ def download(redownload=False):
         __download(__get_url(90, -180, 60, 'surface'), redownload)
         pbar.update(1)
 
-def process(include_islands=True):
+def process_dem(include_islands=True):
     with progress("Loading land masks", 2) as pbar:
         gdf = gpd.read_file(shapefile_path)
         pbar.update(1)

@@ -85,7 +85,7 @@ def download(redownload = False):
 
 
 
-def process():
+def process_temperatures():
     data_points = ['T2MMIN', 'T2MMAX']
     Image.MAX_IMAGE_PIXELS = None
     with progress("Loading elevation data", 1) as pbar:

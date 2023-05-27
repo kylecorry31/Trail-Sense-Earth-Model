@@ -3,7 +3,6 @@
 *.dat
 *.gz
 *.csv
-*.txt
 *.nc4
 *.jpg
 *.webp
@@ -16,4 +15,5 @@
 *.shx
 *.html
 *.zip
+source/
 nasa-credentials.txt

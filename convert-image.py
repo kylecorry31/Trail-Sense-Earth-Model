@@ -2,8 +2,8 @@ from scripts import compress_to_webp, get_min_max
 from PIL import Image
 
 # INPUT
-input_filename = 'images/dem-land-etopo.tif'
-output_filename = 'output/dem.webp'
+input_filename = 'images/geoids.tif'
+output_filename = 'output/geoids.webp'
 quality = 100
 invalid_value = -99999
 lossless = False
