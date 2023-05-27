@@ -76,7 +76,8 @@ def download(data_points = ['T2MMIN', 'T2MMAX'], redownload = False):
 
 
 
-def process(data_points = ['T2MMIN', 'T2MMAX']):
+def process():
+    data_points = ['T2MMIN', 'T2MMAX']
     Image.MAX_IMAGE_PIXELS = None
     with progress("Loading elevation data", 1) as pbar:
         elevations = load_pixels(elevation_image)
