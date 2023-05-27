@@ -65,8 +65,8 @@ def download(data_points = ['T2MMIN', 'T2MMAX'], redownload = False):
         password = f.readline().strip()
     
     # TODO: download both T2MMIN and T2MMAX at the same time
-    for data_point in data_points:
-        with progress(f"Downloading MERRA-2 {data_point}", (end_year - start_year + 1) * 12) as pbar:
+    with progress("Downloading MERRA-2 data", (end_year - start_year + 1) * 12 * len(data_points)) as pbar:
+        for data_point in data_points:
             for year in range(start_year, end_year + 1):
                 for month in range(1, 13):
                     if not os.path.exists(f'{source_folder}/{year}-{month}-{data_point}.tif') or redownload:

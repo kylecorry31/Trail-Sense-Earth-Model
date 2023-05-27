@@ -45,7 +45,6 @@ def process(include_islands=True):
         gdf_islands = gpd.read_file(island_shapefile_path)
         pbar.update(1)
     with progress("Masking elevation data", 1) as pbar:
-        # Open the GeoTIFF file
         with rasterio.open(surface_path) as src:
             gdf = gdf.to_crs(src.crs)
             if include_islands:
@@ -59,7 +58,6 @@ def process(include_islands=True):
                             "width": masked_image.shape[2],
                             "transform": masked_transform,
                             "crs": src.crs})
-            # Create a new GeoTIFF file and write the masked image
             with rasterio.open(dem_land_path, 'w', **metadata) as dst:
                 dst.write(masked_image)
         pbar.update(1)
