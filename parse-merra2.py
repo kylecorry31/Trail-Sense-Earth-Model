@@ -1,6 +1,7 @@
 import PIL.Image as Image
 import numpy as np
-from scripts import to_tif
+from scripts import to_tif, load_pixels
+from tqdm import tqdm
 
 # Input
 # TODO: Load start and end from filename by default
@@ -14,8 +15,9 @@ elevation_invalid_value = -99999
 Image.MAX_IMAGE_PIXELS = None
 sum_values = []
 count_values = []
-elevations = np.array(Image.open(elevation_image))
-print(data_point)
+with tqdm(total=1, desc="Loading elevation data") as pbar:
+    elevations = load_pixels(elevation_image)
+    pbar.update(1)
 elevation_w = len(elevations[0])
 elevation_h = len(elevations)
 
@@ -34,27 +36,30 @@ def to_sea_level(data):
     return data
 
 def get_data(year, month):
-    image = Image.open(f'source/merra2/{year}-{month}-{data_point}.tif')
-    return np.array(image)
+    return load_pixels(f'source/merra2/{year}-{month}-{data_point}.tif')
 
 def write_img(year, month, values):
     to_tif(values, f'images/{year}-{month}-{data_point}.tif')
 
-for year in range(start_year, end_year + 1):
-    for month in range(1, 13):
-        print(f'Processing {year}-{month}')
-        values = to_sea_level(get_data(year, month))
-        if len(sum_values) < month:
-            sum_values.append(values)
-            count_values.append(1)
-        else:
-            sum_values[month - 1] += values
-            count_values[month - 1] += 1
+# Calculate the climate normals
+with tqdm(total=(end_year - start_year + 1) * 12, desc=f"Calculating climate normals ({data_point})") as pbar:
+    for year in range(start_year, end_year + 1):
+        for month in range(1, 13):
+            values = to_sea_level(get_data(year, month))
+            if len(sum_values) < month:
+                sum_values.append(values)
+                count_values.append(1)
+            else:
+                sum_values[month - 1] += values
+                count_values[month - 1] += 1
+            pbar.update(1)
 
 # Average the values
 for month in range(1, 13):
     sum_values[month - 1] = sum_values[month - 1] / count_values[month - 1]
 
 # Write the average values to a TIF file
-for month in range(1, 13):
-    write_img(f'{start_year}-{end_year}', month, sum_values[month - 1])
+with tqdm(total=12, desc=f"Generating images ({data_point})") as pbar:
+    for month in range(1, 13):
+        write_img(f'{start_year}-{end_year}', month, sum_values[month - 1])
+        pbar.update(1)
