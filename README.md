@@ -28,8 +28,5 @@ Global Relief Model. NOAA National Centers for Environmental Information.
 https://doi.org/10.25921/fd45-gt74 . Accessed 2023-05-26.
 ETOPO 2022 metadata may be accessed here: ETOPO 2022 metadata landing page
 
-## WorldClim
-Fick, S.E. and R.J. Hijmans, 2017. WorldClim 2: new 1km spatial resolution climate surfaces for global land areas. International Journal of Climatology 37 (12): 4302-4315.
-
-## WOA
-Boyer, Tim P.; Garcia, Hernan E.; Locarnini, Ricardo A.; Zweng, Melissa M.; Mishonov, Alexey V.; Reagan, James R.; Weathers, Katharine A.; Baranova, Olga K.; Seidov, Dan; Smolyar, Igor V. (2018). World Ocean Atlas 2018. Land Sea Mask. NOAA National Centers for Environmental Information. Dataset. https://www.ncei.noaa.gov/archive/accession/NCEI-WOA18. Accessed 2023-05-27.
+## Natural Earth (for land masking)
+Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.

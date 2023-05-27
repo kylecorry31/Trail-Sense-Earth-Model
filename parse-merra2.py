@@ -6,7 +6,7 @@ from scripts import to_tif
 # TODO: Load start and end from filename by default
 start_year = 1991
 end_year = 2020
-data_point = 'T2MMAX'
+data_point = 'T2MMIN'
 elevation_image = 'images/dem-land-etopo.tif'
 elevation_invalid_value = -99999
 

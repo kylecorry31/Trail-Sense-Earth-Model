@@ -45,5 +45,6 @@ def write_img(year, month, values):
 for year in range(start_year, end_year + 1):
     for month in range(1, 13):
         print(f'Processing {year}-{month}')
-        values = get_data(year, month)
-        write_img(year, month, values)
+        if not os.path.exists(f'source/merra2/{year}-{month}-{data_point}.tif'):
+            values = get_data(year, month)
+            write_img(year, month, values)

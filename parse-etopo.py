@@ -6,13 +6,12 @@ from scripts import resize
 
 # Input GeoTIFF path
 surface_path = "source/etopo/ETOPO_2022_v1_60s_N90W180_surface.tif"
-geoid_path = "source/etopo/ETOPO_2022_v1_60s_N90W180_geoid.tif"
 shapefile_path = "source/natural-earth/ne_10m_land.shp"
 island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 include_islands = True
 output_adjusted_surface_path = "images/dem-etopo.tif"
 output_tif_path = "images/dem-land-etopo.tif"
-output_size = None#(360 * 8, 180 * 8)
+output_size = None
 
 ######## Program, don't modify ########
 
@@ -20,22 +19,8 @@ output_size = None#(360 * 8, 180 * 8)
 gdf = gpd.read_file(shapefile_path)
 gdf_islands = gpd.read_file(island_shapefile_path)
 
-# Add geoid to surface
-with rasterio.open(geoid_path) as geoids:
-    geoids = geoids.read(1)
-    with rasterio.open(surface_path) as src:
-        surface = src.read(1)
-        surface += geoids
-        
-        # Save the new surface
-        metadata = src.profile
-        metadata.update(count=1)
-        with rasterio.open(output_adjusted_surface_path, 'w', **metadata) as dst:
-            dst.write(surface, 1)
-
-
 # Open the GeoTIFF file
-with rasterio.open(output_adjusted_surface_path) as src:
+with rasterio.open(surface_path) as src:
     gdf = gdf.to_crs(src.crs)
     if include_islands:
         gdf_islands = gdf_islands.to_crs(src.crs)
@@ -54,5 +39,5 @@ with rasterio.open(output_adjusted_surface_path) as src:
 
 # # Resize the images
 if output_size is not None:
-    resize(output_adjusted_surface_path, output_adjusted_surface_path, output_size)
+    resize(surface_path, output_adjusted_surface_path, output_size)
     resize(output_tif_path, output_tif_path, output_size)

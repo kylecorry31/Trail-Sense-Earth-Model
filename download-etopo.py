@@ -1,15 +1,15 @@
 import os
 import requests
 
-grid = 15
-redownload = False
+grid = 60
+redownload = True
 
 ############ Program, don't modify ############
 
-def get_url(latitude, longitude, type_path, type):
+def get_url(latitude, longitude, data_type, type_path=None):
     lat = ('N' if latitude >= 0 else 'S') + str(abs(latitude)).zfill(2)
     lon = ('E' if longitude >= 0 else 'W') + str(abs(longitude)).zfill(3)
-    url = f'https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/{grid}s/{grid}s_{type_path}_gtif/ETOPO_2022_v1_{grid}s_{lat}{lon}_{type}.tif'
+    url = f'https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/data/{grid}s/{grid}s_{data_type if type_path is None else type_path}_gtif/ETOPO_2022_v1_{grid}s_{lat}{lon}_{data_type}.tif'
     return url
 
 def download(url):
@@ -25,12 +25,5 @@ def download(url):
         else:
             raise Exception(f'Error {r.status_code} downloading {url}')
 
-def download_tiles(type_path, type):
-    for lat in range(90, -90, -grid):
-        for lon in range(-180, 180, grid):
-            url = get_url(lat, lon, type_path, type)
-            download(url)
-
-download_tiles('surface_elev', 'surface')
-download_tiles('geoid', 'geoid')
-download_tiles('surface_sid', 'surface_sid')
+download(get_url(90, -180, 'geoid'))
+download(get_url(90, -180, 'surface'))
