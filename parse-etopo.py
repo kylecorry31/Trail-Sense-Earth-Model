@@ -3,10 +3,11 @@ from scripts import load, load_pixels, to_tif, compress_to_webp
 import numpy as np
 
 # INPUT
-new_size = (720, 360)
+new_size = (1080, 540)
 resolution = 15
 include_bathymetry = False
 image_filename_format = 'source/etopo/ETOPO_2022_v1_{grid_size}s_{latitude}{longitude}_{type}.tif' 
+# TODO: Use WOA mask
 
 # Images are 3600x3600
 # 240 pixels per degree
@@ -14,13 +15,6 @@ image_filename_format = 'source/etopo/ETOPO_2022_v1_{grid_size}s_{latitude}{long
 ######## Program, don't modify ########
 output_filename = 'images/dem-etopo.tif'
 new_image = np.array(Image.new('F', new_size))
-
-pixels_per_degree = 3600 / resolution
-
-total_width = pixels_per_degree * 360
-total_height = pixels_per_degree * 180
-
-# TODO: Scale using total_width and total_height or set new resolution
 
 num_tiles_lat = int(180 / resolution)
 num_tiles_lon = int(360 / resolution)

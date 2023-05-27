@@ -1,6 +1,6 @@
 from scripts import to_tif
 
-with open('datfiles/geoids.csv', 'r') as file:
+with open('source/geoids.csv', 'r') as file:
     lines = file.readlines()
 
 values = [line.split(',') for line in lines]

@@ -1,8 +1,8 @@
 from scripts import compress_to_webp, get_min_max
 
 # INPUT
-input_filename = 'images/dem.tif'
-output_filename = 'output/dem.webp'
+input_filename = 'images/land-woa.tif'
+output_filename = 'output/land.webp'
 quality = 100
 invalid_value = -999
 lossless = False
