@@ -1,60 +1,58 @@
-from PIL import Image
-from scripts import load, load_pixels, to_tif, compress_to_webp
-import numpy as np
+import geopandas as gpd
+import pandas as pd
+import rasterio
+from rasterio.mask import mask
+from scripts import resize
 
-# INPUT
-new_size = (1080, 540)
-resolution = 15
-include_bathymetry = False
-image_filename_format = 'source/etopo/ETOPO_2022_v1_{grid_size}s_{latitude}{longitude}_{type}.tif' 
-# TODO: Use WOA mask
-
-# Images are 3600x3600
-# 240 pixels per degree
+# Input GeoTIFF path
+surface_path = "source/etopo/ETOPO_2022_v1_60s_N90W180_surface.tif"
+geoid_path = "source/etopo/ETOPO_2022_v1_60s_N90W180_geoid.tif"
+shapefile_path = "source/natural-earth/ne_10m_land.shp"
+island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
+include_islands = True
+output_adjusted_surface_path = "images/dem-etopo.tif"
+output_tif_path = "images/dem-land-etopo.tif"
+output_size = None#(360 * 8, 180 * 8)
 
 ######## Program, don't modify ########
-output_filename = 'images/dem-etopo.tif'
-new_image = np.array(Image.new('F', new_size))
 
-num_tiles_lat = int(180 / resolution)
-num_tiles_lon = int(360 / resolution)
+# Read the shapefile using geopandas
+gdf = gpd.read_file(shapefile_path)
+gdf_islands = gpd.read_file(island_shapefile_path)
 
-individual_image_size = (int(new_size[0] / num_tiles_lon) + 1, int(new_size[1] / num_tiles_lat) + 1)
-
-Image.MAX_IMAGE_PIXELS = None
-
-def apply_geoid(elevations, geoids):
-    for x in range(len(elevations)):
-        for y in range(len(elevations[0])):
-            elevations[x][y] += geoids[x][y]
-
-def get_data(path):
-    im = load(path, new_size)
-    return np.array(im)
-
-def update_image(latitude, longitude):
-    lat = ('N' if latitude >= 0 else 'S') + str(abs(latitude)).zfill(2)
-    lon = ('E' if longitude >= 0 else 'W') + str(abs(longitude)).zfill(3)
-    img = load_pixels(image_filename_format.format(grid_size=resolution, latitude=lat, longitude=lon, type='surface'), individual_image_size)
-    geoid = load_pixels(image_filename_format.format(grid_size=resolution, latitude=lat, longitude=lon, type='geoid'), individual_image_size)
-    img = np.add(img, geoid)
-    if not include_bathymetry:
-        sid = load_pixels(image_filename_format.format(grid_size=resolution, latitude=lat, longitude=lon, type='surface_sid'), individual_image_size)
-        # Set the pixel to 0 if the sid is for bathymetry
-        img[sid < 9] = 0
-        # img[sid == 12] = 0
-    
-    # Add it to the new image
-    start_y = int((180 - (latitude + 90)) * new_size[1] / 181.0)
-    start_x = int((longitude + 180) * new_size[0] / 361.0)
-    # img = np.ones((individual_image_size[1], individual_image_size[0])) * 255
-    print(start_x, start_y, latitude, longitude)
-    new_image[start_y:start_y + individual_image_size[1], start_x:start_x + individual_image_size[0]] = img
+# Add geoid to surface
+with rasterio.open(geoid_path) as geoids:
+    geoids = geoids.read(1)
+    with rasterio.open(surface_path) as src:
+        surface = src.read(1)
+        surface += geoids
+        
+        # Save the new surface
+        metadata = src.profile
+        metadata.update(count=1)
+        with rasterio.open(output_adjusted_surface_path, 'w', **metadata) as dst:
+            dst.write(surface, 1)
 
 
-for latitude in range(90, -90, -resolution):
-    for longitude in range(-180, 180, resolution):
-        update_image(latitude, longitude)
+# Open the GeoTIFF file
+with rasterio.open(output_adjusted_surface_path) as src:
+    gdf = gdf.to_crs(src.crs)
+    if include_islands:
+        gdf_islands = gdf_islands.to_crs(src.crs)
+        gdf = gpd.GeoDataFrame(pd.concat([gdf, gdf_islands], ignore_index=True), crs=src.crs)
 
-to_tif(new_image, output_filename)
-compress_to_webp([output_filename], 'test.webp', lambda x: int(x))
+    masked_image, masked_transform = mask(src, gdf.geometry)
+    metadata = src.meta.copy()
+    metadata.update({"driver": "GTiff",
+                     "height": masked_image.shape[1],
+                     "width": masked_image.shape[2],
+                     "transform": masked_transform,
+                     "crs": src.crs})
+    # Create a new GeoTIFF file and write the masked image
+    with rasterio.open(output_tif_path, 'w', **metadata) as dst:
+        dst.write(masked_image)
+
+# # Resize the images
+if output_size is not None:
+    resize(output_adjusted_surface_path, output_adjusted_surface_path, output_size)
+    resize(output_tif_path, output_tif_path, output_size)

@@ -11,6 +11,7 @@ elevation_image = 'images/dem-land-etopo.tif'
 elevation_invalid_value = -99999
 
 ############ Program, don't modify ############
+Image.MAX_IMAGE_PIXELS = None
 sum_values = []
 count_values = []
 elevations = np.array(Image.open(elevation_image))
