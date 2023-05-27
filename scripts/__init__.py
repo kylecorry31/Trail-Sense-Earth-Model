@@ -5,7 +5,7 @@ import numpy as np
 
 def load(path, resize=None):
     im = Image.open(path)
-    if resize is not None:
+    if resize is not None and im.size != resize:
         im = im.resize(resize, Image.NEAREST)
     return im
 
