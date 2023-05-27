@@ -59,10 +59,19 @@ def __load_data(year, month, data_point):
 def __write_img_processed(year, month, values, data_point):
     to_tif(values, f'images/{year}-{month}-{data_point}.tif')
 
-def download(data_points = ['T2MMIN', 'T2MMAX'], redownload = False):
+def download(redownload = False):
+    if not os.path.exists(credentials_file):
+        username = input("NASA Earthdata username: ")
+        password = input("NASA Earthdata password: ")
+        with open(credentials_file, 'w') as f:
+            f.write(username + '\n')
+            f.write(password + '\n')
+    
     with open(credentials_file, 'r') as f:
         username = f.readline().strip()
         password = f.readline().strip()
+    
+    data_points = ['T2MMIN', 'T2MMAX']
     
     # TODO: download both T2MMIN and T2MMAX at the same time
     with progress("Downloading MERRA-2 data", (end_year - start_year + 1) * 12 * len(data_points)) as pbar:
