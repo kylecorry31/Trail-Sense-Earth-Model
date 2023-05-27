@@ -1,15 +1,18 @@
 from scripts import compress_to_webp, get_min_max
+from PIL import Image
 
 # INPUT
-input_filename = 'images/land-woa.tif'
-output_filename = 'output/land.webp'
+input_filename = 'images/dem-land-etopo.tif'
+output_filename = 'output/dem.webp'
 quality = 100
-invalid_value = -999
+invalid_value = -99999
 lossless = False
 
 map_point = lambda x: int(x)
 
 ######## Program, don't modify ########
+Image.MAX_IMAGE_PIXELS = None
+
 def create_image(path, offset, output):
     compress_to_webp([path], output, map_point, offset, invalid_value, quality, lossless)
 

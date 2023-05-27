@@ -7,14 +7,13 @@ from scripts import to_tif
 start_year = 1991
 end_year = 2020
 data_point = 'T2MMAX'
-elevation_image = 'images/dem-worldclim.tif'
-elevation_invalid_value = -32768
+elevation_image = 'images/dem-land-etopo.tif'
+elevation_invalid_value = -99999
 
 ############ Program, don't modify ############
 sum_values = []
 count_values = []
 elevations = np.array(Image.open(elevation_image))
-# elevations[elevations < -440] = 0
 print(data_point)
 elevation_w = len(elevations[0])
 elevation_h = len(elevations)

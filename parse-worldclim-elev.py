@@ -16,4 +16,15 @@ def get_data(path):
 
 elevations = get_data(elevation_filename)
 
+print(f"Min: {np.min(elevations)} Max: {np.max(elevations)}")
 to_tif(elevations, output_filename)
+
+# land
+land = np.zeros((len(elevations), len(elevations[0])))
+land[elevations != 0] = 255
+to_tif(land, 'images/land-worldclim.tif')
+
+# sea
+sea = np.zeros((len(elevations), len(elevations[0])))
+sea[elevations == 0] = 255
+to_tif(sea, 'images/sea-worldclim.tif')

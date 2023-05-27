@@ -9,4 +9,10 @@
 *.webp
 *.png
 *.pyc
+*.cpg
+*.dbf
+*.prj
+*.shp
+*.shx
+*.html
 nasa-credentials.txt

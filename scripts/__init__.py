@@ -1,11 +1,13 @@
 from PIL import Image
 import os
 import numpy as np
+import rasterio
+from rasterio.enums import Resampling
 
 def load(path, resize=None):
     im = Image.open(path)
     if resize is not None:
-        im = im.resize(resize, Image.ANTIALIAS)
+        im = im.resize(resize, Image.NEAREST)
     return im
 
 def load_pixels(path, resize=None):
@@ -39,14 +41,23 @@ def get_min_max(paths, map_point=lambda x: x, invalid_value=-999, resize=None):
     min_value = 100000
     max_value = -100000
     for path in paths:
-        im = load(path, resize)
-        for x in range(im.size[0]):
-            for y in range(im.size[1]):
-                t = im.getpixel((x, y))
-                if t != invalid_value:
-                    min_value = min(min_value, map_point(t))
-                    max_value = max(max_value, map_point(t))
-    return (min_value, max_value)
+        im = load_pixels(path, resize)
+        min_value = min(min_value, np.min(im[im != invalid_value]))
+        max_value = max(max_value, np.max(im[im != invalid_value]))
+    return (map_point(min_value), map_point(max_value))
+
+
+    # min_value = 100000
+    # max_value = -100000
+    # for path in paths:
+    #     im = load(path, resize)
+    #     for x in range(im.size[0]):
+    #         for y in range(im.size[1]):
+    #             t = im.getpixel((x, y))
+    #             if t != invalid_value:
+    #                 min_value = min(min_value, map_point(t))
+    #                 max_value = max(max_value, map_point(t))
+    # return (min_value, max_value)
 
 def to_tif(values, output, map_point=lambda x: x, is_inverted=False):
     img = Image.new('F', (len(values[0]), len(values)), color='black')
@@ -60,3 +71,9 @@ def to_tif(values, output, map_point=lambda x: x, is_inverted=False):
     if not os.path.exists(output.rsplit('/', 1)[0]):
         os.makedirs(output.rsplit('/', 1)[0])
     img.save(output, format='TIFF')
+
+def resize(path, output, size):
+    Image.MAX_IMAGE_PIXELS = None
+    im = Image.open(path)
+    im = im.resize(size, Image.NEAREST)
+    im.save(output, format='TIFF')

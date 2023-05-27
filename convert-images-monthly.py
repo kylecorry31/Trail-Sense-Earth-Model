@@ -1,7 +1,7 @@
 from scripts import compress_to_webp, get_min_max
 
 # INPUT
-data_point = 'T2MMIN'
+data_point = 'T2MMAX'
 filename_format = 'images/1991-2020-{month}-{data_point}.tif'
 output_dir = 'output'
 quality = 100
