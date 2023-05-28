@@ -5,8 +5,8 @@ from pydap.cas.urs import setup_session
 from scripts import to_tif, load_pixels
 from scripts.progress import progress
 
-start_year = 1991
-end_year = 2020
+# Dew point / humidity might be retrieved from here: https://goldsmr4.gesdisc.eosdis.nasa.gov/opendap/hyrax/MERRA2_MONTHLY/M2TMNXSLV.5.12.4/2022/contents.html
+
 temperature_offset = -273.15
 elevation_invalid_value = -99999
 elevation_image = 'images/dem-land-etopo.tif'
@@ -14,8 +14,17 @@ source_folder = 'source/merra2'
 credentials_file = 'nasa-credentials.txt'
 
 def __get_version(year, month):
-    if year == 2020 and month == 9:
-        return 401
+    revisions = [
+        (2020, 9, 401),
+        (2021, 6, 401),
+        (2021, 7, 401),
+        (2021, 8, 401),
+        (2021, 9, 401),
+    ]
+
+    for revision in revisions:
+        if year == revision[0] and month == revision[1]:
+            return revision[2]
 
     if year <= 1991:
         return 100
@@ -59,7 +68,7 @@ def __load_data(year, month, data_point):
 def __write_img_processed(year, month, values, data_point):
     to_tif(values, f'images/{year}-{month}-{data_point}.tif')
 
-def download(redownload = False):
+def download(start_year=1991, end_year=2020, redownload = False):
     if not os.path.exists(credentials_file):
         username = input("NASA Earthdata username: ")
         password = input("NASA Earthdata password: ")
@@ -85,7 +94,7 @@ def download(redownload = False):
 
 
 
-def process_temperatures():
+def process_temperatures(start_year=1991, end_year=2020):
     data_points = ['T2MMIN', 'T2MMAX']
     Image.MAX_IMAGE_PIXELS = None
     with progress("Loading elevation data", 1) as pbar:
