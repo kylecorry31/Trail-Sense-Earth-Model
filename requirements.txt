@@ -6,3 +6,5 @@ geopandas
 rasterio
 requests
 pydap
+xarray
+cdsapi

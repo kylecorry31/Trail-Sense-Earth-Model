@@ -1,9 +1,11 @@
 # Trail-Sense-Earth-Model
 A generator for Trail Sense which generates Earth models such as historic temperatures and geoids.
 
-**generate-temperature-merra.py**: The script to generate the global temperature model. This will generate 8 WEBP files in the output directory for the min/max monthly temperatures. Resolution is 576x361.
+**generate-temperature-model.py**: The script to generate the global temperature model. This will generate 8 WEBP files in the output directory for the min/max monthly temperatures. Resolution is 576x361.
 
-**generate-geoid.py**: The script to generate the geoid model. This will generate 1 WEBP file in the output directory. Resolution is 361x181.
+**generate-humidity-model.py**: The script to generate the global humidity model. This will generate 4 WEBP files in the output directory for the monthly humidity. Resolution is 576x361.
+
+**generate-geoid-model.py**: The script to generate the geoid model. This will generate 1 WEBP file in the output directory. Resolution is 361x181.
 
 # Credits
 ## CRU
@@ -20,3 +22,8 @@ ETOPO 2022 metadata may be accessed here: ETOPO 2022 metadata landing page
 
 ## Natural Earth (for land masking)
 Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.
+
+## ERA5
+Contains modified Copernicus Climate Change Service information 1991 - 2020. Neither the European Commission nor ECMWF is responsible for any use that may be made of the Copernicus information or data it contains.
+
+Hersbach, H., Bell, B., Berrisford, P., Biavati, G., Horányi, A., Muñoz Sabater, J., Nicolas, J., Peubey, C., Radu, R., Rozum, I., Schepers, D., Simmons, A., Soci, C., Dee, D., Thépaut, J-N. (2023): ERA5 monthly averaged data on pressure levels from 1940 to present. Copernicus Climate Change Service (C3S) Climate Data Store (CDS), DOI: 10.24381/cds.6860a573 (Accessed on 17-NOV-2023)
