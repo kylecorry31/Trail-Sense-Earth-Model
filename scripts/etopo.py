@@ -35,7 +35,7 @@ def download(redownload=False):
     with progress("Downloading ETOPO data", 2) as pbar:
         __download(__get_url(90, -180, 60, 'geoid'), redownload)
         pbar.update(1)
-        __download(__get_url(90, -180, 60, 'surface'), redownload)
+        __download(__get_url(90, -180, 60, 'surface', 'surface_elev'), redownload)
         pbar.update(1)
 
 def process_dem(include_islands=True):
