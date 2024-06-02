@@ -27,3 +27,9 @@ Made with Natural Earth. Free vector and raster map data @ naturalearthdata.com.
 Contains modified Copernicus Climate Change Service information 1991 - 2020. Neither the European Commission nor ECMWF is responsible for any use that may be made of the Copernicus information or data it contains.
 
 Hersbach, H., Bell, B., Berrisford, P., Biavati, G., Horányi, A., Muñoz Sabater, J., Nicolas, J., Peubey, C., Radu, R., Rozum, I., Schepers, D., Simmons, A., Soci, C., Dee, D., Thépaut, J-N. (2023): ERA5 monthly averaged data on pressure levels from 1940 to present. Copernicus Climate Change Service (C3S) Climate Data Store (CDS), DOI: 10.24381/cds.6860a573 (Accessed on 17-NOV-2023)
+
+## Visible Earth
+R. Stockli, E. Vermote, N. Saleous, R. Simmon and D. Herring (2005). The Blue
+Marble Next Generation - A true color earth dataset including seasonal dynamics
+from MODIS. Published by the NASA Earth Observatory. Corresponding author:
+rstockli@climate.gsfc.nasa.gov

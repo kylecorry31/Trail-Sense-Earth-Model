@@ -8,3 +8,4 @@ requests
 pydap
 xarray
 cdsapi
+scikit-learn
