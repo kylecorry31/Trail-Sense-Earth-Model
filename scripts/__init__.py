@@ -22,7 +22,7 @@ def compress_to_webp2(paths, output_filename, map_point=lambda x: x, a=1, b=0, i
 
     for x in range(new_im.size[0]):
         for y in range(new_im.size[1]):
-            ts = [im.getpixel((x, y)) for im in images]
+            ts = [im.getpixel((x, y)) for im in images][0]
             if invalid_value in ts:
                 if len(images) == 1:
                     pixels[x, y] = 0

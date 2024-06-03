@@ -6,6 +6,8 @@ from sklearn.cluster import KMeans
 from .progress import progress
 from tqdm import tqdm
 
+kmeans = None
+
 
 def __download(url, filename):
     if not os.path.exists(f"source/visible-earth"):
@@ -54,14 +56,16 @@ def download():
 
 
 def __simplify(reference_image, target_image, colors):
-    # Convert the reference image to HSV
-    reference_image_hsv = reference_image.convert("HSV")
-    reference_pixels = np.array(reference_image_hsv)
-    reference_pixels_reshaped = reference_pixels.reshape(-1, 3)
+    global kmeans
+    if kmeans is None:
+        # Convert the reference image to HSV
+        reference_image_hsv = reference_image.convert("HSV")
+        reference_pixels = np.array(reference_image_hsv)
+        reference_pixels_reshaped = reference_pixels.reshape(-1, 3)
 
-    # Apply K-Means clustering to the HSV pixels of the reference image
-    kmeans = KMeans(n_clusters=colors, random_state=0)
-    kmeans.fit(reference_pixels_reshaped)
+        # Apply K-Means clustering to the HSV pixels of the reference image
+        kmeans = KMeans(n_clusters=colors, random_state=0)
+        kmeans.fit(reference_pixels_reshaped)
 
     # Convert the target image to HSV
     target_image_hsv = target_image.convert("HSV")
@@ -83,25 +87,13 @@ def __simplify(reference_image, target_image, colors):
 
 
 def process_maps():
-    if not os.path.exists("output"):
-        os.makedirs("output")
+    if not os.path.exists("images"):
+        os.makedirs("images")
 
-    resize_before = True
-    max_size = 2800
     reference = Image.open("source/visible-earth/3.jpg")
-    # Read month from user
     with tqdm(total=12, desc="Processing Visible Earth images") as pbar:
         for month in range(1, 13):
             image = Image.open(f"source/visible-earth/{month}.jpg")
-            if resize_before:
-                image.thumbnail((max_size, max_size))
-                reference.thumbnail((max_size, max_size))
-            # image = simplify(image, 16)
             image = __simplify(reference, image, 16)
-
-            if not resize_before:
-                image.thumbnail((max_size, max_size))
-
-            # TODO: Save at full quality?
-            image.save(f"output/world-map-{month}.webp")
+            image.save(f"images/world-map-{month}.tif")
             pbar.update(1)
