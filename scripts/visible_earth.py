@@ -86,7 +86,7 @@ def __simplify(reference_image, target_image, colors):
     return compressed_image
 
 
-def process_maps():
+def process_maps(colors = 16):
     if not os.path.exists("images"):
         os.makedirs("images")
 
@@ -94,6 +94,7 @@ def process_maps():
     with tqdm(total=12, desc="Processing Visible Earth images") as pbar:
         for month in range(1, 13):
             image = Image.open(f"source/visible-earth/{month}.jpg")
-            image = __simplify(reference, image, 16)
+            if colors > 0:
+                image = __simplify(reference, image, colors)
             image.save(f"images/world-map-{month}.tif")
             pbar.update(1)
