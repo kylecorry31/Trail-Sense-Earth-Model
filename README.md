@@ -33,3 +33,6 @@ R. Stockli, E. Vermote, N. Saleous, R. Simmon and D. Herring (2005). The Blue
 Marble Next Generation - A true color earth dataset including seasonal dynamics
 from MODIS. Published by the NASA Earth Observatory. Corresponding author:
 rstockli@climate.gsfc.nasa.gov
+
+## Uptide
+Licensed under LGPL-3.0: https://github.com/stephankramer/uptide/blob/master/LICENSE

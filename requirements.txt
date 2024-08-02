@@ -9,3 +9,4 @@ pydap
 xarray
 cdsapi
 scikit-learn
+uptide
