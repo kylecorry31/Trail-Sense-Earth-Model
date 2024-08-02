@@ -36,3 +36,6 @@ rstockli@climate.gsfc.nasa.gov
 
 ## Uptide
 Licensed under LGPL-3.0: https://github.com/stephankramer/uptide/blob/master/LICENSE
+
+## NOAA
+NOAA CO-OPS API: https://api.tidesandcurrents.noaa.gov/mdapi/prod/ and https://api.tidesandcurrents.noaa.gov/api/prod/
