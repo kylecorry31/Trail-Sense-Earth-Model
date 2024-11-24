@@ -10,3 +10,5 @@ xarray
 cdsapi
 scikit-learn
 uptide
+webob
+netCDF4

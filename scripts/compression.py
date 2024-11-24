@@ -5,7 +5,7 @@ from PIL import Image
 # Pixel = a * value + b
 # Value = (pixel - b) / a
 
-def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, quality, lossless, size=None):
+def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, quality, lossless, size=None, grouping=3):
     Image.MAX_IMAGE_PIXELS = None
     with progress(f'Calculating compression offset ({data_point})', 1) as pbar:
         offset = get_min_max(files, map_point, invalid_value, size)
@@ -17,9 +17,9 @@ def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, qualit
 
     print(f'A: {a}, B: {b}')
 
-    grouping = 3 if use_rgb else 1
+    grouping = grouping if use_rgb else 1
     
-    with progress(f'Compressing ({data_point})', len(files) // grouping) as pbar:
+    with progress(f'Compressing ({data_point})', len(files)) as pbar:
         for i in range(0, len(files), grouping):
             compress_to_webp2(files[i:i+grouping], f'output/{data_point}-{i + 1}-{i + grouping}.webp', map_point, a, b, invalid_value, quality, lossless, size)
             pbar.update(grouping)

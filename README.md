@@ -39,3 +39,8 @@ Licensed under LGPL-3.0: https://github.com/stephankramer/uptide/blob/master/LIC
 
 ## NOAA
 NOAA CO-OPS API: https://api.tidesandcurrents.noaa.gov/mdapi/prod/ and https://api.tidesandcurrents.noaa.gov/api/prod/
+
+## EOT20
+https://creativecommons.org/licenses/by/4.0/
+
+Hart-Davis Michael, Piccioni Gaia, Dettmering Denise, Schwatke Christian, Passaro Marcello, Seitz Florian (2021). EOT20 - A global Empirical Ocean Tide model from multi-mission satellite altimetry. SEANOE. https://doi.org/10.17882/79489
