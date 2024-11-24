@@ -12,7 +12,7 @@ for constituent in constituents:
     files.append(f'images/eot20/{constituent}-imaginary.tif')
 
 
-compression.minify_multiple(files, lambda x: x, 100000, 'constituents', True, 100, True, (720, 360), 2)
+compression.minify_multiple(files, lambda x: x, 100000, 'constituents', True, 100, True, (721, 361), 2)
 i = 0
 for consituent in constituents:
     os.rename(f'output/constituents-{i + 1}-{i + 2}.webp', f'output/constituents-{consituent}.webp')

@@ -40,7 +40,7 @@ def process_ocean_tides(reprocess = False):
                 
                 def get_value(latitude, longitude):
                     latitude_index = int((latitude + 90) / y_scale)
-                    longitude_index = int((longitude + 180) / x_scale)
+                    longitude_index = int(longitude / x_scale)
                     return (real[latitude_index, longitude_index], imaginary[latitude_index, longitude_index])
                 
                 real_image = Image.new("F", (int(360 / x_scale), int(180 / y_scale)))
