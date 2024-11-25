@@ -53,6 +53,7 @@ def process_dem(include_islands=True):
 
             masked_image, masked_transform = mask(src, gdf.geometry)
             metadata = src.meta.copy()
+            print(src.meta)
             metadata.update({"driver": "GTiff",
                             "height": masked_image.shape[1],
                             "width": masked_image.shape[2],
