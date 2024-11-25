@@ -6,12 +6,12 @@ import rasterio.transform
 from scripts import progress, to_tif
 import numpy as np
 import os
+import shutil
 import geopandas as gpd
-import pandas as pd
 import rasterio
-from rasterio.mask import mask
 from scipy.ndimage import binary_dilation
 from rasterio.features import rasterize
+import requests
 
 # from osgeo import gdal
 
@@ -24,9 +24,22 @@ y_scale = 0.125
 shapefile_path = "source/natural-earth/ne_10m_land.shp"
 island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 
-# TODO: Download the data from https://www.seanoe.org/data/00683/79489/data/85762.zip and unzip it to source/eot20
 def download():
-    pass
+    os.makedirs(source_directory, exist_ok=True)
+    with progress.progress("Downloading ocean tides", 1) as pbar:
+        if not os.path.exists(f'{source_directory}/ocean_tides/2N2_ocean_eot20.nc'):
+            url = 'https://www.seanoe.org/data/00683/79489/data/85762.zip'
+            r = requests.get(url, allow_redirects=True)
+            with open(f'{source_directory}/85762.zip', 'wb') as f:
+                f.write(r.content)
+            shutil.unpack_archive(f'{source_directory}/85762.zip', f'{source_directory}')
+            os.remove(f'{source_directory}/85762.zip')
+            os.remove(f'{source_directory}/load_tides.zip')
+            shutil.unpack_archive(f'{source_directory}/ocean_tides.zip', f'{source_directory}')
+            os.remove(f'{source_directory}/ocean_tides.zip')
+            shutil.rmtree(f'{source_directory}/__MACOSX')
+        pbar.update(1)
+    
 
 def process_ocean_tides():
     os.makedirs(output_directory, exist_ok=True)
