@@ -15,11 +15,11 @@ for constituent in constituents:
     os.rename(f'output/constituents-{constituent}-1-2.webp', f'output/constituents-{constituent}.webp')
     scale_map[constituent] = scale
 
-# Print as a kotlin dictionary
+print()
 print('A = 255, B = 0')
 print()
 
-# Print the amplitudes
+# Print the amplitudes as a kotlin map
 print('private val amplitudes = mutableMapOf(')
 
 for constituent, amplitude in amplitudes.items():

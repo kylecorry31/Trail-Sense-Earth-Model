@@ -1,19 +1,15 @@
 import netCDF4
 import os
-
 import rasterio.mask
 import rasterio.transform
 from scripts import progress, to_tif
 import numpy as np
-import os
 import shutil
 import geopandas as gpd
 import rasterio
 from scipy.ndimage import binary_dilation
 from rasterio.features import rasterize
 import requests
-
-# from osgeo import gdal
 
 # Load the data
 source_directory = 'source/eot20'
@@ -26,7 +22,7 @@ island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 
 def download():
     os.makedirs(source_directory, exist_ok=True)
-    with progress.progress("Downloading ocean tides", 1) as pbar:
+    with progress.progress("Downloading EOT20 data", 1) as pbar:
         if not os.path.exists(f'{source_directory}/ocean_tides/2N2_ocean_eot20.nc'):
             url = 'https://www.seanoe.org/data/00683/79489/data/85762.zip'
             r = requests.get(url, allow_redirects=True)
@@ -73,8 +69,6 @@ def process_ocean_tides():
         
         # Downsample the image
         mask = mask[::scale, ::scale]
-
-        # to_tif(img, f'{output_directory}/land-and-islands.tif')
 
         pbar.update(1)
 
