@@ -69,28 +69,18 @@ def get_min_max(paths, map_point=lambda x: x, invalid_value=-999, resize=None):
         max_value = max(max_value, np.max(im[im != invalid_value]))
     return (map_point(min_value), map_point(max_value))
 
+def to_tif(values, output, is_inverted=False, x_shift=0, masked_value_replacement=0):
+    values_array = np.ma.masked_invalid(values)
+    values_array = np.where(values_array.mask, masked_value_replacement, values_array)
 
-    # min_value = 100000
-    # max_value = -100000
-    # for path in paths:
-    #     im = load(path, resize)
-    #     for x in range(im.size[0]):
-    #         for y in range(im.size[1]):
-    #             t = im.getpixel((x, y))
-    #             if t != invalid_value:
-    #                 min_value = min(min_value, map_point(t))
-    #                 max_value = max(max_value, map_point(t))
-    # return (min_value, max_value)
+    if x_shift != 0:
+        values_array = np.roll(values_array, x_shift, axis=1)
+    
+    if is_inverted:
+        values_array = np.flipud(values_array)
 
-def to_tif(values, output, map_point=lambda x: x, is_inverted=False):
-    img = Image.new('F', (len(values[0]), len(values)), color='black')
-    pixels = img.load()
-    for x in range(img.size[0]):
-        for y in range(img.size[1]):
-            if is_inverted:
-                pixels[x, img.size[1] - y - 1] = map_point(values[y][x])
-            else:
-                pixels[x, y] = map_point(values[y][x])
+    values_array = values_array.astype(np.float32)
+    img = Image.fromarray(values_array, mode='F')
     if not os.path.exists(output.rsplit('/', 1)[0]):
         os.makedirs(output.rsplit('/', 1)[0])
     img.save(output, format='TIFF')

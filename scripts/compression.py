@@ -23,6 +23,8 @@ def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, qualit
         for i in range(0, len(files), grouping):
             compress_to_webp2(files[i:i+grouping], f'output/{data_point}-{i + 1}-{i + grouping}.webp', map_point, a, b, invalid_value, quality, lossless, size)
             pbar.update(grouping)
+    
+    return float(a), float(b)
 
 def minify(path, map_point, invalid_value, output_filename, quality, lossless, size=None):
     Image.MAX_IMAGE_PIXELS = None
