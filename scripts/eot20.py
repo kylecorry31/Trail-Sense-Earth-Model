@@ -55,7 +55,7 @@ def process_ocean_tides():
 
         # Dilate the image
         mask = mask > 0
-        mask = binary_dilation(mask, iterations=10 * scale)
+        mask = binary_dilation(mask, iterations=5 * scale)
         mask = mask.astype(np.float32)
         
         # Downsample the image
