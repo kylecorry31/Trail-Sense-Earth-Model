@@ -70,26 +70,24 @@ def process_ocean_tides():
         for constituent in constituents:
             file_path = f'{source_directory}/ocean_tides/{constituent}_ocean_eot20.nc'
             with netCDF4.Dataset(file_path, 'r') as file:
-                # imaginary = file.variables['imag'][:]
-                # real = file.variables['real'][:]
-                imaginary = file.variables['phase'][:]
-                real = file.variables['amplitude'][:]
+                phase = file.variables['phase'][:]
+                amplitude = file.variables['amplitude'][:]
 
                 min_phase = -180.0
                 max_phase = 180.0
-                imaginary = (imaginary - min_phase) / (max_phase - min_phase)
+                phase = (phase - min_phase) / (max_phase - min_phase)
    
-                x_shift = real.shape[1] // 2
+                x_shift = amplitude.shape[1] // 2
                 
-                updated = to_tif(imaginary, f'{output_directory}/{constituent}-imaginary.tif', True, x_shift, 100000)
+                updated = to_tif(phase, f'{output_directory}/{constituent}-phase.tif', True, x_shift, 100000)
                 # Mask the image
                 updated = updated * mask
                 updated[updated == 0] = 100000
-                to_tif(updated, f'{output_directory}/{constituent}-imaginary.tif')
+                to_tif(updated, f'{output_directory}/{constituent}-phase.tif')
 
 
                 pbar.update(1)
-                updated = to_tif(real, f'{output_directory}/{constituent}-real.tif', True, x_shift, 100000)
+                updated = to_tif(amplitude, f'{output_directory}/{constituent}-amplitude.tif', True, x_shift, 100000)
                 # Mask the image
                 updated = updated * mask
                 updated[updated == 0] = 100000
@@ -97,7 +95,7 @@ def process_ocean_tides():
                 max_amplitude = np.max(updated[updated != 100000])
                 updated[updated != 100000] = (updated[updated != 100000] - min_amplitude) / (max_amplitude - min_amplitude)
                 amplitudes[constituent] = float(max_amplitude)
-                to_tif(updated, f'{output_directory}/{constituent}-real.tif')
+                to_tif(updated, f'{output_directory}/{constituent}-amplitude.tif')
                 pbar.update(1)
     return amplitudes
     
