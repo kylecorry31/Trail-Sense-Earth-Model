@@ -93,7 +93,11 @@ def process_ocean_tides():
                 updated[updated == 0] = 100000
                 min_amplitude = 0.0
                 max_amplitude = np.max(updated[updated != 100000])
-                updated[updated != 100000] = (updated[updated != 100000] - min_amplitude) / (max_amplitude - min_amplitude)
+                normalized = (updated[updated != 100000] - min_amplitude) / (max_amplitude - min_amplitude)
+                
+                # Accentuate the higher values
+                curve = np.power(normalized, 0.25)
+                updated[updated != 100000] = curve
                 amplitudes[constituent] = float(max_amplitude)
                 to_tif(updated, f'{output_directory}/{constituent}-amplitude.tif')
                 pbar.update(1)
