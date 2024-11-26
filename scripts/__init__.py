@@ -66,7 +66,7 @@ def get_min_max(paths, map_point=lambda x: x, invalid_value=-999, resize=None):
         max_value = max(max_value, np.max(im[im != invalid_value]))
     return (map_point(min_value), map_point(max_value))
 
-def to_tif(values, output, is_inverted=False, x_shift=0, masked_value_replacement=0):
+def to_tif(values, output, is_inverted=False, x_shift=0, masked_value_replacement=0, resize=None):
     values_array = np.ma.masked_invalid(values)
     values_array = np.where(values_array.mask, masked_value_replacement, values_array)
 
@@ -78,11 +78,13 @@ def to_tif(values, output, is_inverted=False, x_shift=0, masked_value_replacemen
 
     values_array = values_array.astype(np.float32)
     img = Image.fromarray(values_array, mode='F')
+    if resize is not None and img.size != resize:
+        img = img.resize(resize, Image.LANCZOS)
     if not os.path.exists(output.rsplit('/', 1)[0]):
         os.makedirs(output.rsplit('/', 1)[0])
     img.save(output, format='TIFF')
     img.save(output + '.webp', format='WEBP')
-    return values_array
+    return np.array(img.getdata()).reshape(img.size[1], img.size[0])
 
 def resize(path, output, size):
     Image.MAX_IMAGE_PIXELS = None
