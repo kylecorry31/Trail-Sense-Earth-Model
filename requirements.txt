@@ -9,7 +9,7 @@ pydap
 xarray
 cdsapi
 scikit-learn
-uptide
 webob
 netCDF4
 scipy
+pyTMD

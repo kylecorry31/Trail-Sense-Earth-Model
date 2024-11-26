@@ -38,8 +38,10 @@ Marble Next Generation - A true color earth dataset including seasonal dynamics
 from MODIS. Published by the NASA Earth Observatory. Corresponding author:
 rstockli@climate.gsfc.nasa.gov
 
-## Uptide
-Licensed under LGPL-3.0: https://github.com/stephankramer/uptide/blob/master/LICENSE
+## pyTMD
+https://github.com/tsutterley/pyTMD
+
+MIT License, Copyright (c) 2017 Tyler C Sutterley
 
 ## NOAA
 NOAA CO-OPS API: https://api.tidesandcurrents.noaa.gov/mdapi/prod/ and https://api.tidesandcurrents.noaa.gov/api/prod/
