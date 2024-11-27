@@ -28,9 +28,9 @@ def compress_to_webp2(paths, output_filename, map_point=lambda x: x, a=1, b=0, i
     else:
         mask = np.any([(image_arrays[i] == invalid_value) | np.isnan(image_arrays[i]) for i in range(len(images))], axis=0)
         mapped = np.zeros((*image_arrays[0].shape, 4), dtype=np.uint8)
+        mapped[..., 3] = 255
         for i in range(len(images)):
             mapped[..., i] = np.where(mask, 0, np.int32(a * (map_point(image_arrays[i]) + b)))
-        mapped[..., 3] = np.where(mask, 255, 255)
         new_im = Image.fromarray(mapped, mode='RGBA')
     new_im.save(output_filename, quality=quality, lossless=lossless, format='WEBP')
 
