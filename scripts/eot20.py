@@ -18,6 +18,9 @@ output_directory = 'images/eot20'
 x_scale = 0.125
 y_scale = 0.125
 
+# This needs to be less than 255
+final_width = 250
+
 shapefile_path = "source/natural-earth/ne_10m_land.shp"
 island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 
@@ -76,6 +79,8 @@ def process_ocean_tides(final_shape):
     with progress.progress(f'Processing ocean tides', len(constituents) * 2) as pbar:
         amplitudes = {}
         large_amplitudes = []
+        indices_images_created = False
+        non_zero_bool_array = None
         for constituent in constituents:
             file_path = f'{source_directory}/ocean_tides/{constituent}_ocean_eot20.nc'
             with netCDF4.Dataset(file_path, 'r') as file:
@@ -87,25 +92,12 @@ def process_ocean_tides(final_shape):
                 phase = (phase - min_phase) / (max_phase - min_phase)
    
                 x_shift = amplitude.shape[1] // 2
-                
-                updated = to_tif(phase, f'{output_directory}/{constituent}-phase.tif', True, x_shift, 100000)
-                # Mask the image
-                updated = updated * mask
-                updated[updated == 0] = 100000
 
-                # Resize to the final shape
-                if final_shape is not None:
-                    img = Image.fromarray(updated).resize(final_shape, Image.NEAREST)
-                    updated = np.array(img).reshape((final_shape[1], final_shape[0]))
-
-                to_tif(updated, f'{output_directory}/{constituent}-phase.tif')
-
-
-                pbar.update(1)
+                # AMPLITUDE
                 updated = to_tif(amplitude, f'{output_directory}/{constituent}-amplitude.tif', True, x_shift, 100000)
                 # Mask the image
                 updated = updated * mask
-                updated[updated == 0] = 100000
+                updated[mask == 0] = 100000
 
                 # Resize to the final shape (before normalization)
                 if final_shape is not None:
@@ -114,7 +106,6 @@ def process_ocean_tides(final_shape):
 
                 min_amplitude = 0.0
 
-                # Record the positions and value of all amplitudes greater than 500 and not equal to 100000
                 has_large_amplitudes = (np.sum(updated > 500) - np.sum(updated == 100000)) > 0
                 if has_large_amplitudes:
                     large_amplitude_indices = np.argwhere((updated > 500) & (updated != 100000))
@@ -126,12 +117,56 @@ def process_ocean_tides(final_shape):
 
                 normalized = (updated[updated != 100000] - min_amplitude) / (max_amplitude - min_amplitude)
                 normalized[normalized < 0] = 0
-                
-                # Accentuate the higher values
-                curve = normalized
-                updated[updated != 100000] = curve
+                updated[updated != 100000] = normalized
+
+                if non_zero_bool_array is None:
+                    non_zero_bool_array = (updated != 100000)
+
+                # Create the indices images
+                if not indices_images_created:
+                    indices_images_created = True
+                    indices_x = np.zeros(updated.shape)
+                    indices_y = np.zeros(updated.shape)
+                    non_zero_indices = np.argwhere(non_zero_bool_array)
+                    for i in range(len(non_zero_indices)):
+                        source_x = non_zero_indices[i][1]
+                        source_y = non_zero_indices[i][0]
+                        destination_x = i % final_width + 1
+                        destination_y = i // final_width + 1
+                        indices_x[source_y, source_x] = destination_x
+                        indices_y[source_y, source_x] = destination_y
+                    # Save the images
+                    to_tif(indices_x, f'{output_directory}/indices-x.tif')
+                    to_tif(indices_y, f'{output_directory}/indices-y.tif')
+
+                # Create a condensed image
+                updated = updated[non_zero_bool_array]
+                total_values = len(updated)
+                updated = np.append(updated, np.zeros(final_width - (total_values % final_width)))
+                updated = updated.reshape((-1, final_width))
                 amplitudes[constituent] = float(max_amplitude)
                 to_tif(updated, f'{output_directory}/{constituent}-amplitude.tif')
+                pbar.update(1)
+                
+                # PHASE
+                updated = to_tif(phase, f'{output_directory}/{constituent}-phase.tif', True, x_shift, 100000)
+                # Mask the image
+                updated = updated * mask
+                updated[mask == 0] = 100000
+
+                # Resize to the final shape
+                if final_shape is not None:
+                    img = Image.fromarray(updated).resize(final_shape, Image.NEAREST)
+                    updated = np.array(img).reshape((final_shape[1], final_shape[0]))
+                
+                updated = updated[non_zero_bool_array]
+                total_values = len(updated)
+                updated = np.append(updated, np.zeros(final_width - (total_values % final_width)))
+                updated = updated.reshape((-1, final_width))
+
+                to_tif(updated, f'{output_directory}/{constituent}-phase.tif')
+
+
                 pbar.update(1)
     return amplitudes, large_amplitudes
     

@@ -1,5 +1,4 @@
 from scripts import compression, eot20, natural_earth
-import os
 
 natural_earth.download()
 eot20.download()
@@ -9,11 +8,14 @@ constituents = ['2N2', 'J1', 'K1', 'K2', 'M2', 'M4', 'MF', 'MM', 'N2', 'O1', 'P1
 
 scale_map = {}
 
-for constituent in constituents:
-    files = [f'images/eot20/{constituent}-amplitude.tif', f'images/eot20/{constituent}-phase.tif']
-    scale = compression.minify_multiple(files, lambda x: x, 100000, f'constituents-{constituent}', True, 100, True, (720, 360), 2, should_print=False, a_override=255, b_override=0)
-    os.rename(f'output/constituents-{constituent}-1-2.webp', f'output/constituents-{constituent}.webp')
-    scale_map[constituent] = scale
+files = [f'images/eot20/{constituent}-amplitude.tif' for constituent in constituents]
+compression.minify_multiple(files, lambda x: x, 100000, 'tide-amplitudes', True, 100, True, None, 3, should_print=False, a_override=255, b_override=0)
+
+files = [f'images/eot20/{constituent}-phase.tif' for constituent in constituents]
+compression.minify_multiple(files, lambda x: x, 100000, 'tide-phases', True, 100, True, None, 3, should_print=False, a_override=255, b_override=0)
+
+files = ['images/eot20/indices-x.tif', 'images/eot20/indices-y.tif']
+compression.minify_multiple(files, lambda x: x, 100000, 'tide-indices', True, 100, True, None, 2, should_print=False, a_override=1, b_override=0)
 
 print()
 print('A = 255, B = 0')
@@ -27,6 +29,7 @@ for constituent, amplitude in amplitudes.items():
 
 print(')')
 
+print()
 
 # Print the large amplitudes
 print('private val largeAmplitudes = listOf(')
