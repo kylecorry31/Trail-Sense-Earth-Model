@@ -10,6 +10,7 @@ import rasterio
 from scipy.ndimage import binary_dilation
 from rasterio.features import rasterize
 import requests
+from PIL import Image
 
 # Load the data
 source_directory = 'source/eot20'
@@ -37,7 +38,7 @@ def download():
         pbar.update(1)
     
 
-def process_ocean_tides():
+def process_ocean_tides(final_shape):
     os.makedirs(output_directory, exist_ok=True)
     os.makedirs(source_directory, exist_ok=True)
 
@@ -74,6 +75,7 @@ def process_ocean_tides():
 
     with progress.progress(f'Processing ocean tides', len(constituents) * 2) as pbar:
         amplitudes = {}
+        large_amplitudes = []
         for constituent in constituents:
             file_path = f'{source_directory}/ocean_tides/{constituent}_ocean_eot20.nc'
             with netCDF4.Dataset(file_path, 'r') as file:
@@ -90,6 +92,12 @@ def process_ocean_tides():
                 # Mask the image
                 updated = updated * mask
                 updated[updated == 0] = 100000
+
+                # Resize to the final shape
+                if final_shape is not None:
+                    img = Image.fromarray(updated).resize(final_shape, Image.NEAREST)
+                    updated = np.array(img).reshape((final_shape[1], final_shape[0]))
+
                 to_tif(updated, f'{output_directory}/{constituent}-phase.tif')
 
 
@@ -98,16 +106,33 @@ def process_ocean_tides():
                 # Mask the image
                 updated = updated * mask
                 updated[updated == 0] = 100000
+
+                # Resize to the final shape (before normalization)
+                if final_shape is not None:
+                    img = Image.fromarray(updated).resize(final_shape, Image.NEAREST)
+                    updated = np.array(img).reshape((final_shape[1], final_shape[0]))
+
                 min_amplitude = 0.0
+
+                # Record the positions and value of all amplitudes greater than 500 and not equal to 100000
+                has_large_amplitudes = (np.sum(updated > 500) - np.sum(updated == 100000)) > 0
+                if has_large_amplitudes:
+                    large_amplitude_indices = np.argwhere((updated > 500) & (updated != 100000))
+                    for idx in large_amplitude_indices:
+                        large_amplitudes.append((constituent, int(idx[0]), int(idx[1]), int(updated[idx[0], idx[1]])))
+                        updated[idx[0], idx[1]] = 0
+                
                 max_amplitude = np.max(updated[updated != 100000])
+
                 normalized = (updated[updated != 100000] - min_amplitude) / (max_amplitude - min_amplitude)
+                normalized[normalized < 0] = 0
                 
                 # Accentuate the higher values
-                curve = np.power(normalized, 0.25)
+                curve = normalized
                 updated[updated != 100000] = curve
                 amplitudes[constituent] = float(max_amplitude)
                 to_tif(updated, f'{output_directory}/{constituent}-amplitude.tif')
                 pbar.update(1)
-    return amplitudes
+    return amplitudes, large_amplitudes
     
 
