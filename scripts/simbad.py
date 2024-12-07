@@ -9,6 +9,14 @@ magnitude_map = {
     'Mizar': 2.04
 }
 
+color_index_map = {
+    'Hadar': -0.23,
+    'Acrux': -0.26,
+    'Alsephina': 0.04,
+    'Acamar': 0.128,
+    'Mizar': 0.02
+}
+
 def get_star_details(star_name):
     # Look up the object ID for the star name
     result_table = Simbad.query_objectids(star_name)
@@ -31,5 +39,8 @@ def get_star_details(star_name):
         b_mag = np.nan
 
     color_index = b_mag - v_mag
+
+    if np.isnan(color_index):
+        color_index = color_index_map.get(star_name, np.nan)
 
     return float(ra), float(dec), float(v_mag), float(pm_ra), float(pm_dec), float(color_index)
