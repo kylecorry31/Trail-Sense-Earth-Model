@@ -1,4 +1,5 @@
 from scripts import simbad
+import numpy as np
 
 stars = [
     'Sirius',
@@ -81,5 +82,5 @@ stars = [
 ]
 
 for star in stars:
-    ra, dec, v_mag, pm_ra, pm_dec = simbad.get_star_details(star)
-    print(f"{star.replace(' ', '')}(EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra})),")  
+    ra, dec, v_mag, pm_ra, pm_dec, color_index = simbad.get_star_details(star)
+    print(f"{star.replace(' ', '')}(EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {(str(color_index) + 'f') if not np.isnan(color_index) else 'null'}),")  

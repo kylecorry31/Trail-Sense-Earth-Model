@@ -15,7 +15,7 @@ def get_star_details(star_name):
     main_id = result_table["ID"].data[0].decode("utf-8")
 
     # Query SIMBAD for the main ID
-    Simbad.add_votable_fields("flux(V)", "pmra", "pmdec")
+    Simbad.add_votable_fields("flux(V)", "pmra", "pmdec", "flux(B)")
     result_table = Simbad.query_object(main_id)
     ra = Angle(result_table["RA"].data[0], unit='hourangle').degree
     dec = Angle(result_table["DEC"].data[0], unit='deg').degree
@@ -26,4 +26,10 @@ def get_star_details(star_name):
     pm_ra = result_table["PMRA"].data[0] / (1000 * 3600)
     pm_dec = result_table["PMDEC"].data[0] / (1000 * 3600)
 
-    return float(ra), float(dec), float(v_mag), float(pm_ra), float(pm_dec)
+    b_mag = result_table["FLUX_B"].data[0]
+    if np.ma.is_masked(b_mag):
+        b_mag = np.nan
+
+    color_index = b_mag - v_mag
+
+    return float(ra), float(dec), float(v_mag), float(pm_ra), float(pm_dec), float(color_index)
