@@ -11,6 +11,8 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-tide-corrections.py**: The script to generate the astronomical tide corrections. It will output the corrections for each tide constituent.
 
+**generate-star-model.py**: The script to generate the star model. It will output the Kotlin enums for the specified list of stars.
+
 # Credits
 ## CRU
 Climatic Research Unit (University of East Anglia) and Met Office (https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/). Listed under the Open Government Licence: http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
@@ -50,3 +52,8 @@ NOAA CO-OPS API: https://api.tidesandcurrents.noaa.gov/mdapi/prod/ and https://a
 https://creativecommons.org/licenses/by/4.0/
 
 Hart-Davis Michael, Piccioni Gaia, Dettmering Denise, Schwatke Christian, Passaro Marcello, Seitz Florian (2021). EOT20 - A global Empirical Ocean Tide model from multi-mission satellite altimetry. SEANOE. https://doi.org/10.17882/79489
+
+## SIMBAD
+https://doi.org/10.1051/aas:2000332
+
+This research has made use of the SIMBAD database, operated at CDS, Strasbourg, France. 2000,A&AS,143,9 , "The SIMBAD astronomical database", Wenger et al.

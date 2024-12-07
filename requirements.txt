@@ -13,3 +13,4 @@ webob
 netCDF4
 scipy
 pyTMD
+astroquery
