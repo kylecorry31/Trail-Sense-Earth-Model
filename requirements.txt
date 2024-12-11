@@ -14,3 +14,4 @@ netCDF4
 scipy
 pyTMD
 astroquery
+timezonefinder
