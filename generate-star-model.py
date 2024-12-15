@@ -101,7 +101,9 @@ stars = [
     'Markeb',
     'Gamma Cassiopeiae',
     'Aljanah',
-    'Acrab'
+    'Acrab',
+    'Ruchbah',
+    'Segin'
 ]
 
 for star in stars:
