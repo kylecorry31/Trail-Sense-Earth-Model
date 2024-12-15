@@ -6,7 +6,8 @@ magnitude_map = {
     'Acrux': 0.76,
     'Alsephina': 1.95,
     'Acamar': 3.2,
-    'Mizar': 2.04
+    'Mizar': 2.04,
+    'Markeb': 2.48
 }
 
 color_index_map = {
@@ -14,7 +15,16 @@ color_index_map = {
     'Acrux': -0.26,
     'Alsephina': 0.04,
     'Acamar': 0.128,
-    'Mizar': 0.02
+    'Mizar': 0.02,
+    'Markeb': -0.2
+}
+
+proper_motion_ra_map = {
+    'Acrab': -5.2
+}
+
+proper_motion_dec_map = {
+    'Acrab': -24.04
 }
 
 def get_star_details(star_name):
@@ -31,8 +41,15 @@ def get_star_details(star_name):
     if np.ma.is_masked(v_mag):
         v_mag = magnitude_map.get(star_name, np.nan)
 
-    pm_ra = result_table["PMRA"].data[0] / (1000 * 3600)
-    pm_dec = result_table["PMDEC"].data[0] / (1000 * 3600)
+    pm_ra = result_table["PMRA"].data[0]
+    if np.ma.is_masked(pm_ra):
+        pm_ra = proper_motion_ra_map.get(star_name, np.nan)
+    pm_ra = pm_ra / (1000 * 3600)
+
+    pm_dec = result_table["PMDEC"].data[0]
+    if np.ma.is_masked(pm_dec):
+        pm_dec = proper_motion_dec_map.get(star_name, np.nan)
+    pm_dec = pm_dec / (1000 * 3600)
 
     b_mag = result_table["FLUX_B"].data[0]
     if np.ma.is_masked(b_mag):
