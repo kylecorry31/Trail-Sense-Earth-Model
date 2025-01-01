@@ -121,10 +121,10 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             with open(f'{wikipedia_dir}/{title}.webp', 'rb') as f:
                 image_bytes = f.read()
             image = Image.open(io.BytesIO(image_bytes))
-            image_size = 200
+            image_size = 300
             image.thumbnail((image_size, image_size))
             buffer = io.BytesIO()
-            image.save(buffer, format='WEBP')
+            image.save(buffer, format='WEBP', quality=75)
             image = base64.b64encode(buffer.getvalue()).decode('utf-8')
             name = common_name if common_name != '' and common_name != scientific_name else summary['title']
             url = summary['content_urls']['mobile']['page']
