@@ -167,7 +167,7 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
 
             data = {
                 'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),
-                'image': image,
+                'images': [image],
                 'notes': '\n\n'.join(notes),
                 'category': kingdom,
                 'subcategory': _class,
