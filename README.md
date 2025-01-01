@@ -15,6 +15,8 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-timezone-location-map.py**: The script to generate coordinates for each timezone ID.
 
+**generate-species-catalog.py**: The script to generate a species catalog of the most common species. It will output JSON files to output/species-catalog.
+
 # Credits
 ## CRU
 Climatic Research Unit (University of East Anglia) and Met Office (https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/). Listed under the Open Government Licence: http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
@@ -69,3 +71,15 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# iNaturalist
+Used to get the most common species.
+
+https://www.inaturalist.org/pages/api+reference
+
+# Wikipedia
+Species catalog information.
+
+https://en.wikipedia.org/api/rest_v1
+
+https://en.wikipedia.org (see the wikipedia link in each species catalog notes section)

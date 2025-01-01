@@ -1,0 +1,159 @@
+from scripts import inaturalist
+from scripts import wikipedia
+from scripts import progress
+import markdownify
+import json
+import re
+import os
+import base64
+from PIL import Image
+import io
+import csv
+
+# INPUT
+number_of_species = 500
+redownload = False
+
+######## Program, don't modify ########
+output_dir = 'output/species-catalog'
+wikipedia_dir = 'source/wikipedia'
+species_file = 'source/inaturalist/species.csv'
+species_file_scientific_name = 'scientificName'
+species_file_common_name = 'vernacularName'
+species_file_wikipedia_url = 'wikipediaUrl'
+all_continents = ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
+kingdoms = ['Plantae', 'Animalia', 'Fungi']
+classes = {
+    'Bird': ['Aves'],
+    'Mammal': ['Mammalia'],
+    'Reptile': ['Reptilia'],
+    'Amphibian': ['Amphibia'],
+    'Fish': ['Actinopterygii', 'Chondrichthyes', 'Sarcopterygii'],
+    'Insect': ['Insecta'],
+    'Arachnid': ['Arachnida'],
+    'Crustacean': ['Crustacea'],
+    'Mollusc': ['Mollusca'],
+}
+# These have incomplete wikipedia entries
+species_to_skip = ['Deroceras laeve', 'Solanum dimidiatum', 'Oudemansiella furfuracea', 'Stereum lobatum']
+
+def get_sections(html):
+    # Remove some elements and their contents
+    html = re.sub(r'<figure.*?</figure>', '', html)
+    html = re.sub(r'<sup.*?</sup>', '', html)
+    html = re.sub(r'<div role="note".*?</div>', '', html)
+    html = re.sub(r'<ul class="gallery.*?</ul>', '', html)
+    markdown = markdownify.markdownify(html, strip=['a', 'img', 'b', 'i'], heading_style='ATX')
+    markdown = markdown.replace('\xa0', ' ').replace('\u2013', '-').replace('\u00a0', ' ').replace('\u2044', '/')
+    # A section is pair of header followed by the content until the next header
+    sections = {}
+    lines = markdown.split('\n')
+    current_section = None
+    for line in lines:
+        if line.startswith('## '):
+            if current_section is not None:
+                sections[current_section] = '\n'.join(sections[current_section]).strip()
+            current_section = line.replace('## ', '').strip()
+            sections[current_section] = []
+        elif current_section is not None:
+            sections[current_section].append(line)
+    if current_section is not None:
+        sections[current_section] = '\n'.join(sections[current_section]).strip()
+    sections['full'] = markdown
+    return sections
+
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# Load the species from iNaturalist
+inaturalist.download(number_of_species, redownload)
+species_to_lookup = []
+with open(species_file, 'r') as f:
+    reader = csv.DictReader(f)
+    for i, row in enumerate(reader):
+        species_to_lookup.append((row[species_file_scientific_name], row[species_file_common_name], row[species_file_wikipedia_url]))
+
+species_to_lookup = [species for species in species_to_lookup if species[0] not in species_to_skip]
+
+# Lookup the species on Wikipedia
+wikipedia.download([[scientific_name.replace(' ', '_'), wikipediaUrl.split('/')[-1], common_name] for (scientific_name, common_name, wikipediaUrl) in species_to_lookup], redownload)
+
+# Delete existing species catalog entries
+for file in os.listdir(output_dir):
+    os.remove(f'{output_dir}/{file}')
+
+# Generate species catalog entries
+with progress.progress('Processing species catalog', len(species_to_lookup)) as pbar:
+    for species in species_to_lookup:
+        try:
+            (scientific_name, common_name, wikipediaUrl) = species
+            title = scientific_name.replace(' ', '_')
+            with open(f'{wikipedia_dir}/{title}.json', 'r') as f:
+                summary = json.load(f)
+            
+            with open(f'{wikipedia_dir}/{title}_page.html', 'r') as f:
+                html = f.read()
+            
+            page = get_sections(html)
+
+            with open(f'{wikipedia_dir}/{title}.webp', 'rb') as f:
+                image_bytes = f.read()
+            image = Image.open(io.BytesIO(image_bytes))
+            image_size = 150
+            image.thumbnail((image_size, image_size))
+            buffer = io.BytesIO()
+            image.save(buffer, format='WEBP')
+            image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            name = common_name if common_name != '' and common_name != scientific_name else summary['title']
+            description = summary['extract'].replace('\xa0', ' ').replace('\u2013', '-').replace('\u00a0', ' ').replace('\u2044', '/')
+            url = summary['content_urls']['mobile']['page']
+            uses = page.get('Uses', '')
+            distribution = page.get('Distribution', '')
+            if distribution == '':
+                distribution = page.get('Range', '')
+            
+            if distribution == '':
+                distribution = page.get('Distribution and habitat', '')
+
+            kingdom = None
+            for k in kingdoms:
+                if k in page['full']:
+                    kingdom = k
+                    break
+
+            _class = None
+            for c in classes:
+                if any([cl in page['full'] for cl in classes[c]]):
+                    _class = c
+                    break
+            
+            continents = [continent for continent in all_continents if continent in page['full']]
+
+            extra_description = page.get('Description', '')
+
+            notes = []
+            notes.append(f'{description}\n\n{extra_description}'.strip())
+            if uses != '':
+                notes.append(f'Uses\n\n{uses}'.strip())
+            if distribution != '':
+                notes.append(f'Distribution\n\n{distribution}'.strip())
+
+            notes.append(url)
+            notes.append('Image sourced from Wikipedia')
+
+            data = {
+                'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),
+                'image': image,
+                'notes': '\n\n'.join(notes),
+                'category': kingdom,
+                'subcategory': _class,
+                'continents': continents
+            }
+
+            with open(f'{output_dir}/{scientific_name}.json', 'w') as f:
+                json.dump(data, f)
+            
+            pbar.update(1)
+        except Exception as e:
+            print(f'Error processing {scientific_name}')
+            raise e
