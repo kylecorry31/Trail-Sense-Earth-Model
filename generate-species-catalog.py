@@ -1,6 +1,7 @@
 from scripts import inaturalist
 from scripts import wikipedia
 from scripts import progress
+from scripts import gemini
 import markdownify
 import json
 import re
@@ -9,10 +10,12 @@ import base64
 from PIL import Image
 import io
 import csv
+import time
 
 # INPUT
 number_of_species = 500
 redownload = False
+summarize = False # Requires google-gemini-api-key.txt, limited to 1500 requests per day
 
 ######## Program, don't modify ########
 output_dir = 'output/species-catalog'
@@ -36,6 +39,12 @@ classes = {
 }
 # These have incomplete wikipedia entries
 species_to_skip = ['Deroceras laeve', 'Solanum dimidiatum', 'Oudemansiella furfuracea', 'Stereum lobatum']
+summarize_prompt = """You are a professional content summarizer. Only use information presented in the text to summarize. If something isn't mentioned, leave it out. Write a description of the species. It should include some key features to help identify it, whether it is edible (but only if explicitely mentioned), and where it can be found (habitat and geographic location). If the common name is provided, use that instead of the scientific name. Your entire summarization MUST have at most 4 sentences.
+
+TEXT TO SUMMARIZE:
+<>
+
+SUMMARY:"""
 
 def get_sections(html):
     # Remove some elements and their contents
@@ -61,6 +70,13 @@ def get_sections(html):
         sections[current_section] = '\n'.join(sections[current_section]).strip()
     sections['full'] = markdown
     return sections
+
+def summarize(text):
+    prompt = summarize_prompt.replace("<>", text)
+    summarized = gemini.process(prompt)
+    # Limit to 15 requests per minute
+    time.sleep(4)
+    return summarized
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -137,6 +153,11 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
                 notes.append(f'Uses\n\n{uses}'.strip())
             if distribution != '':
                 notes.append(f'Distribution\n\n{distribution}'.strip())
+
+            if summarize:
+                summarized = summarize('\n\n'.join(notes))
+                notes = []
+                notes.append(summarized)
 
             notes.append(url)
             notes.append('Image sourced from Wikipedia')
