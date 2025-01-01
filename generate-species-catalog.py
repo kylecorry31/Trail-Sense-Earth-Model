@@ -15,7 +15,7 @@ import time
 # INPUT
 number_of_species = 500
 redownload = False
-summarize = False # Requires google-gemini-api-key.txt, limited to 1500 requests per day
+should_summarize = False # Requires google-gemini-api-key.txt, limited to 1500 requests per day
 
 ######## Program, don't modify ########
 output_dir = 'output/species-catalog'
@@ -47,17 +47,23 @@ TEXT TO SUMMARIZE:
 SUMMARY:"""
 
 def get_sections(html):
+    original_html = html
     # Remove some elements and their contents
+    table_idx = html.index("\n</tbody></table>")
+    if table_idx != -1:
+        html = html[table_idx + len("\n</tbody></table>"):]
     html = re.sub(r'<figure.*?</figure>', '', html)
     html = re.sub(r'<sup.*?</sup>', '', html)
     html = re.sub(r'<div role="note".*?</div>', '', html)
     html = re.sub(r'<ul class="gallery.*?</ul>', '', html)
+    html = re.sub(r'\(<span class="rt-commentedText.*?</span>\)', '', html)
     markdown = markdownify.markdownify(html, strip=['a', 'img', 'b', 'i'], heading_style='ATX')
     markdown = markdown.replace('\xa0', ' ').replace('\u2013', '-').replace('\u00a0', ' ').replace('\u2044', '/')
     # A section is pair of header followed by the content until the next header
     sections = {}
     lines = markdown.split('\n')
-    current_section = None
+    current_section = 'Abstract'
+    sections[current_section] = []
     for line in lines:
         if line.startswith('## '):
             if current_section is not None:
@@ -68,7 +74,7 @@ def get_sections(html):
             sections[current_section].append(line)
     if current_section is not None:
         sections[current_section] = '\n'.join(sections[current_section]).strip()
-    sections['full'] = markdown
+    sections['full'] = original_html
     return sections
 
 def summarize(text):
@@ -124,12 +130,7 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             description = summary['extract'].replace('\xa0', ' ').replace('\u2013', '-').replace('\u00a0', ' ').replace('\u2044', '/')
             url = summary['content_urls']['mobile']['page']
             uses = page.get('Uses', '')
-            distribution = page.get('Distribution', '')
-            if distribution == '':
-                distribution = page.get('Range', '')
-            
-            if distribution == '':
-                distribution = page.get('Distribution and habitat', '')
+            distribution = page.get('Distribution', page.get('Range', page.get('Distribution and habitat', '')))
 
             kingdom = None
             for k in kingdoms:
@@ -148,19 +149,22 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             extra_description = page.get('Description', '')
 
             notes = []
-            notes.append(f'{description}\n\n{extra_description}'.strip())
-            if uses != '':
-                notes.append(f'Uses\n\n{uses}'.strip())
-            if distribution != '':
-                notes.append(f'Distribution\n\n{distribution}'.strip())
+            notes.append(page.get("Abstract", "").strip())
 
-            if summarize:
+            if should_summarize:
+                notes.append(description)
+
+                if uses != '':
+                    notes.append(f'Uses\n\n{uses}'.strip())
+
+                if distribution != '':
+                    notes.append(f'Distribution\n\n{distribution}'.strip())
                 summarized = summarize('\n\n'.join(notes))
                 notes = []
                 notes.append(summarized)
 
+            notes.append('Image and content are from Wikipedia')
             notes.append(url)
-            notes.append('Image sourced from Wikipedia')
 
             data = {
                 'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),
@@ -173,7 +177,7 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
 
             with open(f'{output_dir}/{scientific_name}.json', 'w') as f:
                 json.dump(data, f)
-            
+
             pbar.update(1)
         except Exception as e:
             print(f'Error processing {scientific_name}')
