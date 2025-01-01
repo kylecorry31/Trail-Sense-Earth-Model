@@ -127,7 +127,6 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             image.save(buffer, format='WEBP')
             image = base64.b64encode(buffer.getvalue()).decode('utf-8')
             name = common_name if common_name != '' and common_name != scientific_name else summary['title']
-            description = summary['extract'].replace('\xa0', ' ').replace('\u2013', '-').replace('\u00a0', ' ').replace('\u2044', '/')
             url = summary['content_urls']['mobile']['page']
             uses = page.get('Uses', '')
             distribution = page.get('Distribution', page.get('Range', page.get('Distribution and habitat', '')))
@@ -146,7 +145,7 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             
             continents = [continent for continent in all_continents if continent in page['full']]
 
-            extra_description = page.get('Description', '')
+            description = page.get('Description', '')
 
             notes = []
             notes.append(page.get("Abstract", "").strip())
