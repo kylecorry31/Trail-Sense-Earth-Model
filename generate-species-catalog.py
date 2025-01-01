@@ -99,7 +99,7 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             with open(f'{wikipedia_dir}/{title}.webp', 'rb') as f:
                 image_bytes = f.read()
             image = Image.open(io.BytesIO(image_bytes))
-            image_size = 150
+            image_size = 200
             image.thumbnail((image_size, image_size))
             buffer = io.BytesIO()
             image.save(buffer, format='WEBP')
