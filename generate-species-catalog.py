@@ -74,16 +74,11 @@ def get_sections(html):
     for tag in soup.find_all('ul', {'class': 'gallery'}):
         tag.decompose()
     
-    for tag in soup.find_all('span', {'class': 'rt-commentedText'}):
-        tag.decompose()
-    
     for tag in soup.find_all(None, {'style': 'display:none'}):
         tag.decompose()
 
     html = str(soup)
-    html = html.replace('()', '')
     markdown = markdownify.markdownify(html, strip=['a', 'img', 'b', 'i'], heading_style='ATX')
-    markdown = markdown.replace('\xa0', ' ').replace('\u2013', '-').replace('\u00a0', ' ').replace('\u2044', '/')
     # A section is pair of header followed by the content until the next header
     sections = {}
     lines = markdown.split('\n')
