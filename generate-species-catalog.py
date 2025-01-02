@@ -11,6 +11,7 @@ from PIL import Image
 import io
 import csv
 import time
+from bs4 import BeautifulSoup
 
 # INPUT
 number_of_species = 500
@@ -48,15 +49,39 @@ SUMMARY:"""
 
 def get_sections(html):
     original_html = html
-    # Remove some elements and their contents
-    table_idx = html.index("\n</tbody></table>")
-    if table_idx != -1:
-        html = html[table_idx + len("\n</tbody></table>"):]
-    html = re.sub(r'<figure.*?</figure>', '', html)
-    html = re.sub(r'<sup.*?</sup>', '', html)
-    html = re.sub(r'<div role="note".*?</div>', '', html)
-    html = re.sub(r'<ul class="gallery.*?</ul>', '', html)
-    html = re.sub(r'\(<span class="rt-commentedText.*?</span>\)', '', html)
+    soup = BeautifulSoup(html, 'html.parser')
+    elements_to_delete = [
+        'title',
+        'meta',
+        'link',
+        'table',
+        'tbody',
+        'tr',
+        'td',
+        'th',
+        'thead',
+        'figure',
+        'sup',
+    ]
+
+    for element in elements_to_delete:
+        for tag in soup.find_all(element):
+            tag.decompose()
+    
+    for tag in soup.find_all('div', {'role': 'note'}):
+        tag.decompose()
+    
+    for tag in soup.find_all('ul', {'class': 'gallery'}):
+        tag.decompose()
+    
+    for tag in soup.find_all('span', {'class': 'rt-commentedText'}):
+        tag.decompose()
+    
+    for tag in soup.find_all(None, {'style': 'display:none'}):
+        tag.decompose()
+
+    html = str(soup)
+    html = html.replace('()', '')
     markdown = markdownify.markdownify(html, strip=['a', 'img', 'b', 'i'], heading_style='ATX')
     markdown = markdown.replace('\xa0', ' ').replace('\u2013', '-').replace('\u00a0', ' ').replace('\u2044', '/')
     # A section is pair of header followed by the content until the next header

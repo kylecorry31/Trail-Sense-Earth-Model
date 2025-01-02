@@ -16,3 +16,4 @@ pyTMD
 astroquery
 timezonefinder
 markdownify
+beautifulsoup4
