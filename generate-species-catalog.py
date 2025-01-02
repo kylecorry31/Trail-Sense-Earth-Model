@@ -20,6 +20,8 @@ should_summarize = False
 regenerate_summaries = False
 # The list of scientific names to debug the tag detection
 scientific_name_debug_tags = []
+image_size = 300
+image_quality = 50
 
 ######## Program, don't modify ########
 output_dir = 'output/species-catalog'
@@ -65,7 +67,7 @@ all_tags = {
 }
 # These have incomplete wikipedia entries
 species_to_skip = ['Deroceras laeve', 'Solanum dimidiatum',
-                   'Oudemansiella furfuracea', 'Stereum lobatum']
+                   'Oudemansiella furfuracea', 'Stereum lobatum', 'Homo sapiens']
 summarize_prompt = """You are a professional content summarizer. Only use information presented in the text to summarize. If something isn't mentioned, leave it out. Write a description of the species. It should include some key features to help identify it, whether it is edible (but only if explicitely mentioned), and where it can be found (habitat and geographic location). If the common name is provided, use that instead of the scientific name. Your entire summarization MUST have at most 4 sentences.
 
 TEXT TO SUMMARIZE:
@@ -224,7 +226,7 @@ with open(species_file, 'r') as f:
     for i, row in enumerate(reader):
         if len(scientific_name_debug_tags) == 0 or row[species_file_scientific_name] in scientific_name_debug_tags:
             species_to_lookup.append((row[species_file_scientific_name],
-                                    row[species_file_common_name], row[species_file_wikipedia_url]))
+                                      row[species_file_common_name], row[species_file_wikipedia_url]))
 
 species_to_lookup = [
     species for species in species_to_lookup if species[0] not in species_to_skip]
@@ -257,10 +259,9 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             with open(f'{wikipedia_dir}/{title}.webp', 'rb') as f:
                 image_bytes = f.read()
             image = Image.open(io.BytesIO(image_bytes))
-            image_size = 300
             image.thumbnail((image_size, image_size))
             buffer = io.BytesIO()
-            image.save(buffer, format='WEBP', quality=75)
+            image.save(buffer, format='WEBP', quality=image_quality)
             image = base64.b64encode(buffer.getvalue()).decode('utf-8')
             name = common_name if common_name != '' and common_name != scientific_name else summary[
                 'title']
