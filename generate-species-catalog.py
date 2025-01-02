@@ -4,19 +4,19 @@ from scripts import progress
 from scripts import gemini
 import markdownify
 import json
-import re
 import os
 import base64
 from PIL import Image
 import io
 import csv
-import time
 from bs4 import BeautifulSoup
+import re
 
 # INPUT
 number_of_species = 500
 redownload = False
 should_summarize = False # Requires google-gemini-api-key.txt, limited to 1500 requests per day
+regenerate_summaries = False
 
 ######## Program, don't modify ########
 output_dir = 'output/species-catalog'
@@ -25,22 +25,40 @@ species_file = 'source/inaturalist/species.csv'
 species_file_scientific_name = 'scientificName'
 species_file_common_name = 'vernacularName'
 species_file_wikipedia_url = 'wikipediaUrl'
-all_continents = ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
-kingdoms = {
-    'Plant': ['Plantae'],
-    'Animal': ['Animalia'],
-    'Fungus': ['Fungi'],
-}
-classes = {
-    'Bird': ['Aves'],
-    'Mammal': ['Mammalia'],
-    'Reptile': ['Reptilia'],
-    'Amphibian': ['Amphibia'],
-    'Fish': ['Actinopterygii', 'Chondrichthyes', 'Sarcopterygii'],
-    'Insect': ['Insecta'],
-    'Arachnid': ['Arachnida'],
-    'Crustacean': ['Crustacea'],
-    'Mollusc': ['Mollusca'],
+all_tags = {
+    # Location
+    'Africa': ['Africa', 'Worldwide'],
+    'Antarctica': ['Antarctica'],
+    'Asia': ['Asia', 'Worldwide'],
+    'Australia': ['Australia', 'Worldwide'],
+    'Europe': ['Europe', 'Worldwide'],
+    'North America': ['North America', 'Worldwide'],
+    'South America': ['South America', 'Worldwide'],
+    # Kingdom
+    'Plant': ['| Kingdom: | Plantae |'],
+    'Animal': ['| Kingdom: | Animalia |'],
+    'Fungus': ['| Kingdom: | Fungi |'],
+    # Class
+    'Bird': ['| Class: | Aves |'],
+    'Mammal': ['| Class: | Mammalia |'],
+    'Reptile': ['| Class: | Reptilia |'],
+    'Amphibian': ['| Class: | Amphibia |'],
+    'Fish': ['| Class: | Actinopterygii |', '| Class: | Chondrichthyes |', '| Class: | Sarcopterygii |'],
+    'Insect': ['| Class: | Insecta |'],
+    'Arachnid': ['| Class: | Arachnida |'],
+    'Crustacean': ['| Class: | Crustacea |'],
+    'Mollusc': ['| Class: | Mollusca |'],
+    # Habitat
+    'Forest': ['Forest', 'Woodland', 'Woods'],
+    'Desert': ['Desert'],
+    'Grassland': ['Grassland', 'Meadow', 'Grassy', 'Steppe', 'Prairie', 'Savanna', 'Lawn', 'Pasture', 'Field'],
+    'Wetland': ['Wetland', 'Swamp', 'Marsh', 'Bog', 'Swampy', 'Marshes', 'Fen'],
+    'Mountain': ['Mountain', 'Alpine'],
+    'Urban': ['Urban', 'City', 'Road', 'Roadside'],
+    'Marine': ['Marine', 'Ocean', 'Sea', 'Saltwater', 'Salt-water'],
+    'Freshwater': ['Freshwater', 'fresh water', 'River', 'Lake', 'Pond', 'Stream'],
+    'Cave': ['Cave'],
+    'Tundra': ['Tundra', 'Arctic', 'Polar'],
 }
 # These have incomplete wikipedia entries
 species_to_skip = ['Deroceras laeve', 'Solanum dimidiatum', 'Oudemansiella furfuracea', 'Stereum lobatum']
@@ -50,20 +68,51 @@ TEXT TO SUMMARIZE:
 <>
 
 SUMMARY:"""
+license_overrides = {
+    'Trifolium repens': {
+        'user': 'Vinayaraj',
+        'license': 'CC BY-SA 4.0',
+    },
+    'Asclepias syriaca': {
+        'user': 'Amos Oliver Doyle',
+        'license': 'CC BY-SA 4.0',
+    },
+    'Urtica dioica': {
+        'user': 'Skalle-Per Hedenhös',
+        'license': 'CC BY-SA 4.0',
+    },
+    'Bufo bufo': {
+        'user': 'Tythatguy1312',
+        'license': 'CC BY-SA 4.0',
+    },
+    'Carnegiea gigantea': {
+        'user': 'WClarke',
+        'license': 'CC BY-SA 3.0',
+    },
+    'Fagus sylvatica': {
+        'user': 'GooseCanada',
+        'license': 'CC BY-SA 4.0',
+    }
+}
 
 def get_sections(html):
-    original_html = html
+
+    # Preprocess the html by removing all text after the reference sections
+    reference_sections = [
+        'References',
+        'Citations',
+        'External_links',
+        'See_also',
+    ]
+
+    for section in reference_sections:
+        html = html.split(f'<h2 id="{section}">')[0]
+
     soup = BeautifulSoup(html, 'html.parser')
     elements_to_delete = [
         'title',
         'meta',
         'link',
-        'table',
-        'tbody',
-        'tr',
-        'td',
-        'th',
-        'thead',
         'figure',
         'sup',
     ]
@@ -80,6 +129,21 @@ def get_sections(html):
     
     for tag in soup.find_all(None, {'style': 'display:none'}):
         tag.decompose()
+    
+    full_html = str(soup)
+
+    tables = [
+        'table',
+        'tbody',
+        'tr',
+        'td',
+        'th',
+        'thead',
+    ]
+    for element in tables:
+        for tag in soup.find_all(element):
+            tag.decompose()
+        
 
     html = str(soup)
     markdown = markdownify.markdownify(html, strip=['a', 'img', 'b', 'i'], heading_style='ATX')
@@ -98,15 +162,43 @@ def get_sections(html):
             sections[current_section].append(line)
     if current_section is not None:
         sections[current_section] = '\n'.join(sections[current_section]).strip()
-    sections['full'] = original_html
+    html_before_references = full_html
+    sections['full'] = markdownify.markdownify(html_before_references, strip=['a', 'img', 'b', 'i'], heading_style='ATX')
     return sections
 
-def summarize(text):
+def summarize(id, text):
     prompt = summarize_prompt.replace("<>", text)
-    summarized = gemini.process(prompt)
-    # Limit to 15 requests per minute
-    time.sleep(4)
+    summarized = gemini.process(id, prompt, regenerate_summaries)
     return summarized
+
+def regex_word(word):
+    return r'[^\w]' + word + r'[^\w]'
+
+def contains_word(text, word):
+    escaped = re.escape(word) + r's?'
+    # Near isn't a negation in all cases, maybe pass in a list of additional negations for a single word
+    negations_before = ['except', 'not', 'near']
+    negations_after = ['basin']
+    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s|\n', text)
+    # TODO: Return the matched sentence for further analysis
+    matches = list(filter(lambda x: x is not None, [
+        sentence for sentence in sentences 
+        if re.search(regex_word(escaped), sentence) is not None
+        and not any(re.search(regex_word(re.escape(negation)) + r'[^\.\n]*' + regex_word(escaped), sentence) for negation in negations_before) 
+        and not any(re.search(regex_word(escaped) + r'?[^\.\n]*' + regex_word(re.escape(negation)), sentence) for negation in negations_after)
+    ]))
+    has_keyword = any(matches)
+    if not has_keyword:
+        return False
+    
+    # print("KEYWORD:", word)
+    # for match in matches:
+    #     print("MATCH:")
+    #     print(match)
+    #     print()
+    # exit()
+
+    return True
 
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
@@ -140,6 +232,9 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             with open(f'{wikipedia_dir}/{title}_page.html', 'r') as f:
                 html = f.read()
             
+            with open(f'{wikipedia_dir}/{title}_image_metadata.json', 'r') as f:
+                image_metadata = json.load(f)
+            
             page = get_sections(html)
 
             with open(f'{wikipedia_dir}/{title}.webp', 'rb') as f:
@@ -154,21 +249,26 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             url = summary['content_urls']['mobile']['page']
             uses = page.get('Uses', '')
             distribution = page.get('Distribution', page.get('Range', page.get('Distribution and habitat', '')))
+
+            # Image license info
+            page_id = next(iter(image_metadata['query']['pages']))
+            image_info = image_metadata['query']['pages'][page_id]['imageinfo'][0] if 'imageinfo' in image_metadata['query']['pages'][page_id] else None
+            user = image_info['user'] if image_info is not None else ''
+            license = image_info['extmetadata']['LicenseShortName']['value'] if image_info is not None else ''
+
+            if scientific_name in license_overrides:
+                user = license_overrides[scientific_name]['user']
+                license = license_overrides[scientific_name]['license']
+
+            if license == '':
+                print(f'No license found for {scientific_name}')
+
+            lower_page = page['full'].lower()
             tags = []
-
-            for kingdom in kingdoms:
-                if any([k in page['full'] for k in kingdoms[kingdom]]):
-                    tags.append(kingdom)
-                    break
-
-            for c in classes:
-                if any([cl in page['full'] for cl in classes[c]]):
-                    tags.append(c)
-                    break
+            for tag in all_tags:
+                if any([contains_word(lower_page, t.lower()) for t in all_tags[tag]]):
+                    tags.append(tag)
             
-            continents = [continent for continent in all_continents if continent in page['full']]
-            tags.extend(continents)
-
             description = page.get('Description', '')
 
             notes = []
@@ -182,12 +282,12 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
 
                 if distribution != '':
                     notes.append(f'Distribution\n\n{distribution}'.strip())
-                summarized = summarize('\n\n'.join(notes))
+                summarized = summarize(scientific_name, '\n\n'.join(notes))
                 notes = []
                 notes.append(summarized)
 
-            notes.append('Image and content are from Wikipedia')
-            notes.append(url)
+            notes.append(f'The text is sourced from Wikipedia ({url}), licensed under CC BY-SA 4.0.')
+            notes.append(f'The image is sourced from Wikipedia. Uploaded by {user}, licensed under {license}.')
 
             data = {
                 'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),

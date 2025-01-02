@@ -35,6 +35,19 @@ def __get_summary(title, save_title, redownload):
         with open(f'{source_dir}/{save_title}.json', 'w') as f:
             json.dump(data, f)
         return True
+    
+    if redownload or not os.path.exists(f'{source_dir}/{save_title}_image_metadata.json'):
+        # Load image path
+        with open(f'{source_dir}/{save_title}.json', 'r') as f:
+            data = json.load(f)
+        orignal_image_url = data['originalimage']['source']
+        url = f'https://commons.wikimedia.org/w/api.php?action=query&titles=File:{orignal_image_url.split("/")[-1]}&prop=imageinfo&iiprop=user|extmetadata&format=json'
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            raise Exception(f'Error: {response.status_code}, {response.text}')
+        with open(f'{source_dir}/{save_title}_image_metadata.json', 'w') as f:
+            f.write(response.text)
+        return True
     return False
 
 def __get_page(title, save_title, redownload):
