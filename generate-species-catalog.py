@@ -26,7 +26,11 @@ species_file_scientific_name = 'scientificName'
 species_file_common_name = 'vernacularName'
 species_file_wikipedia_url = 'wikipediaUrl'
 all_continents = ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
-kingdoms = ['Plantae', 'Animalia', 'Fungi']
+kingdoms = {
+    'Plant': ['Plantae'],
+    'Animal': ['Animalia'],
+    'Fungus': ['Fungi'],
+}
 classes = {
     'Bird': ['Aves'],
     'Mammal': ['Mammalia'],
@@ -150,20 +154,20 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             url = summary['content_urls']['mobile']['page']
             uses = page.get('Uses', '')
             distribution = page.get('Distribution', page.get('Range', page.get('Distribution and habitat', '')))
+            tags = []
 
-            kingdom = None
-            for k in kingdoms:
-                if k in page['full']:
-                    kingdom = k
+            for kingdom in kingdoms:
+                if any([k in page['full'] for k in kingdoms[kingdom]]):
+                    tags.append(kingdom)
                     break
 
-            _class = None
             for c in classes:
                 if any([cl in page['full'] for cl in classes[c]]):
-                    _class = c
+                    tags.append(c)
                     break
             
             continents = [continent for continent in all_continents if continent in page['full']]
+            tags.extend(continents)
 
             description = page.get('Description', '')
 
@@ -189,9 +193,7 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
                 'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),
                 'images': [image],
                 'notes': '\n\n'.join(notes),
-                'category': kingdom,
-                'subcategory': _class,
-                'continents': continents
+                'tags': tags
             }
 
             with open(f'{output_dir}/{scientific_name}.json', 'w') as f:
