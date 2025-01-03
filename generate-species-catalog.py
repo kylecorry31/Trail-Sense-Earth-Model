@@ -26,17 +26,15 @@ regenerate_summaries = False
 # The list of scientific names to debug the tag detection
 scientific_name_debug_tags = []
 image_size = 300
-image_quality = 50
-condensed_image_size = 300
-condensed_image_quality = 50
+image_quality = 70
 condensed_catalog_counts = {
-    'Plant': 150,
-    'Mammal': 40,
+    'Plant': 100,
+    'Mammal': 30,
     'Bird': 30,
     'Reptile': 30,
     'Amphibian': 20,
     'Fish': 20,
-    'Insect': 40,
+    'Insect': 20,
     'Arachnid': 20,
     'Mollusk': 10,
     'Crustacean': 10,
@@ -52,7 +50,7 @@ species_file_common_name = 'vernacularName'
 species_file_wikipedia_url = 'wikipediaUrl'
 # These have incomplete wikipedia entries
 species_to_skip = ['Deroceras laeve', 'Solanum dimidiatum',
-                   'Oudemansiella furfuracea', 'Stereum lobatum', 'Homo sapiens']
+                   'Oudemansiella furfuracea', 'Stereum lobatum', 'Homo sapiens', 'Felis catus', 'Canis familiaris']
 
 
 tag_to_id = {
@@ -335,7 +333,7 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             tags = [tag_to_id[tag] for tag in tags if tag in tag_to_id]
 
             data = {
-                'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),
+                'name': (name.title() if name.lower() != scientific_name.lower() else name.capitalize()).replace("'S", "'s"),
                 'images': [image],
                 'notes': '\n\n'.join(notes),
                 'tags': tags,
@@ -372,6 +370,8 @@ species_to_export = {
     'Fungus': [],
 }
 
+# TODO: Create a condensed catalog for each continent
+
 for species in resolved:
     scientific_name, tags = species
     for tag in tags:
@@ -383,19 +383,6 @@ for species in resolved:
 with zipfile.ZipFile(f'{output_dir}/species-catalog.zip', 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     for tag in species_to_export:
         for species in species_to_export[tag]:
-            if condensed_image_quality != image_quality or condensed_image_size != image_size:
-                with open(f'{output_dir}/{species}.json', 'r') as f:
-                    data = json.load(f)
-                image = data['images'][0]
-                image = base64.b64decode(image)
-                image = Image.open(io.BytesIO(image))
-                image.thumbnail((condensed_image_size, condensed_image_size))
-                buffer = io.BytesIO()
-                image.save(buffer, format='WEBP', quality=condensed_image_quality)
-                image = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                data['images'] = [image]
-                with open(f'{output_dir}/{species}.json', 'w') as f:
-                    json.dump(data, f)
             z.write(f'{output_dir}/{species}.json', f'{species}.json')
 
 print('Licenses:', licenses)
