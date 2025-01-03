@@ -10,7 +10,8 @@ source_dir = 'source/wikipedia'
 headers = {'User-Agent': 'Trail Sense Bot (trailsense@protonmail.com)'}
 
 thumbnail_override = {
-    'Asparagus_officinalis': 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Illustration_Asparagus_officinalis0b.jpg'
+    'Asparagus_officinalis': 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Illustration_Asparagus_officinalis0b.jpg',
+    'Melanerpes aurifrons': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Golden-fronted_%28Velasquez%27s%29_woodpecker_%28Melanerpes_aurifrons%29_male_Copan.jpg/320px-Golden-fronted_%28Velasquez%27s%29_woodpecker_%28Melanerpes_aurifrons%29_male_Copan.jpg',
 }
 
 def __make_request(path, is_json=True):

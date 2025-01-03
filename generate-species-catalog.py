@@ -14,7 +14,7 @@ import re
 import zipfile
 
 # INPUT
-number_of_species = 500
+number_of_species = 1000
 redownload = False
 # Requires google-gemini-api-key.txt, limited to 1500 requests per day
 should_summarize = False
@@ -99,6 +99,22 @@ license_overrides = {
     'Fagus sylvatica': {
         'user': 'GooseCanada',
         'license': 'CC BY-SA 4.0',
+    },
+    'Persicaria virginiana': {
+        'user': 'weeg',
+        'license': 'CC0'
+    },
+    'Echinocereus engelmannii': {
+        'user': 'Clayton Esterson',
+        'license': 'Public Domain'
+    },
+    'Rubus allegheniensis': {
+        'user': 'USDA-NRCS PLANTS Database',
+        'license': 'PD-US'
+    },
+    'Carya ovata': {
+        'user': 'Famartin',
+        'license': 'CC BY-SA 4.0'
     }
 }
 
@@ -219,6 +235,8 @@ def contains_word(text, word, should_print=False):
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
+licenses = set()
+
 # Load the species from iNaturalist
 inaturalist.download(number_of_species, redownload)
 count = 0
@@ -283,6 +301,8 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             if scientific_name in license_overrides:
                 user = license_overrides[scientific_name]['user']
                 license = license_overrides[scientific_name]['license']
+            
+            licenses.add(license)
 
             if license == '':
                 print(f'No license found for {scientific_name}')
@@ -337,3 +357,5 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
         except Exception as e:
             print(f'Error processing {scientific_name}')
             raise e
+
+print('Licenses:', licenses)
