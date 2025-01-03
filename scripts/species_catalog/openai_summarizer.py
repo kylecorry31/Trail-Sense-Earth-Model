@@ -56,7 +56,7 @@ summary_schema = {
             "class": {
                 "description": "The class this species is classified under or null if not one of the common classes.",
                 "type": ["string", "null"],
-                "enum": ['Bird', 'Mammal', 'Reptile', 'Amphibian', 'Fish', 'Insect', 'Arachnid', 'Crustacean', 'Mollusc'],
+                "enum": ['Bird', 'Mammal', 'Reptile', 'Amphibian', 'Fish', 'Insect', 'Arachnid', 'Crustacean', 'Mollusk'],
             },
             "isDangerous": {
                 "description": "Whether the species is dangerous to humans.",
@@ -109,12 +109,12 @@ class OpenAISummarizer(Summarizer):
             notes.append(response['description'])
         else:
             print(f"Missing description for {scientific_name}")
-        if 'appearance' in response and response['appearance'] != '':
-            notes.append(f"APPEARANCE\n{response['appearance']}")
-        if 'uses' in response and response['uses'] != '':
-            notes.append(f"USES\n{response['uses']}")
-        if 'notes' in response and response['notes'] != '':
-            notes.append(f"ADDITIONAL NOTES\n{response['notes']}")
+        # if 'appearance' in response and response['appearance'] != '':
+        #     notes.append(f"APPEARANCE\n{response['appearance']}")
+        # if 'uses' in response and response['uses'] != '':
+        #     notes.append(f"USES\n{response['uses']}")
+        # if 'notes' in response and response['notes'] != '':
+        #     notes.append(f"ADDITIONAL NOTES\n{response['notes']}")
 
         notes = '\n\n'.join(notes)
 

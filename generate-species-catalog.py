@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 import zipfile
 
 # INPUT
-number_of_species = 1500
+number_of_species = 2000
 redownload = False
 should_summarize = True
 # Requires google-gemini-api-key.txt, limited to 1500 free requests per day
@@ -27,16 +27,18 @@ regenerate_summaries = False
 scientific_name_debug_tags = []
 image_size = 300
 image_quality = 50
+condensed_image_size = 300
+condensed_image_quality = 50
 condensed_catalog_counts = {
-    'Plant': 100,
-    'Mammal': 30,
+    'Plant': 150,
+    'Mammal': 40,
     'Bird': 30,
     'Reptile': 30,
     'Amphibian': 20,
     'Fish': 20,
-    'Insect': 20,
+    'Insect': 40,
     'Arachnid': 20,
-    'Mollusc': 10,
+    'Mollusk': 10,
     'Crustacean': 10,
     'Fungus': 50,
 }
@@ -52,6 +54,38 @@ species_file_wikipedia_url = 'wikipediaUrl'
 species_to_skip = ['Deroceras laeve', 'Solanum dimidiatum',
                    'Oudemansiella furfuracea', 'Stereum lobatum', 'Homo sapiens']
 
+
+tag_to_id = {
+    'Africa': 1,
+    'Antarctica': 2,
+    'Asia': 3,
+    'Australia': 4,
+    'Europe': 5,
+    'North America': 6,
+    'South America': 7,
+    'Plant': 8,
+    'Animal': 9,
+    'Fungus': 10,
+    'Bird': 11,
+    'Mammal': 12,
+    'Reptile': 13,
+    'Amphibian': 14,
+    'Fish': 15,
+    'Insect': 16,
+    'Arachnid': 17,
+    'Crustacean': 18,
+    'Mollusk': 19,
+    'Forest': 20,
+    'Desert': 21,
+    'Grassland': 22,
+    'Wetland': 23,
+    'Mountain': 24,
+    'Urban': 25,
+    'Marine': 26,
+    'Freshwater': 27,
+    'Cave': 28,
+    'Tundra': 29,
+}
 
 license_overrides = {
     'Trifolium repens': {
@@ -117,6 +151,14 @@ license_overrides = {
     'Quercus phellos': {
         'user': 'Freekhou5',
         'license': 'CC BY-SA 4.0'
+    },
+    'Campanula persicifolia': {
+        'user': 'Skalle-Per Hedenhös',
+        'license': 'CC BY-SA 4.0'
+    },
+    'Heptapleurum arboricola': {
+        'user': 'JMK',
+        'license': 'CC BY-SA 3.0'
     }
 
 }
@@ -284,10 +326,13 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             tags = summarized['tags']
 
             notes.append(summarized['notes'])
-            notes.append(f'The text is sourced from Wikipedia ({
-                         url}), licensed under CC BY-SA 4.0.')
-            notes.append(f'The image is sourced from Wikipedia. Uploaded by {
-                         user}, licensed under {license}.')
+            notes.append(f'Text derived from {url} (CC BY-SA 4.0)')
+            notes.append(f'Image by {user} ({license})')
+
+            # Add to resolved before minifying the tags
+            resolved.append([scientific_name, tags])
+
+            tags = [tag_to_id[tag] for tag in tags if tag in tag_to_id]
 
             data = {
                 'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),
@@ -295,8 +340,6 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
                 'notes': '\n\n'.join(notes),
                 'tags': tags,
             }
-
-            resolved.append([scientific_name, tags])
 
             with open(f'{output_dir}/{scientific_name}.json', 'w') as f:
                 json.dump(data, f)
@@ -324,7 +367,7 @@ species_to_export = {
     'Fish': [],
     'Insect': [],
     'Arachnid': [],
-    'Mollusc': [],
+    'Mollusk': [],
     'Crustacean': [],
     'Fungus': [],
 }
@@ -334,11 +377,25 @@ for species in resolved:
     for tag in tags:
         if tag in species_to_export and len(species_to_export[tag]) < condensed_catalog_counts[tag]:
             species_to_export[tag].append(scientific_name)
+            break
 
 # Generate a zip file of all the species to export
 with zipfile.ZipFile(f'{output_dir}/species-catalog.zip', 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     for tag in species_to_export:
         for species in species_to_export[tag]:
+            if condensed_image_quality != image_quality or condensed_image_size != image_size:
+                with open(f'{output_dir}/{species}.json', 'r') as f:
+                    data = json.load(f)
+                image = data['images'][0]
+                image = base64.b64decode(image)
+                image = Image.open(io.BytesIO(image))
+                image.thumbnail((condensed_image_size, condensed_image_size))
+                buffer = io.BytesIO()
+                image.save(buffer, format='WEBP', quality=condensed_image_quality)
+                image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                data['images'] = [image]
+                with open(f'{output_dir}/{species}.json', 'w') as f:
+                    json.dump(data, f)
             z.write(f'{output_dir}/{species}.json', f'{species}.json')
 
 print('Licenses:', licenses)

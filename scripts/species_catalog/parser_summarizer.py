@@ -24,7 +24,7 @@ all_tags = {
     'Insect': ['| Class: | Insecta |'],
     'Arachnid': ['| Class: | Arachnida |'],
     'Crustacean': ['| Class: | Crustacea |'],
-    'Mollusc': ['| Class: | Mollusca |'],
+    'Mollusk': ['| Class: | Mollusca |'],
     # Habitat
     'Forest': ['Forest', 'Woodland', 'Woods'],
     'Desert': ['Desert'],
