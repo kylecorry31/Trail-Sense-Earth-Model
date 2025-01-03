@@ -1,8 +1,9 @@
 from scripts import inaturalist
 from scripts import wikipedia
 from scripts import progress
-from scripts import gemini
-from scripts import openai
+from scripts.species_catalog.openai_summarizer import OpenAISummarizer
+from scripts.species_catalog.gemini_summarizer import GeminiSummarizer
+from scripts.species_catalog.parser_summarizer import ParserSummarizer
 import markdownify
 import json
 import os
@@ -35,127 +36,10 @@ species_file = 'source/inaturalist/species.csv'
 species_file_scientific_name = 'scientificName'
 species_file_common_name = 'vernacularName'
 species_file_wikipedia_url = 'wikipediaUrl'
-all_tags = {
-    # Location
-    # TODO: Add all countries
-    'Africa': ['Africa'],
-    'Antarctica': ['Antarctica'],
-    'Asia': ['Asia', 'Japan', 'Korea', 'China', 'Russia', 'India'],
-    'Australia': ['Australia', 'Oceania'],
-    'Europe': ['Europe'],
-    'North America': ['North America'],
-    'South America': ['South America'],
-    # Kingdom
-    'Plant': ['| Kingdom: | Plantae |'],
-    'Animal': ['| Kingdom: | Animalia |'],
-    'Fungus': ['| Kingdom: | Fungi |'],
-    # Class
-    'Bird': ['| Class: | Aves |'],
-    'Mammal': ['| Class: | Mammalia |'],
-    'Reptile': ['| Class: | Reptilia |'],
-    'Amphibian': ['| Class: | Amphibia |'],
-    'Fish': ['| Class: | Actinopterygii |', '| Class: | Chondrichthyes |', '| Class: | Sarcopterygii |'],
-    'Insect': ['| Class: | Insecta |'],
-    'Arachnid': ['| Class: | Arachnida |'],
-    'Crustacean': ['| Class: | Crustacea |'],
-    'Mollusc': ['| Class: | Mollusca |'],
-    # Habitat
-    'Forest': ['Forest', 'Woodland', 'Woods'],
-    'Desert': ['Desert'],
-    'Grassland': ['Grassland', 'Meadow', 'Grassy', 'Steppe', 'Prairie', 'Savanna', 'Lawn', 'Pasture', 'Field'],
-    'Wetland': ['Wetland', 'Swamp', 'Marsh', 'Bog', 'Swampy', 'Marshes', 'Fen', 'riverbank', 'riverbed', 'wet soil'],
-    'Mountain': ['Mountain', 'Alpine'],
-    'Urban': ['Urban', 'City', 'Roadside', 'along road', 'cities'],
-    'Marine': ['Marine', 'Ocean', 'Sea', 'Saltwater', 'Salt-water'],
-    'Freshwater': ['Freshwater', 'fresh water', 'River', 'Lake', 'Pond', 'Stream'],
-    'Cave': ['Cave'],
-    'Tundra': ['Tundra', 'Arctic', 'Polar'],
-}
 # These have incomplete wikipedia entries
 species_to_skip = ['Deroceras laeve', 'Solanum dimidiatum',
                    'Oudemansiella furfuracea', 'Stereum lobatum', 'Homo sapiens']
-summarize_prompt = """Summarize the following text, keeping it very short, easy to read, and matching the specied JSON format. Do not add anything not present in the text. Only output the JSON object, do not include anything else, do not surround in a code block. The tags MUST apply to the species being summarized.
 
-KEYS
-"description": A description of the appearance of the species to assist in identification. Mention look-alikes if in the text.
-"size": How big it is (in metric and US)
-"edibility": Yes, No, Partial (specify what is edible), Unknown. Describe any preparation that is needed to make it edible.
-"tags": string list of continents (multiple allowed), habitats (multiple allowed), kingdom it belongs to (maximum 1 allowed), class it belongs to (maximum 1 allowed) for the species being summarized. The only valid tag values are: [<1>]
-
-TEXT TO SUMMARIZE:
-<2>
-
-SUMMARY:"""
-
-summary_schema = {
-    "name": "Species",
-    "schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "$id": "species.schema.json",
-        "title": "Species",
-        "description": "A species of plant, animal, or fungus.",
-        "type": "object",
-        "properties": {
-            "name": {
-                "description": "The common name of the species.",
-                "type": "string"
-            },
-            "description": {
-                "description": "A one sentence description of the species.",
-                "type": "string"
-            },
-            "notes": {
-                "description": "Important notes about the species such as rarity, behavior, aggression, or poison/venom.",
-                "type": "string"
-            },
-            "appearance": {
-                "description": "A short and simple description of the appearance of the species to assist in identification.",
-                "type": "string"
-            },
-            "uses": {
-                "description": "How can this species be used by a human in a wilderness survival situation. Includes whether it is edible, medicinal, or use for tools. Includes a brief description of the preparation required.",
-                "type": "string"
-            },
-            "continents": {
-                "description": "The continents the species is found on in the wild.",
-                "type": "array",
-                "items": {
-                    "type": "string",
-                    "enum": ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
-                },
-                "uniqueItems": True,
-                "minItems": 1
-            },
-            "habitats": {
-                "description": "The habitats the species is found in.",
-                "type": "array",
-                "items": {
-                    "type": "string",
-                    "enum": ['Forest', 'Desert', 'Grassland', 'Wetland', 'Mountain', 'Urban', 'Marine', 'Freshwater', 'Cave', 'Tundra']
-                },
-                "uniqueItems": True,
-                "minItems": 1
-            },
-            "kingdom": {
-                "description": "The kingdom the species is classified under.",
-                "type": "string",
-                "enum": ['Plant', 'Animal', 'Fungus'],
-                "maxItems": 1
-            },
-            "class": {
-                "description": "The class the species is classified under.",
-                "type": "string",
-                "enum": ['Bird', 'Mammal', 'Reptile', 'Amphibian', 'Fish', 'Insect', 'Arachnid', 'Crustacean', 'Mollusc'],
-                "maxItems": 1
-            },
-            "isDangerous": {
-                "description": "Whether the species is dangerous to humans.",
-                "type": "boolean"
-            },
-        },
-        "required": ["name", "description", "continents", "habitats", "kingdom"]
-    }
-}
 
 license_overrides = {
     'Trifolium repens': {
@@ -279,54 +163,6 @@ def get_sections(html):
                                                'a', 'img', 'b', 'i'], heading_style='ATX')
     return sections
 
-
-def summarize(id, text):
-    tags = ', '.join(all_tags.keys())
-    prompt = summarize_prompt.replace("<1>", tags).replace("<2>", text)
-    if summary_source == 'gemini':
-        summarized = gemini.process(id, prompt, regenerate_summaries)
-    elif summary_source == 'openai':
-        summarized = openai.process(id, f"Instructions: Summarize the species for my field guide, be very brief in your responses.\n\n{text}", regenerate_summaries, {
-            "type": "json_schema",
-            "json_schema": summary_schema
-        })
-    else:
-        summarized = text
-    return summarized
-
-
-def regex_word(word):
-    return r'(^|[^\w"-])' + word + r'($|[^\w"-])'
-
-
-def contains_word(text, word, should_print=False):
-    escaped = re.escape(word) + r's?'
-    # Near isn't a negation in all cases, maybe pass in a list of additional negations for a single word
-    negations_before = ['except', 'not', 'near', 'apart from']
-    negations_after = []
-    false_positivies = ['river basin', 'rocky mountains', 'seasonal pasture myopathy',
-                        'fields of', 'field of', 'the field', 'field studies', 'field study', 'field research', 'field testing', 'field test', 'field guide', 'field work']
-    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s|\n', text)
-    matches = list(filter(lambda x: x is not None, [
-        sentence for sentence in sentences
-        if re.search(regex_word(escaped), sentence) is not None
-        and not any(re.search(regex_word(re.escape(false_positive) + r's?'), sentence) for false_positive in false_positivies)
-        and not any(re.search(regex_word(re.escape(negation)) + r'[^\.\n]*' + regex_word(escaped), sentence) for negation in negations_before)
-        and not any(re.search(regex_word(escaped) + r'?[^\.\n]*' + regex_word(re.escape(negation)), sentence) for negation in negations_after)
-    ]))
-    has_keyword = any(matches)
-    if not has_keyword:
-        return False
-
-    if should_print:
-        print("KEYWORD:", word)
-        for match in matches:
-            print("MATCH:", match)
-            print()
-
-    return True
-
-
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
@@ -399,33 +235,28 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             if license == '':
                 print(f'No license found for {scientific_name}')
 
+            summarizer = ParserSummarizer(scientific_name_debug_tags)
+            if should_summarize and summary_source == 'gemini':
+                summarizer = GeminiSummarizer(regenerate_summaries, scientific_name_debug_tags)
+            elif should_summarize and summary_source == 'openai':
+                summarizer = OpenAISummarizer(regenerate_summaries)
+
             notes = []
-            notes.append(page.get("Abstract", "").strip())
+            summarized = summarizer.summarize(scientific_name, name, page)
+            name = summarized['name']
+            tags = summarized['tags']
 
-            if should_summarize:
-                summarized = summarize(scientific_name, page['full'])
-                if len(scientific_name_debug_tags) > 0:
-                    print('\n\n'.join(notes))
-                notes = []
-                notes.append(summarized)
-
+            notes.append(summarized['notes'])
             notes.append(f'The text is sourced from Wikipedia ({
                          url}), licensed under CC BY-SA 4.0.')
             notes.append(f'The image is sourced from Wikipedia. Uploaded by {
                          user}, licensed under {license}.')
 
-            lower_page = page['full'].lower() + '\n' + \
-                (summarized.lower() if should_summarize else '')
-            tags = []
-            for tag in all_tags:
-                if any([contains_word(lower_page, t.lower(), scientific_name in scientific_name_debug_tags) for t in all_tags[tag]]):
-                    tags.append(tag)
-
             data = {
                 'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),
                 'images': [image],
                 'notes': '\n\n'.join(notes),
-                'tags': tags
+                'tags': tags,
             }
 
             with open(f'{output_dir}/{scientific_name}.json', 'w') as f:
