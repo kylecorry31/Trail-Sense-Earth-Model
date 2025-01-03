@@ -27,6 +27,19 @@ regenerate_summaries = False
 scientific_name_debug_tags = []
 image_size = 300
 image_quality = 50
+condensed_catalog_counts = {
+    'Plant': 100,
+    'Mammal': 30,
+    'Bird': 30,
+    'Reptile': 30,
+    'Amphibian': 20,
+    'Fish': 20,
+    'Insect': 20,
+    'Arachnid': 20,
+    'Mollusc': 10,
+    'Crustacean': 10,
+    'Fungus': 50,
+}
 
 ######## Program, don't modify ########
 output_dir = 'output/species-catalog'
@@ -84,10 +97,32 @@ license_overrides = {
     'Melanerpes aurifrons': {
         'user': 'Charles J. Sharp',
         'license': 'CC BY-SA 4.0'
+    },
+    'Arum italicum': {
+        'user': 'Consultaplantas',
+        'license': 'CC BY-SA 4.0'
+    },
+    'Manduca sexta': {
+        'user': 'Wesxdz',
+        'license': 'CC0'
+    },
+    'Betula nigra': {
+        'user': 'Greg Hume',
+        'license': 'CC BY-SA 4.0'
+    },
+    'Eriobotrya japonica': {
+        'user': 'Aftabbanoori',
+        'license': 'CC BY-SA 3.0'
+    },
+    'Quercus phellos': {
+        'user': 'Freekhou5',
+        'license': 'CC BY-SA 4.0'
     }
+
 }
 
 resolved = []
+
 
 def get_sections(html):
 
@@ -163,6 +198,7 @@ def get_sections(html):
                                                'a', 'img', 'b', 'i'], heading_style='ATX')
     return sections
 
+
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
@@ -237,7 +273,8 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
 
             summarizer = ParserSummarizer(scientific_name_debug_tags)
             if should_summarize and summary_source == 'gemini':
-                summarizer = GeminiSummarizer(regenerate_summaries, scientific_name_debug_tags)
+                summarizer = GeminiSummarizer(
+                    regenerate_summaries, scientific_name_debug_tags)
             elif should_summarize and summary_source == 'openai':
                 summarizer = OpenAISummarizer(regenerate_summaries)
 
@@ -292,24 +329,10 @@ species_to_export = {
     'Fungus': [],
 }
 
-max_species_to_export = {
-    'Plant': 100,
-    'Mammal': 30,
-    'Bird': 30,
-    'Reptile': 30,
-    'Amphibian': 20,
-    'Fish': 20,
-    'Insect': 20,
-    'Arachnid': 20,
-    'Mollusc': 10,
-    'Crustacean': 10,
-    'Fungus': 50,
-}
-
 for species in resolved:
     scientific_name, tags = species
     for tag in tags:
-        if tag in species_to_export and len(species_to_export[tag]) < max_species_to_export[tag]:
+        if tag in species_to_export and len(species_to_export[tag]) < condensed_catalog_counts[tag]:
             species_to_export[tag].append(scientific_name)
 
 # Generate a zip file of all the species to export
