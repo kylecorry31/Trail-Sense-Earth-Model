@@ -49,12 +49,12 @@ summary_schema = {
                 },
             },
             "kingdom": {
-                "description": "The kingdom the species is classified under.",
+                "description": "The kingdom this species is classified under.",
                 "type": "string",
                 "enum": ['Plant', 'Animal', 'Fungus'],
             },
             "class": {
-                "description": "The class the species is classified under.",
+                "description": "The class this species is classified under or null if not one of the common classes.",
                 "type": ["string", "null"],
                 "enum": ['Bird', 'Mammal', 'Reptile', 'Amphibian', 'Fish', 'Insect', 'Arachnid', 'Crustacean', 'Mollusc'],
             },
@@ -76,6 +76,7 @@ class OpenAISummarizer(Summarizer):
         self.regenerate = regenerate
 
     def summarize(self, scientific_name, common_name, wikipedia_sections):
+        # TODO: If it is invalid, reprocess once
         response = openai.process(scientific_name, f"Instructions: Summarize the species for my field guide, be very brief in your responses.\n\n{wikipedia_sections['full']}", self.regenerate, response_format={
             "type": "json_schema",
             "json_schema": summary_schema
@@ -96,7 +97,7 @@ class OpenAISummarizer(Summarizer):
             tags.append(response['kingdom'])
         else:
             print(f"Missing kingdom for {scientific_name}")
-        if 'class' in response:
+        if 'class' in response and response['kingdom'] == 'Animal':
             tags.append(response['class'])
         if 'isDangerous' in response and response['isDangerous']:
             tags.append('Dangerous')

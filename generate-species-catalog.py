@@ -12,11 +12,10 @@ from PIL import Image
 import io
 import csv
 from bs4 import BeautifulSoup
-import re
 import zipfile
 
 # INPUT
-number_of_species = 1000
+number_of_species = 1500
 redownload = False
 should_summarize = True
 # Requires google-gemini-api-key.txt, limited to 1500 free requests per day
@@ -88,6 +87,7 @@ license_overrides = {
     }
 }
 
+resolved = []
 
 def get_sections(html):
 
@@ -259,6 +259,8 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
                 'tags': tags,
             }
 
+            resolved.append([scientific_name, tags])
+
             with open(f'{output_dir}/{scientific_name}.json', 'w') as f:
                 json.dump(data, f)
 
@@ -274,5 +276,46 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
         except Exception as e:
             print(f'Error processing {scientific_name}')
             raise e
+
+# Create a condensed species catalog
+species_to_export = {
+    'Plant': [],
+    'Mammal': [],
+    'Bird': [],
+    'Reptile': [],
+    'Amphibian': [],
+    'Fish': [],
+    'Insect': [],
+    'Arachnid': [],
+    'Mollusc': [],
+    'Crustacean': [],
+    'Fungus': [],
+}
+
+max_species_to_export = {
+    'Plant': 100,
+    'Mammal': 30,
+    'Bird': 30,
+    'Reptile': 30,
+    'Amphibian': 20,
+    'Fish': 20,
+    'Insect': 20,
+    'Arachnid': 20,
+    'Mollusc': 10,
+    'Crustacean': 10,
+    'Fungus': 50,
+}
+
+for species in resolved:
+    scientific_name, tags = species
+    for tag in tags:
+        if tag in species_to_export and len(species_to_export[tag]) < max_species_to_export[tag]:
+            species_to_export[tag].append(scientific_name)
+
+# Generate a zip file of all the species to export
+with zipfile.ZipFile(f'{output_dir}/species-catalog.zip', 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+    for tag in species_to_export:
+        for species in species_to_export[tag]:
+            z.write(f'{output_dir}/{species}.json', f'{species}.json')
 
 print('Licenses:', licenses)
