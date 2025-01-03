@@ -11,7 +11,6 @@ import io
 import csv
 from bs4 import BeautifulSoup
 import re
-import sqlite3
 
 # INPUT
 number_of_species = 500
@@ -240,15 +239,6 @@ wikipedia.download([[scientific_name.replace(' ', '_'), wikipediaUrl.split('/')[
 for file in os.listdir(output_dir):
     os.remove(f'{output_dir}/{file}')
 
-# Create a sqlite database
-if os.path.exists('output/species-catalog.db'):
-    os.remove('output/species-catalog.db')
-conn = sqlite3.connect('output/species-catalog.db')
-c = conn.cursor()
-c.execute(
-    'CREATE TABLE IF NOT EXISTS species (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, notes TEXT, tags TEXT)')
-c.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, species_id INTEGER, image BLOB)')
-
 # Generate species catalog entries
 with progress.progress('Processing species catalog', len(species_to_lookup)) as pbar:
     for species in species_to_lookup:
@@ -332,21 +322,7 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             with open(f'{output_dir}/{scientific_name}.json', 'w') as f:
                 json.dump(data, f)
 
-            # Load into a sqlite database
-            response = c.execute('INSERT INTO species(name, notes, tags) VALUES (?, ?, ?)',
-                                 (
-                                     data['name'],
-                                     data['notes'],
-                                     ','.join(data['tags']))
-                                 )
-            id = response.lastrowid
-            for image in data['images']:
-                c.execute('INSERT INTO images(species_id, image) VALUES (?, ?)',
-                          (id, image))
-
             pbar.update(1)
         except Exception as e:
             print(f'Error processing {scientific_name}')
             raise e
-conn.commit()
-conn.close()
