@@ -11,7 +11,7 @@ headers = {'User-Agent': 'Trail Sense Bot (trailsense@protonmail.com)'}
 
 thumbnail_override = {
     'Asparagus_officinalis': 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Illustration_Asparagus_officinalis0b.jpg',
-    'Melanerpes aurifrons': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Golden-fronted_%28Velasquez%27s%29_woodpecker_%28Melanerpes_aurifrons%29_male_Copan.jpg/320px-Golden-fronted_%28Velasquez%27s%29_woodpecker_%28Melanerpes_aurifrons%29_male_Copan.jpg',
+    'Melanerpes_aurifrons': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Golden-fronted_%28Velasquez%27s%29_woodpecker_%28Melanerpes_aurifrons%29_male_Copan.jpg/320px-Golden-fronted_%28Velasquez%27s%29_woodpecker_%28Melanerpes_aurifrons%29_male_Copan.jpg',
 }
 
 def __make_request(path, is_json=True):
@@ -30,18 +30,19 @@ def __get_image(title, url):
         image.save(f'{source_dir}/{title}.webp', format='WEBP')
 
 def __get_summary(title, save_title, redownload):
+    downloaded_image = False
     if redownload or not os.path.exists(f'{source_dir}/{save_title}.json'):
         data = __make_request(f'/page/summary/{title}')
         __get_image(save_title, thumbnail_override[save_title] if save_title in thumbnail_override else data['thumbnail']['source'])
         with open(f'{source_dir}/{save_title}.json', 'w') as f:
             json.dump(data, f)
-        return True
+        downloaded_image = True
     
     if redownload or not os.path.exists(f'{source_dir}/{save_title}_image_metadata.json'):
         # Load image path
         with open(f'{source_dir}/{save_title}.json', 'r') as f:
             data = json.load(f)
-        orignal_image_url = data['originalimage']['source']
+        orignal_image_url = thumbnail_override[save_title] if save_title in thumbnail_override else data['originalimage']['source']
         url = f'https://commons.wikimedia.org/w/api.php?action=query&titles=File:{orignal_image_url.split("/")[-1]}&prop=imageinfo&iiprop=user|extmetadata&format=json'
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
@@ -49,7 +50,7 @@ def __get_summary(title, save_title, redownload):
         with open(f'{source_dir}/{save_title}_image_metadata.json', 'w') as f:
             f.write(response.text)
         return True
-    return False
+    return downloaded_image
 
 def __get_page(title, save_title, redownload):
     if redownload or not os.path.exists(f'{source_dir}/{save_title}_page.html'):
