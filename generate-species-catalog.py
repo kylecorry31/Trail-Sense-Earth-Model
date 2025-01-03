@@ -246,7 +246,8 @@ if os.path.exists('output/species-catalog.db'):
 conn = sqlite3.connect('output/species-catalog.db')
 c = conn.cursor()
 c.execute(
-    'CREATE TABLE IF NOT EXISTS species (scientific_name TEXT PRIMARY KEY, name TEXT, images BLOB, notes TEXT, tags TEXT)')
+    'CREATE TABLE IF NOT EXISTS species (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, notes TEXT, tags TEXT)')
+c.execute('CREATE TABLE IF NOT EXISTS images (id INTEGER PRIMARY KEY AUTOINCREMENT, species_id INTEGER, image BLOB)')
 
 # Generate species catalog entries
 with progress.progress('Processing species catalog', len(species_to_lookup)) as pbar:
@@ -332,12 +333,16 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
                 json.dump(data, f)
 
             # Load into a sqlite database
-            image_bytes = base64.b64decode(image)
-
-            c.execute('INSERT INTO species VALUES (?, ?, ?, ?, ?)',
-                      (scientific_name, name, image_bytes,
-                       data['notes'], json.dumps(data['tags']))
+            response = c.execute('INSERT INTO species(name, notes, tags) VALUES (?, ?, ?)',
+                      (
+                          data['name'],
+                          data['notes'],
+                          ','.join(data['tags']))
                       )
+            id = response.lastrowid
+            for image in data['images']:
+                c.execute('INSERT INTO images(species_id, image) VALUES (?, ?)',
+                        (id, base64.b64encode(image_bytes)))
 
             pbar.update(1)
         except Exception as e:
