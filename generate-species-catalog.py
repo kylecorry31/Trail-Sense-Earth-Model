@@ -11,6 +11,7 @@ import io
 import csv
 from bs4 import BeautifulSoup
 import re
+import zipfile
 
 # INPUT
 number_of_species = 500
@@ -220,6 +221,7 @@ if not os.path.exists(output_dir):
 
 # Load the species from iNaturalist
 inaturalist.download(number_of_species, redownload)
+count = 0
 species_to_lookup = []
 with open(species_file, 'r') as f:
     reader = csv.DictReader(f)
@@ -227,9 +229,10 @@ with open(species_file, 'r') as f:
         if len(scientific_name_debug_tags) == 0 or row[species_file_scientific_name] in scientific_name_debug_tags:
             species_to_lookup.append((row[species_file_scientific_name],
                                       row[species_file_common_name], row[species_file_wikipedia_url]))
-
+original_len = len(species_to_lookup)
 species_to_lookup = [
     species for species in species_to_lookup if species[0] not in species_to_skip]
+count = original_len - len(species_to_lookup)
 
 # Lookup the species on Wikipedia
 wikipedia.download([[scientific_name.replace(' ', '_'), wikipediaUrl.split('/')[-1], common_name]
@@ -321,6 +324,14 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
 
             with open(f'{output_dir}/{scientific_name}.json', 'w') as f:
                 json.dump(data, f)
+
+            count += 1
+            # If the count is divisible by 500, create a zip file of all the .json files
+            if count % 500 == 0:
+                with zipfile.ZipFile(f'{output_dir}/species-catalog-top-{count}.zip', 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+                    for file in os.listdir(output_dir):
+                        if file.endswith('.json'):
+                            z.write(f'{output_dir}/{file}', file)
 
             pbar.update(1)
         except Exception as e:

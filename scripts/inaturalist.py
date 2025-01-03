@@ -21,7 +21,7 @@ def download(number_of_species, redownload = False):
     per_page = 500
     pages = math.ceil(number_of_species / per_page)
 
-    species = {}
+    species = []
 
     with progress('Downloading iNaturalist species counts', total=pages) as pbar:
         for page in range(1, pages + 1):
@@ -44,15 +44,16 @@ def download(number_of_species, redownload = False):
                     wikipedia_url = wikipedia_overrides[scientific_name]
                 
                 if wikipedia_url is not None and wikipedia_url != '':
-                    species[scientific_name] = {
+                    species.append({
+                        'scientific_name': scientific_name,
                         'vernacular_name': vernacular_name,
                         'wikipedia_url': wikipedia_url
-                    }
+                    })
             pbar.update(1)
 
     # Write to CSV
     with open(f'{download_dir}/species.csv', 'w') as file:
         writer = csv.writer(file)
         writer.writerow(['scientificName', 'vernacularName', 'wikipediaUrl'])
-        for scientific_name, data in species.items():
-            writer.writerow([scientific_name, data['vernacular_name'], data['wikipedia_url']])
+        for data in species:
+            writer.writerow([data['scientific_name'], data['vernacular_name'], data['wikipedia_url']])
