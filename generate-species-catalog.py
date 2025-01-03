@@ -334,15 +334,15 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
 
             # Load into a sqlite database
             response = c.execute('INSERT INTO species(name, notes, tags) VALUES (?, ?, ?)',
-                      (
-                          data['name'],
-                          data['notes'],
-                          ','.join(data['tags']))
-                      )
+                                 (
+                                     data['name'],
+                                     data['notes'],
+                                     ','.join(data['tags']))
+                                 )
             id = response.lastrowid
             for image in data['images']:
                 c.execute('INSERT INTO images(species_id, image) VALUES (?, ?)',
-                        (id, base64.b64encode(image_bytes)))
+                          (id, image))
 
             pbar.update(1)
         except Exception as e:
