@@ -33,9 +33,10 @@ species_file_common_name = 'vernacularName'
 species_file_wikipedia_url = 'wikipediaUrl'
 all_tags = {
     # Location
+    # TODO: Add all countries
     'Africa': ['Africa'],
     'Antarctica': ['Antarctica'],
-    'Asia': ['Asia'],
+    'Asia': ['Asia', 'Japan', 'Korea', 'China', 'Russia', 'India'],
     'Australia': ['Australia', 'Oceania'],
     'Europe': ['Europe'],
     'North America': ['North America'],
@@ -114,6 +115,10 @@ license_overrides = {
     },
     'Carya ovata': {
         'user': 'Famartin',
+        'license': 'CC BY-SA 4.0'
+    },
+    'Melanerpes aurifrons': {
+        'user': 'Charles J. Sharp',
         'license': 'CC BY-SA 4.0'
     }
 }
@@ -201,7 +206,7 @@ def summarize(id, text):
 
 
 def regex_word(word):
-    return r'[^\w"-]' + word + r'[^\w"-]'
+    return r'(^|[^\w"-])' + word + r'($|[^\w"-])'
 
 
 def contains_word(text, word, should_print=False):
