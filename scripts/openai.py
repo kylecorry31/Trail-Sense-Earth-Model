@@ -2,9 +2,9 @@ import requests
 import os
 import time
 
-output_dir = "source/gemini"
+output_dir = "source/openai"
 
-def process(id, prompt, regenerate=False):
+def process(id, prompt, regenerate=False, response_format=None):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -12,24 +12,26 @@ def process(id, prompt, regenerate=False):
         with open(f'{output_dir}/{id}.txt', 'r') as f:
             return f.read()
 
-    with open('google-gemini-api-key.txt', 'r') as f:
+    with open('openai-api-key.txt', 'r') as f:
         api_key = f.read().strip()
 
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + api_key
+    url = "https://api.openai.com/v1/chat/completions"
     headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
     }
     data = {
-        "contents": [{
-            "parts": [{"text": prompt}]
-        }]
+        "model": "gpt-4o-mini",
+        "messages": [{"role": "user", "content": prompt}],
     }
+
+    if response_format is not None:
+        data["response_format"] = response_format
+
     response = requests.post(url, headers=headers, json=data)
     if response.status_code != 200:
         raise Exception(f"Failed to process prompt: {response.status_code}, {response.text}")
-    text = response.json()['candidates'][0]['content']['parts'][0]['text']
-    # Limit to 15 requests per minute
-    time.sleep(4)
+    text = response.json()['choices'][0]['message']['content']
     with open(f'{output_dir}/{id}.txt', 'w') as f:
         f.write(text)
     return text

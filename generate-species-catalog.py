@@ -2,6 +2,7 @@ from scripts import inaturalist
 from scripts import wikipedia
 from scripts import progress
 from scripts import gemini
+from scripts import openai
 import markdownify
 import json
 import os
@@ -16,8 +17,11 @@ import zipfile
 # INPUT
 number_of_species = 1000
 redownload = False
-# Requires google-gemini-api-key.txt, limited to 1500 requests per day
-should_summarize = False
+should_summarize = True
+# Requires google-gemini-api-key.txt, limited to 1500 free requests per day
+# summary_source = 'gemini'
+# Requires openai-api-key.txt, costs money
+summary_source = 'openai'
 regenerate_summaries = False
 # The list of scientific names to debug the tag detection
 scientific_name_debug_tags = []
@@ -70,12 +74,89 @@ all_tags = {
 # These have incomplete wikipedia entries
 species_to_skip = ['Deroceras laeve', 'Solanum dimidiatum',
                    'Oudemansiella furfuracea', 'Stereum lobatum', 'Homo sapiens']
-summarize_prompt = """You are a professional content summarizer. Only use information presented in the text to summarize. If something isn't mentioned, leave it out. Write a description of the species. It should include some key features to help identify it, whether it is edible (but only if explicitely mentioned), and where it can be found (habitat and geographic location). If the common name is provided, use that instead of the scientific name. Your entire summarization MUST have at most 4 sentences.
+summarize_prompt = """Summarize the following text, keeping it very short, easy to read, and matching the specied JSON format. Do not add anything not present in the text. Only output the JSON object, do not include anything else, do not surround in a code block. The tags MUST apply to the species being summarized.
+
+KEYS
+"description": A description of the appearance of the species to assist in identification. Mention look-alikes if in the text.
+"size": How big it is (in metric and US)
+"edibility": Yes, No, Partial (specify what is edible), Unknown. Describe any preparation that is needed to make it edible.
+"tags": string list of continents (multiple allowed), habitats (multiple allowed), kingdom it belongs to (maximum 1 allowed), class it belongs to (maximum 1 allowed) for the species being summarized. The only valid tag values are: [<1>]
 
 TEXT TO SUMMARIZE:
-<>
+<2>
 
 SUMMARY:"""
+
+summary_schema = {
+    "name": "Species",
+    "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "species.schema.json",
+        "title": "Species",
+        "description": "A species of plant, animal, or fungus.",
+        "type": "object",
+        "properties": {
+            "name": {
+                "description": "The common name of the species.",
+                "type": "string"
+            },
+            "description": {
+                "description": "A one sentence description of the species.",
+                "type": "string"
+            },
+            "notes": {
+                "description": "Important notes about the species such as rarity, behavior, aggression, or poison/venom.",
+                "type": "string"
+            },
+            "appearance": {
+                "description": "A short and simple description of the appearance of the species to assist in identification.",
+                "type": "string"
+            },
+            "uses": {
+                "description": "How can this species be used by a human in a wilderness survival situation. Includes whether it is edible, medicinal, or use for tools. Includes a brief description of the preparation required.",
+                "type": "string"
+            },
+            "continents": {
+                "description": "The continents the species is found on in the wild.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": ['Africa', 'Antarctica', 'Asia', 'Australia', 'Europe', 'North America', 'South America']
+                },
+                "uniqueItems": True,
+                "minItems": 1
+            },
+            "habitats": {
+                "description": "The habitats the species is found in.",
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": ['Forest', 'Desert', 'Grassland', 'Wetland', 'Mountain', 'Urban', 'Marine', 'Freshwater', 'Cave', 'Tundra']
+                },
+                "uniqueItems": True,
+                "minItems": 1
+            },
+            "kingdom": {
+                "description": "The kingdom the species is classified under.",
+                "type": "string",
+                "enum": ['Plant', 'Animal', 'Fungus'],
+                "maxItems": 1
+            },
+            "class": {
+                "description": "The class the species is classified under.",
+                "type": "string",
+                "enum": ['Bird', 'Mammal', 'Reptile', 'Amphibian', 'Fish', 'Insect', 'Arachnid', 'Crustacean', 'Mollusc'],
+                "maxItems": 1
+            },
+            "isDangerous": {
+                "description": "Whether the species is dangerous to humans.",
+                "type": "boolean"
+            },
+        },
+        "required": ["name", "description", "continents", "habitats", "kingdom"]
+    }
+}
+
 license_overrides = {
     'Trifolium repens': {
         'user': 'Vinayaraj',
@@ -200,8 +281,17 @@ def get_sections(html):
 
 
 def summarize(id, text):
-    prompt = summarize_prompt.replace("<>", text)
-    summarized = gemini.process(id, prompt, regenerate_summaries)
+    tags = ', '.join(all_tags.keys())
+    prompt = summarize_prompt.replace("<1>", tags).replace("<2>", text)
+    if summary_source == 'gemini':
+        summarized = gemini.process(id, prompt, regenerate_summaries)
+    elif summary_source == 'openai':
+        summarized = openai.process(id, f"Instructions: Summarize the species for my field guide, be very brief in your responses.\n\n{text}", regenerate_summaries, {
+            "type": "json_schema",
+            "json_schema": summary_schema
+        })
+    else:
+        summarized = text
     return summarized
 
 
@@ -292,9 +382,6 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             name = common_name if common_name != '' and common_name != scientific_name else summary[
                 'title']
             url = summary['content_urls']['mobile']['page']
-            uses = page.get('Uses', '')
-            distribution = page.get('Distribution', page.get(
-                'Range', page.get('Distribution and habitat', '')))
 
             # Image license info
             page_id = next(iter(image_metadata['query']['pages']))
@@ -306,32 +393,19 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
             if scientific_name in license_overrides:
                 user = license_overrides[scientific_name]['user']
                 license = license_overrides[scientific_name]['license']
-            
+
             licenses.add(license)
 
             if license == '':
                 print(f'No license found for {scientific_name}')
 
-            lower_page = page['full'].lower()
-            tags = []
-            for tag in all_tags:
-                if any([contains_word(lower_page, t.lower(), scientific_name in scientific_name_debug_tags) for t in all_tags[tag]]):
-                    tags.append(tag)
-
-            description = page.get('Description', '')
-
             notes = []
             notes.append(page.get("Abstract", "").strip())
 
             if should_summarize:
-                notes.append(description)
-
-                if uses != '':
-                    notes.append(f'Uses\n\n{uses}'.strip())
-
-                if distribution != '':
-                    notes.append(f'Distribution\n\n{distribution}'.strip())
-                summarized = summarize(scientific_name, '\n\n'.join(notes))
+                summarized = summarize(scientific_name, page['full'])
+                if len(scientific_name_debug_tags) > 0:
+                    print('\n\n'.join(notes))
                 notes = []
                 notes.append(summarized)
 
@@ -339,6 +413,13 @@ with progress.progress('Processing species catalog', len(species_to_lookup)) as 
                          url}), licensed under CC BY-SA 4.0.')
             notes.append(f'The image is sourced from Wikipedia. Uploaded by {
                          user}, licensed under {license}.')
+
+            lower_page = page['full'].lower() + '\n' + \
+                (summarized.lower() if should_summarize else '')
+            tags = []
+            for tag in all_tags:
+                if any([contains_word(lower_page, t.lower(), scientific_name in scientific_name_debug_tags) for t in all_tags[tag]]):
+                    tags.append(tag)
 
             data = {
                 'name': name.title() if name.lower() != scientific_name.lower() else name.capitalize(),
