@@ -96,7 +96,9 @@ summary_source = 'openai'
 regenerate_summaries = False
 names_to_debug = []
 image_size = 250
-image_quality = 50
+max_image_quality = 80
+min_image_quality = 30
+max_image_size_kb = 5
 license_overrides = {}
 
 ######## Program, don't modify ########
@@ -242,7 +244,13 @@ with progress.progress('Processing species catalog', len(pages)) as pbar:
             image = Image.open(io.BytesIO(image_bytes))
             image.thumbnail((image_size, image_size))
             buffer = io.BytesIO()
+            image_quality = max_image_quality
             image.save(buffer, format='WEBP', quality=image_quality)
+            max_image_size_bytes = max_image_size_kb * 1024
+            while image_quality > min_image_quality and buffer.getbuffer().nbytes > max_image_size_bytes:
+                buffer = io.BytesIO()
+                image_quality -= 10
+                image.save(buffer, format='WEBP', quality=image_quality)
             image.save(f'{output_dir}/{title}.webp', format='WEBP', quality=image_quality)
             image = base64.b64encode(buffer.getvalue()).decode('utf-8')
             name = summary['title']
