@@ -29,14 +29,13 @@ pages = [
     'Quail',
     'Pheasant',
     'Columbidae',
-    'Duck',
-    'Goose',
+    'Anatidae',
     'Rallidae',
     'Snipe',
     'Woodcock',
     'Passerellidae',
     'Corvid',
-    'Boar',
+    'Suina',
     'Lepomis',
     'Micropterus',
     'Pomoxis',
@@ -56,7 +55,6 @@ pages = [
     'Chelydridae',
     'Big cat',
     'Chiroptera',
-    'Bison',
     'Lynx',
     'Mustelidae',
     'Skunk',
@@ -66,6 +64,21 @@ pages = [
     'Porcupine',
     'Eulipotyphla',
     'Armadillo',
+    'Caprinae',
+    'Caviidae',
+    'Tinamidae',
+    'Dasyproctidae',
+    'Hippopotamidae',
+    'Camelidae',
+    'Tapir',
+    'Partridge',
+    'Guineafowl',
+    'Gallini_(bird)',
+    'Pedetidae',
+    'Antelope',
+    'Bovina_(subtribe)',
+    'Equidae',
+    'Macropodidae',
 
     # Rocks
     'Chert',
@@ -290,5 +303,6 @@ with zipfile.ZipFile(f'{output_dir}.zip', 'w', compression=zipfile.ZIP_DEFLATED,
         if file.endswith('.json'):
             z.write(f'{output_dir}/{file}', file)
 
+print('Size:', os.path.getsize(f'{output_dir}.zip') / 1024, 'KB')
 
 print('Licenses:', licenses)
