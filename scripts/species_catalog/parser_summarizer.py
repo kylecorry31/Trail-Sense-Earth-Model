@@ -49,7 +49,8 @@ def contains_word(text, word, should_print=False):
     negations_before = ['except', 'not', 'near', 'apart from']
     negations_after = []
     false_positivies = ['river basin', 'rocky mountains', 'seasonal pasture myopathy',
-                        'fields of', 'field of', 'the field', 'field studies', 'field study', 'field research', 'field testing', 'field test', 'field guide', 'field work']
+                        'fields of', 'field of', 'the field', 'field studies', 'field study', 'field research', 'field testing', 'field test', 'field guide', 'field work',
+                        'cave painting', 'river valley', 'tethys ocean']
     sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s|\n', text)
     matches = list(filter(lambda x: x is not None, [
         sentence for sentence in sentences
@@ -85,6 +86,6 @@ class ParserSummarizer(Summarizer):
                 tags.append(tag)
         return {
             "name": common_name,
-            "notes": wikipedia_sections.get("Abstract", "").strip(),
+            "notes": wikipedia_sections.get("extract", "").strip(),
             "tags": tags
         }
