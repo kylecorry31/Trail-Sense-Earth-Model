@@ -14,64 +14,119 @@ import zipfile
 
 # INPUT
 pages = [
-    'Squirrel',
-    'Deer',
-    'Antilocapridae',
-    'Muridae',
-    'Procyonidae',
-    'Opposum',
-    'Frog',
-    'Beaver',
-    'Meleagris',
-    'Bear',
-    'Leporidae',
-    'Grouse',
-    'Quail',
-    'Pheasant',
-    'Columbidae',
-    'Anatidae',
-    'Gruiformes',
-    'Charadriiformes',
-    'Passerellidae',
-    'Corvid',
-    'Suina',
-    'Centrarchidae',
-    'Cyprinidae',
-    'Siluriformes',
-    'Salmonidae',
-    'Percidae',
-    'Lepisosteidae',
-    'Amiidae',
-    'Canidae',
-    'Toad',
-    'Snake',
-    'Turtle',
-    'Lizard',
-    'Crocodilian',
+    # Mammals
+    'Lagomorpha',
     'Chiroptera',
-    'Mustelidae',
-    'Skunk',
-    'Viverridae',
-    'Hyena',
-    'Pinniped',
-    'Porcupine',
+    'Pinnipedia',
     'Eulipotyphla',
     'Armadillo',
-    'Caprinae',
-    'Caviidae',
-    'Tinamidae',
-    'Dasyproctidae',
-    'Hippopotamidae',
-    'Camelidae',
-    'Tapir',
-    'Partridge',
-    'Guineafowl',
-    'Gallini_(bird)',
-    'Pedetidae',
-    'Antelope',
-    'Bovina_(subtribe)',
-    'Equidae',
-    'Macropodidae',
+    'Rodentia',
+    'Artiodactyla',
+    'Perissodactyla',
+    'Marsupialia',
+    'Fissipedia',
+
+    # Amphibians
+    'Frog',
+    'Urodela',
+
+    # Reptiles
+    'Testudines',
+    'Squamata',
+    'Crocodylia',
+
+    # Birds
+    'Galliformes',
+    'Columbiformes',
+    'Anseriformes',
+    'Gruiformes',
+    'Charadriiformes',
+    'Passeriformes',
+    'Tinamiformes',
+
+    # Fish
+    'Cypriniformes',
+    'Anguilliformes',
+    'Siluriformes',
+    'Salmoniformes',
+    'Perciformes',
+    'Holostei',
+    'Pleuronectiformes',
+    'Gadiformes',
+    'Elasmobranchii',
+
+    # Arthropods
+    'Araneae',
+    'Scorpiones',
+    'Acarina',
+    'Orthoptera',
+    'Diptera',
+    'Hymenoptera',
+    'Lepidoptera',
+    'Coleoptera',
+    'Decapoda',
+    'Chilopoda',
+
+    # Mollusks
+    'Bivalvia',
+    'Gastropoda',
+    'Cephalopoda',
+
+    # Annelids
+    'Hirudinea',
+    'Lumbricina',
+
+    # Cnidaria
+    'Anthozoa',
+    'Medusozoa',
+    'Actiniaria',
+
+    # Plants
+    'Moss',
+    'Fern',
+    'Coniferae',
+    'Pandanales',
+    'Poales',
+    'Arecaceae',
+    'Cactaceae',
+    'Salicaceae',
+    'Betulaceae',
+    'Fagaceae',
+    'Nothofagus',
+    'Juglandaceae',
+    'Casuarinaceae',
+    'Aceraceae',
+    'Anacardiaceae',
+    'Rosaceae',
+    'Vitaceae',
+    'Ericaceae',
+    'Lamiaceae',
+    'Plantaginaceae',
+    'Allium',
+    'Apiaceae',
+    'Aloe',
+    'Asteraceae',
+    'Cucurbitaceae',
+    'Moraceae',
+    'Rutaceae',
+    'Scrophulariaceae',
+    'Solanaceae',
+    'Trifolium',
+    'Laminariales',
+
+    # Mushrooms
+    'Morchellaceae',
+    'Hypomyces lactifluorum',
+    'Amanitaceae',
+    'Cantharellaceae',
+    'Hygrophoraceae',
+    'Russulaceae',
+    'Cortinariaceae',
+    'Boletales',
+    'Calvatia',
+    'Cladonia rangiferina',
+    'Coprinus',
+    'Polyporales',
 
     # Rocks
     'Chert',
@@ -88,7 +143,7 @@ should_summarize = False
 summary_source = 'openai'
 regenerate_summaries = False
 names_to_debug = []
-image_size = 250
+image_size = 300
 max_image_quality = 80
 min_image_quality = 30
 max_image_size_kb = 5

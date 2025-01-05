@@ -13,6 +13,17 @@ thumbnail_override = {
     'Asparagus_officinalis': 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Illustration_Asparagus_officinalis0b.jpg',
     'Corvid': 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Corvus_corone_-near_Canford_Cliffs%2C_Poole%2C_England-8.jpg',
     'Big cat': 'https://upload.wikimedia.org/wikipedia/commons/c/cd/4panthera3.0.png',
+    'Betulaceae': 'https://upload.wikimedia.org/wikipedia/commons/6/60/Corylus_avellana.jpg',
+    'Acarina': 'https://upload.wikimedia.org/wikipedia/commons/2/29/Amblyomma_americanum_tick.jpg',
+    'Carnivora': 'https://upload.wikimedia.org/wikipedia/commons/4/43/Carnivora_portraits.jpg',
+    'Ericaceae': 'https://upload.wikimedia.org/wikipedia/commons/2/28/Maturing_blueberry.jpg',
+    'Fagaceae': 'https://upload.wikimedia.org/wikipedia/commons/a/af/Quercus_robur.jpg',
+    'Polyporales': 'https://upload.wikimedia.org/wikipedia/commons/7/7c/2007-06-27_Laetiporus_sulphureus_crop.jpg',
+    'Pleuronectiformes': 'https://upload.wikimedia.org/wikipedia/commons/2/2b/Pseudopleuronectes_americanus.jpg',
+    'Plantaginaceae': 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Plantago_major.jpg',
+    'Fern': 'https://upload.wikimedia.org/wikipedia/commons/4/47/The_ferns_of_Great_Britain%2C_and_their_allies_the_club-mosses%2C_pepperworts%2C_and_horsetails_%28Pl._2%29_%288515393495%29.jpg',
+    'Cucurbitaceae': 'https://upload.wikimedia.org/wikipedia/commons/f/fc/Flower_of_Lagenaria_captured_at_night.jpg',
+    'Anseriformes': 'https://upload.wikimedia.org/wikipedia/commons/3/33/%D7%91%D7%A8%D7%95%D7%95%D7%96%D7%99%D7%99%D7%9D-01.jpg',
     'Melanerpes_aurifrons': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Golden-fronted_%28Velasquez%27s%29_woodpecker_%28Melanerpes_aurifrons%29_male_Copan.jpg/320px-Golden-fronted_%28Velasquez%27s%29_woodpecker_%28Melanerpes_aurifrons%29_male_Copan.jpg',
 }
 
