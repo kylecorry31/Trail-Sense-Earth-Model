@@ -14,125 +14,54 @@ import zipfile
 
 # INPUT
 pages = [
-    # Mammals
-    'Lagomorpha',
-    'Chiroptera',
-    'Pinnipedia',
-    'Eulipotyphla',
-    'Armadillo',
-    'Rodentia',
-    'Artiodactyla',
-    'Perissodactyla',
-    'Marsupialia',
-    'Fissipedia',
-
-    # Amphibians
-    'Frog',
-    'Urodela',
-
-    # Reptiles
-    'Testudines',
-    'Squamata',
-    'Crocodylia',
-
-    # Birds
-    'Galliformes',
-    'Columbiformes',
-    'Anseriformes',
-    'Gruiformes',
-    'Charadriiformes',
-    'Passeriformes',
-    'Tinamiformes',
-
-    # Fish
-    'Cypriniformes',
-    'Anguilliformes',
-    'Siluriformes',
-    'Salmoniformes',
-    'Perciformes',
-    'Holostei',
-    'Pleuronectiformes',
-    'Gadiformes',
-    'Elasmobranchii',
-
-    # Arthropods
-    'Araneae',
-    'Scorpiones',
-    'Acarina',
-    'Orthoptera',
-    'Diptera',
-    'Hymenoptera',
-    'Lepidoptera',
-    'Coleoptera',
-    'Decapoda',
-    'Chilopoda',
-
-    # Mollusks
-    'Bivalvia',
-    'Gastropoda',
-    'Cephalopoda',
-
-    # Annelids
-    'Hirudinea',
+    # Animals
+    'Sciuridae',
+    'Lepomis',
+    'Micropterus',
+    'Cyprinus',
+    'Crayfish',
+    'Crab',
+    'Clam',
+    'Mussel',
+    'Littorinidae',
+    'Leporidae',
+    'Dasyprocta',
+    'Muridae',
+    'Tetraonini',
+    'Isoptera',
+    'Acridomorpha',
+    'Grylloidea',
+    'Formicidae',
     'Lumbricina',
-
-    # Cnidaria
-    'Anthozoa',
-    'Medusozoa',
-    'Actiniaria',
+    'Coleoptera',
 
     # Plants
-    'Moss',
-    'Fern',
-    'Coniferae',
-    'Pandanales',
-    'Poales',
-    'Arecaceae',
-    'Cactaceae',
-    'Salicaceae',
-    'Betulaceae',
-    'Fagaceae',
-    'Nothofagus',
-    'Juglandaceae',
-    'Casuarinaceae',
-    'Aceraceae',
-    'Anacardiaceae',
-    'Rosaceae',
-    'Vitaceae',
-    'Ericaceae',
-    'Lamiaceae',
-    'Plantaginaceae',
-    'Allium',
-    'Apiaceae',
-    'Aloe',
-    'Asteraceae',
-    'Cucurbitaceae',
-    'Moraceae',
-    'Rutaceae',
-    'Scrophulariaceae',
-    'Solanaceae',
-    'Trifolium',
+    'Toxicodendron radicans',
+    'Toxicodendron diversilobum',
+    'Toxicodendron vernix',
+    'Urtica dioica',
+    'Taraxacum',
     'Laminariales',
+    'Rumex acetosa',
+    'Trifolium',
+    'Typha',
+    'Bambusoideae',
+    'Plantago major',
 
-    # Mushrooms
-    'Morchellaceae',
-    'Hypomyces lactifluorum',
-    'Amanitaceae',
-    'Cantharellaceae',
-    'Hygrophoraceae',
-    'Russulaceae',
-    'Cortinariaceae',
+    # Fungi
+    'Laetiporus',
     'Boletales',
-    'Calvatia',
+    'Morchella',
+    'Pleurotus',
+    'Calvatia gigantea',
+    'Hericium erinaceus',
     'Cladonia rangiferina',
-    'Coprinus',
-    'Polyporales',
 
     # Rocks
     'Chert',
-    'Granite',
     'Basalt',
-    'Obsidian',
+    'Granite',
+    'Obsidian'
 ]
 
 redownload = False
@@ -147,7 +76,12 @@ image_size = 300
 max_image_quality = 80
 min_image_quality = 30
 max_image_size_kb = 5
-license_overrides = {}
+license_overrides = {
+    'Urtica dioica': {
+        'user': 'Skalle-Per Hedenhös',
+        'license': 'CC BY-SA 4.0'
+    }
+}
 
 ######## Program, don't modify ########
 output_dir = 'output/species-catalog'

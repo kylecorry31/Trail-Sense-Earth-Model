@@ -6,11 +6,11 @@ all_tags = {
     # TODO: Add all countries
     'Africa': ['Africa'],
     'Antarctica': ['Antarctica'],
-    'Asia': ['Asia', 'Japan', 'Korea', 'China', 'Russia', 'India'],
+    'Asia': ['Asia', 'Japan', 'Korea', 'China', 'Russia', 'India', 'Eurasia'],
     'Australia': ['Australia', 'Oceania'],
-    'Europe': ['Europe'],
-    'North America': ['North America'],
-    'South America': ['South America'],
+    'Europe': ['Europe', 'Eurasia'],
+    'North America': ['North America', 'North and South America', 'South and North America'],
+    'South America': ['South America', 'North and South America', 'South and North America'],
     # Kingdom
     'Plant': ['| Kingdom: | Plantae |'],
     'Animal': ['| Kingdom: | Animalia |'],
