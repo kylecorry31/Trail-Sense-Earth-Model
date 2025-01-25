@@ -4,9 +4,11 @@ import gzip
 import shutil
 import csv
 from scripts.progress import progress
+import PIL.Image as Image
 
 api_key_file = 'opencellid-api-key.txt'
 source_folder = 'source/opencellid'
+images_folder = 'images/opencellid'
 
 
 def download(redownload=False):
@@ -43,7 +45,13 @@ def download(redownload=False):
 
 
 def process():
+    if not os.path.exists(images_folder):
+        os.makedirs(images_folder)
+
     cell_towers = {}
+
+    # Create an image of 3600x1800 pixels
+    image = Image.new('L', (3600, 1800), 0)
 
     # Get the line count
     with open(f'{source_folder}/cell_towers.csv', 'r') as file:
@@ -76,6 +84,12 @@ def process():
                     cell_towers[(rounded_lat, rounded_lon)] = radio
                 else:
                     cell_towers[(rounded_lat, rounded_lon)] |= radio
+                
+                new_radio = cell_towers[(rounded_lat, rounded_lon)]
+                image.putpixel((int((rounded_lon + 180) * 10), int((90 - rounded_lat) * 10),), new_radio)
                 pbar.update(1)
+
+    image.save(f'{images_folder}/cell_towers.tif')
+
 
     return cell_towers
