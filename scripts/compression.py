@@ -34,17 +34,21 @@ def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, qualit
     
     return float(a), float(b)
 
-def minify(path, map_point, invalid_value, output_filename, quality, lossless, size=None):
+def minify(path, map_point, invalid_value, output_filename, quality, lossless, size=None, a_override=None, b_override=None):
     Image.MAX_IMAGE_PIXELS = None
-    with progress('Calculating compression offset', 1) as pbar:
-        offset = get_min_max([path], map_point, invalid_value)
-        pbar.update(1)
+    if a_override is not None and b_override is not None:
+        a = a_override
+        b = b_override
+    else:
+        with progress('Calculating compression offset', 1) as pbar:
+            offset = get_min_max([path], map_point, invalid_value)
+            pbar.update(1)
 
-    b = -offset[0]
-    # Map to 0-255 after subtracting the offset
-    a = 255 / (offset[1] + b)
-    if np.isinf(a):
-        a = 1
+        b = -offset[0]
+        # Map to 0-255 after subtracting the offset
+        a = 255 / (offset[1] + b)
+        if np.isinf(a):
+            a = 1
 
     print(f'A: {a}, B: {b}')
     

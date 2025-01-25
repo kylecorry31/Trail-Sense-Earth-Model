@@ -50,8 +50,11 @@ def process():
 
     cell_towers = {}
 
+    precision = 0.05
+    pixels_per_degree = 1 / precision
+
     # Create an image of 3600x1800 pixels
-    image = Image.new('L', (3600, 1800), 0)
+    image = Image.new('L', (int(360 * pixels_per_degree), int(180 * pixels_per_degree)), 0)
 
     # Get the line count
     with open(f'{source_folder}/cell_towers.csv', 'r') as file:
@@ -72,8 +75,8 @@ def process():
                     'CDMA': 16,
                 }
                 radio = radios.get(row['radio'])
-                rounded_lat = round(lat, 1)
-                rounded_lon = round(lon, 1)
+                rounded_lat = round(lat * pixels_per_degree) / pixels_per_degree
+                rounded_lon = round(lon * pixels_per_degree) / pixels_per_degree
 
                 if radio is None:
                     print(f'Unknown radio type: {row["radio"]}')
@@ -86,10 +89,7 @@ def process():
                     cell_towers[(rounded_lat, rounded_lon)] |= radio
                 
                 new_radio = cell_towers[(rounded_lat, rounded_lon)]
-                image.putpixel((int((rounded_lon + 180) * 10), int((90 - rounded_lat) * 10),), new_radio)
+                image.putpixel((int((rounded_lon + 180) * pixels_per_degree), int((90 - rounded_lat) * pixels_per_degree),), new_radio)
                 pbar.update(1)
 
     image.save(f'{images_folder}/cell_towers.tif')
-
-
-    return cell_towers
