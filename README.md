@@ -17,6 +17,8 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-species-catalog.py**: The script to generate a species catalog of the most common species. It will output JSON files to output/species-catalog.
 
+**generate-cell-tower-model.py**: The script to generate a cell tower model. It will output a SQLLite DB to output/cell_towers.db.
+
 # Credits
 ## CRU
 Climatic Research Unit (University of East Anglia) and Met Office (https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/). Listed under the Open Government Licence: http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
@@ -83,3 +85,8 @@ Species catalog information.
 https://en.wikipedia.org/api/rest_v1
 
 https://en.wikipedia.org (see the wikipedia link in each species catalog notes section)
+
+# OpenCelliD
+OpenCelliD Project is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License
+
+https://opencellid.org/
