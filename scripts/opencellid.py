@@ -44,14 +44,13 @@ def download(redownload=False):
         pbar.update(1)
 
 
-def process():
+def process(resolution = 0.05):
     if not os.path.exists(images_folder):
         os.makedirs(images_folder)
 
     cell_towers = {}
 
-    precision = 0.05
-    pixels_per_degree = 1 / precision
+    pixels_per_degree = 1 / resolution
 
     # Create an image of 3600x1800 pixels
     image = Image.new('L', (int(360 * pixels_per_degree), int(180 * pixels_per_degree)), 0)
