@@ -18,26 +18,26 @@ def __download(start_year, end_year, variable, dataset):
     c = cdsapi.Client()
 
     request = {
-            "format": "netcdf",
-            "product_type": "monthly_averaged_reanalysis",
-            "variable": variable.split(","),
-            "year": years,
-            "month": [
-                "01",
-                "02",
-                "03",
-                "04",
-                "05",
-                "06",
-                "07",
-                "08",
-                "09",
-                "10",
-                "11",
-                "12",
-            ],
-            "time": "00:00",
-        }
+        "format": "netcdf",
+        "product_type": "monthly_averaged_reanalysis",
+        "variable": variable.split(","),
+        "year": years,
+        "month": [
+            "01",
+            "02",
+            "03",
+            "04",
+            "05",
+            "06",
+            "07",
+            "08",
+            "09",
+            "10",
+            "11",
+            "12",
+        ],
+        "time": "00:00",
+    }
 
     if 'pressure-levels' in dataset:
         request["pressure_level"] = "1000"
@@ -67,7 +67,8 @@ def download(start_year=1991, end_year=2020, redownload=False):
         f"{source_folder}/relative_humidity-{start_year}-{end_year}.nc"
     ):
         with tqdm(total=1, desc="Downloading ERA5 Humidity") as pbar:
-            __download(start_year, end_year, 'relative_humidity', 'reanalysis-era5-pressure-levels-monthly-means')
+            __download(start_year, end_year, 'relative_humidity',
+                       'reanalysis-era5-pressure-levels-monthly-means')
             pbar.update(1)
 
     if redownload or not os.path.exists(
@@ -75,18 +76,20 @@ def download(start_year=1991, end_year=2020, redownload=False):
     ):
         with tqdm(total=1, desc="Downloading ERA5 Precipitation") as pbar:
             # https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=overview
-            __download(start_year, end_year, 'total_precipitation', 'reanalysis-era5-single-levels-monthly-means')
+            __download(start_year, end_year, 'total_precipitation',
+                       'reanalysis-era5-single-levels-monthly-means')
             pbar.update(1)
-    
+
     if redownload or not os.path.exists(
         f"{source_folder}/type_of_low_vegetation,type_of_high_vegetation-{end_year}-{end_year}.nc"
     ):
         with tqdm(total=1, desc="Downloading ERA5 Vegetation") as pbar:
             # https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=overview
             # Only needs 1 year
-            __download(end_year, end_year, 'type_of_low_vegetation,type_of_high_vegetation', 'reanalysis-era5-single-levels-monthly-means')
+            __download(end_year, end_year, 'type_of_low_vegetation,type_of_high_vegetation',
+                       'reanalysis-era5-single-levels-monthly-means')
             pbar.update(1)
-    
+
     # Other useful parameters:
     # Snowfall - sf
     # Leaf area index, low vegetation - lai_lv
@@ -171,34 +174,9 @@ def process_humidity(start_year=1991, end_year=2020):
 def process_precipitation(start_year=1991, end_year=2020):
     __process_dataset('total_precipitation', 'tp', start_year, end_year)
 
+
 def process_vegetation(year=2020):
-    # __process_dataset('type_of_low_vegetation,type_of_high_vegetation', 'tvh',  year, year, 'high_vegetation')
-    # __process_dataset('type_of_low_vegetation,type_of_high_vegetation', 'tvl', year, year, 'low_vegetation')
-
-    # Merge the two into a single vegetation
-
-    width = 1440
-    height = 720
-
-    with tqdm(total=width * height * 12, desc="Merging vegetation") as pbar:
-
-        for month in range(1, 13):
-            vegetation = PIL.Image.new("F", (width, height))
-            with open(f"{images_folder}/{year}-{year}-{month}-high_vegetation.tif", 'rb') as f:
-                high_vegetation = PIL.Image.open(f)
-
-                with open(f"{images_folder}/{year}-{year}-{month}-low_vegetation.tif", 'rb') as f:
-                    low_vegetation = PIL.Image.open(f)
-
-                    for i in range(high_vegetation.size[0]):
-                        for j in range(high_vegetation.size[1]):
-                            high_value = int(high_vegetation.getpixel((i, j)))
-                            low_value = int(low_vegetation.getpixel((i, j)))
-
-                            # First 4 bits = high, last 4 = low
-                            merged_value = (high_value << 4) | low_value
-                            vegetation.putpixel((i, j), merged_value)
-                            
-                            pbar.update(1)
-            vegetation.save(
-                f"{images_folder}/{year}-{year}-{month}-vegetation.tif")
+    __process_dataset('type_of_low_vegetation,type_of_high_vegetation',
+                      'tvh',  year, year, 'high_vegetation')
+    __process_dataset('type_of_low_vegetation,type_of_high_vegetation',
+                      'tvl', year, year, 'low_vegetation')
