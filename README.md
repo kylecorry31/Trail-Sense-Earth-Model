@@ -5,6 +5,8 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-humidity-model.py**: The script to generate the global humidity model. This will generate 4 WEBP files in the output directory for the monthly humidity. Resolution is 576x361.
 
+**generate-precipitation-model.py**: The script to generate the global precipitation model. This will generate 4 WEBP files in the output directory for the monthly precipitation (monthly total). Resolution is 576x361.
+
 **generate-geoid-model.py**: The script to generate the geoid model. This will generate 1 WEBP file in the output directory. Resolution is 361x181.
 
 **generate-tide-model.py**: The script to generate the tide model. This will generate 1 WEBP file for each tidal constituent (currently 17 files) with the red channel being the amplitude (normalized between 0 and 1 and with the 4th root taken on the normalized data) and the green channel being the phase (noramlized between 0 and 1, source is betwen -180 and 180). It will output the max amplitude for each constituent (scale is 0 to max amplitude in cm). Resolution is 720x360.
