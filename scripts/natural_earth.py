@@ -40,12 +40,12 @@ def download(redownload=False):
                 zip_ref.extractall(f'source/natural-earth')
             pbar.update(1)
 
-def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5):
+def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4):
     image = np.array(load(image_path, resize))
-    image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation)
+    image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation, scale)
     to_tif(image, output_path)
 
-def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5):
+def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4):
     shapefile_path = "source/natural-earth/ne_10m_land.shp"
     island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 
@@ -62,7 +62,6 @@ def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=No
     if y_scale is None:
         y_scale = 180 / height
 
-    scale = 4
     mask = rasterize(gdf.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
     mask[mask > 0] = 255
 
