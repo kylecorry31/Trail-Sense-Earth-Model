@@ -5,6 +5,7 @@ import numpy as np
 
 start_year = 1991
 end_year = 2020
+remove_oceans = False
 
 era5.download(start_year, end_year)
 natural_earth.download()
@@ -14,16 +15,17 @@ files = [
     f'images/{start_year}-{end_year}-{month}-total_precipitation.tif' for month in range(1, 13)]
 
 # Zero out the oceans of each file
-with progress.progress('Removing oceans', len(files)) as pbar:
-    for file in files:
-        image = np.array(load(file))
-        image = natural_earth.remove_oceans(image, 0)
-        to_tif(image, file.replace(
-            'total_precipitation', 'total_precipitation_land'))
-        pbar.update(1)
+if remove_oceans:
+    with progress.progress('Removing oceans', len(files)) as pbar:
+        for file in files:
+            image = np.array(load(file))
+            image = natural_earth.remove_oceans(image, 0)
+            to_tif(image, file.replace(
+                'total_precipitation', 'total_precipitation_land'))
+            pbar.update(1)
 
 files = [
-    f'images/{start_year}-{end_year}-{month}-total_precipitation_land.tif' for month in range(1, 13)]
+    f'images/{start_year}-{end_year}-{month}-{'total_precipitation_land' if remove_oceans else 'total_precipitation'}.tif' for month in range(1, 13)]
 compression.minify_multiple(
     files,
     lambda x: x * 1000,
