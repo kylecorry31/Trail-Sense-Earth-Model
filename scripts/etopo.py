@@ -5,6 +5,9 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 from rasterio.mask import mask
+import PIL.Image as Image
+from scripts import to_tif, load_pixels
+from scripts.progress import progress
 
 shapefile_path = "source/natural-earth/ne_10m_land.shp"
 island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
@@ -12,6 +15,9 @@ surface_path = "source/etopo/ETOPO_2022_v1_60s_N90W180_surface.tif"
 geoid_path = "source/etopo/ETOPO_2022_v1_60s_N90W180_geoid.tif"
 dem_path = "images/dem-etopo.tif"
 dem_land_path = "images/dem-land-etopo.tif"
+elevation_invalid_value = -99999
+
+elevations = None
 
 def __get_url(latitude, longitude, grid, data_type, type_path=None):
     lat = ('N' if latitude >= 0 else 'S') + str(abs(latitude)).zfill(2)
@@ -53,7 +59,6 @@ def process_dem(include_islands=True):
 
             masked_image, masked_transform = mask(src, gdf.geometry)
             metadata = src.meta.copy()
-            print(src.meta)
             metadata.update({"driver": "GTiff",
                             "height": masked_image.shape[1],
                             "width": masked_image.shape[2],
@@ -62,3 +67,20 @@ def process_dem(include_islands=True):
             with rasterio.open(dem_land_path, 'w', **metadata) as dst:
                 dst.write(masked_image)
         pbar.update(1)
+
+def adjust_for_elevation(data, map_fn):
+    global elevations
+    if elevations is None:
+        Image.MAX_IMAGE_PIXELS = None
+        elevations = load_pixels(dem_land_path)
+    w = len(data[0])
+    h = len(data)
+    for y in range(h):
+        for x in range(w):
+            elevation_x = int(x / w * len(elevations[0]))
+            elevation_y = int(y / h * len(elevations))
+            elevation = elevations[elevation_y, elevation_x]
+            if elevation == elevation_invalid_value:
+                elevation = 0
+            data[y, x] = map_fn(data[y, x], elevation)
+    return data

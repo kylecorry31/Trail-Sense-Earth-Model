@@ -4,10 +4,10 @@ from tqdm import tqdm
 import xarray as xr
 from datetime import datetime
 import PIL
+from scripts import etopo, progress, to_tif, load_pixels
 
 source_folder = "source/era5"
 images_folder = "images"
-
 
 def __download(start_year, end_year, variable, dataset):
     # Create the folder if it doesn't exist
@@ -89,8 +89,18 @@ def download(start_year=1991, end_year=2020, redownload=False):
             __download(end_year, end_year, 'type_of_low_vegetation,type_of_high_vegetation',
                        'reanalysis-era5-single-levels-monthly-means')
             pbar.update(1)
+    
+    if redownload or not os.path.exists(
+        f"{source_folder}/2m_dewpoint_temperature-{start_year}-{end_year}.nc"
+    ):
+        # https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means?tab=overview
+        with tqdm(total=1, desc="Downloading ERA5 Dew Point") as pbar:
+            __download(start_year, end_year, '2m_dewpoint_temperature',
+                       'reanalysis-era5-single-levels-monthly-means')
+            pbar.update(1)
 
     # Other useful parameters:
+    # https://codes.ecmwf.int/grib/param-db
     # Snowfall - sf
     # Leaf area index, low vegetation - lai_lv
     # Leaf area index, high vegetation - lai_hv
@@ -170,6 +180,17 @@ def __process_dataset(variable, selector, start_year=1991, end_year=2020, name_o
 def process_humidity(start_year=1991, end_year=2020):
     __process_dataset('relative_humidity', 'r', start_year, end_year)
 
+
+def process_dew_point(start_year=1991, end_year=2020):
+    __process_dataset('2m_dewpoint_temperature', 'd2m', start_year, end_year)
+
+    # Convert everything to sea level and celsius
+    with progress.progress("Adjusting for elevation", 12) as pbar:
+        for month in range(1, 13):
+            image = load_pixels(f"{images_folder}/{start_year}-{end_year}-{month}-2m_dewpoint_temperature.tif")
+            data = etopo.adjust_for_elevation(image, lambda x, elevation: (x - 272.15) + 0.001 * elevation)
+            to_tif(data, f"{images_folder}/{start_year}-{end_year}-{month}-2m_dewpoint_temperature.tif")
+            pbar.update(1)
 
 def process_precipitation(start_year=1991, end_year=2020):
     __process_dataset('total_precipitation', 'tp', start_year, end_year)
