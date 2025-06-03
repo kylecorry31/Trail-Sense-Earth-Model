@@ -3,6 +3,10 @@ from scripts import etopo, compression, load_pixels
 etopo.download()
 compression.minify(etopo.geoid_path, lambda x: x, -99999, 'output/geoids.webp', 100, False, (361, 181))
 
+print()
+print("SPHERICAL HARMONICS MODEL")
+print("=========================")
+
 harmonics = compression.spherical_harmonics(etopo.geoid_path, lambda x: x, -99999, 3_000_000, 'output/geoids_reconstructed.webp', True)
 
 code = "private val gCoeff = arrayOf(\n"
