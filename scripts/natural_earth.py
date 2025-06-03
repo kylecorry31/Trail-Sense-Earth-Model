@@ -10,6 +10,14 @@ from scipy.ndimage import binary_dilation
 from rasterio.features import rasterize
 import numpy as np
 
+last_mask = None
+last_mask_replacement = None
+last_mask_inverted = False
+last_mask_x_scale = None
+last_mask_y_scale = None
+last_mask_dilation = None
+last_mask_scale = None
+
 def __download(url, redownload=False):
     filename = url.split('/')[-1]
     if not os.path.exists(f'source/natural-earth'):
@@ -46,12 +54,7 @@ def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, 
     to_tif(image, output_path)
 
 def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4):
-    shapefile_path = "source/natural-earth/ne_10m_land.shp"
-    island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
-
-    gdf = gpd.read_file(shapefile_path)
-    gdf_islands = gpd.read_file(island_shapefile_path)
-
+    global last_mask, last_mask_replacement, last_mask_inverted, last_mask_x_scale, last_mask_y_scale, last_mask_dilation, last_mask_scale
     # Render the shapefiles to an image
     width = image.shape[1]
     height = image.shape[0]
@@ -62,27 +65,43 @@ def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=No
     if y_scale is None:
         y_scale = 180 / height
 
-    mask = rasterize(gdf.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
-    mask[mask > 0] = 255
+    if last_mask is not None and last_mask_replacement == replacement and last_mask_inverted == inverted and last_mask_x_scale == x_scale and last_mask_y_scale == y_scale and last_mask_dilation == dilation and last_mask_scale == scale:
+        mask = last_mask
+    else:
+        shapefile_path = "source/natural-earth/ne_10m_land.shp"
+        island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 
-    img_islands = rasterize(gdf_islands.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
-    img_islands[img_islands > 0] = 255
+        gdf = gpd.read_file(shapefile_path)
+        gdf_islands = gpd.read_file(island_shapefile_path)
 
-    mask = np.maximum(mask, img_islands)
+        mask = rasterize(gdf.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
+        mask[mask > 0] = 255
 
-    # Invert the mask
-    if inverted:
-        mask = 255 - mask
+        img_islands = rasterize(gdf_islands.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
+        img_islands[img_islands > 0] = 255
 
-    # Dilate the image
-    mask = mask > 0
-    mask = binary_dilation(mask, iterations=dilation * scale)
-    mask = mask.astype(np.float32)
-    
-    # Downsample the image
-    mask = mask[::scale, ::scale]
+        mask = np.maximum(mask, img_islands)
 
-    
+        # Invert the mask
+        if inverted:
+            mask = 255 - mask
+
+        # Dilate the image
+        mask = mask > 0
+        mask = binary_dilation(mask, iterations=dilation * scale)
+        mask = mask.astype(np.float32)
+        
+        # Downsample the image
+        mask = mask[::scale, ::scale]
+
+    last_mask = mask
+    last_mask_replacement = replacement
+    last_mask_inverted = inverted
+    last_mask_x_scale = x_scale
+    last_mask_y_scale = y_scale
+    last_mask_dilation = dilation
+    last_mask_scale = scale
+
     image = image * mask
     image[mask == 0] = replacement
     return image

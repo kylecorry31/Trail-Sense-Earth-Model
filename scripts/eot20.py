@@ -1,22 +1,15 @@
 import netCDF4
 import os
-import rasterio.mask
-import rasterio.transform
-from scripts import progress, to_tif
+from scripts import progress, to_tif, natural_earth
 import numpy as np
 import shutil
-import geopandas as gpd
 import rasterio
-from scipy.ndimage import binary_dilation
-from rasterio.features import rasterize
 import requests
 from PIL import Image
 
 # Load the data
 source_directory = 'source/eot20'
 output_directory = 'images/eot20'
-x_scale = 0.125
-y_scale = 0.125
 
 # This needs to be less than 255
 final_width = 250
@@ -47,35 +40,6 @@ def process_ocean_tides(final_shape):
 
     constituents = ['2N2', 'J1', 'K1', 'K2', 'M2', 'M4', 'MF', 'MM', 'N2', 'O1', 'P1', 'Q1', 'S1', 'S2', 'SA', 'SSA', 'T2']
 
-    with progress.progress("Loading land masks", 2) as pbar:
-        gdf = gpd.read_file(shapefile_path)
-        pbar.update(1)
-        gdf_islands = gpd.read_file(island_shapefile_path)
-        pbar.update(1)
-
-    # Render the shapefiles to an image of 2881x1441
-    with progress.progress("Rendering land masks", 3) as pbar:
-        scale = 4
-        mask = rasterize(gdf.geometry, out_shape=(1441 * scale, 2881 * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
-        mask[mask > 0] = 255
-        pbar.update(1)
-
-        img_islands = rasterize(gdf_islands.geometry, out_shape=(1441 * scale, 2881 * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
-        img_islands[img_islands > 0] = 255
-        pbar.update(1)
-
-        mask = np.maximum(mask, img_islands)
-
-        # Dilate the image
-        mask = mask > 0
-        mask = binary_dilation(mask, iterations=5 * scale)
-        mask = mask.astype(np.float32)
-        
-        # Downsample the image
-        mask = mask[::scale, ::scale]
-
-        pbar.update(1)
-
     with progress.progress(f'Processing ocean tides', len(constituents) * 2) as pbar:
         amplitudes = {}
         large_amplitudes = []
@@ -95,9 +59,7 @@ def process_ocean_tides(final_shape):
 
                 # AMPLITUDE
                 updated = to_tif(amplitude, f'{output_directory}/{constituent}-amplitude.tif', True, x_shift, 100000)
-                # Mask the image
-                updated = updated * mask
-                updated[mask == 0] = 100000
+                updated = natural_earth.remove_oceans(updated, dilation=5, replacement=100000, scale=4)
 
                 # Resize to the final shape (before normalization)
                 if final_shape is not None:
@@ -150,9 +112,7 @@ def process_ocean_tides(final_shape):
                 
                 # PHASE
                 updated = to_tif(phase, f'{output_directory}/{constituent}-phase.tif', True, x_shift, 100000)
-                # Mask the image
-                updated = updated * mask
-                updated[mask == 0] = 100000
+                updated = natural_earth.remove_oceans(updated, dilation=5, replacement=100000, scale=4)
 
                 # Resize to the final shape
                 if final_shape is not None:
