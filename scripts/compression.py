@@ -2,9 +2,94 @@ from . import get_min_max, compress_to_webp2, load_pixels, to_tif
 from .progress import progress
 from PIL import Image
 import numpy as np
+import pyshtools
 
 # Pixel = a * value + b
 # Value = (pixel - b) / a
+
+def scale(value, a, b):
+    return np.round(a * (value + b))
+
+def unscale(value, a, b):
+    return value / a - b
+
+def spherical_harmonics(file, map_point, invalid_value, resolution_meters, reconstructed_output_filename=None, should_scale=False):
+    Image.MAX_IMAGE_PIXELS = None
+    pixels = map_point(load_pixels(file))
+    pixels[pixels == invalid_value] = 0
+
+    R = 6371200
+    min_order = (-1 + np.sqrt(1 + 4 * np.square(2 * np.pi * R / resolution_meters))) / 2
+    lmax = min(int(np.ceil(min_order)), 359)
+
+    
+
+    grid = pyshtools.SHGrid.from_array(pixels)
+
+    clm = grid.expand(normalization='schmidt', lmax_calc=lmax)
+
+    g = clm.coeffs[0]
+    h = clm.coeffs[1]
+    minimum = np.inf
+    maximum = -np.inf
+
+    new_g = []
+    new_h = []
+    i = 0
+
+    while i <= lmax:
+        j = 0
+        new_g.append([])
+        new_h.append([])
+        while j <= i:
+            new_g[-1].append(g[i][j])
+            new_h[-1].append(h[i][j])
+            minimum = min(minimum, min(g[i][j], h[i][j]))
+            maximum = max(maximum, max(g[i][j], h[i][j]))
+            j += 1
+        i += 1
+
+    b = -minimum
+    a = 255 / (maximum + b)
+
+    if should_scale:
+        print(f'A = {a}, B = {b}')
+        for row in new_g:
+            for i in range(len(row)):
+                row[i] = scale(row[i], a, b)
+        for row in new_h:
+            for i in range(len(row)):
+                row[i] = scale(row[i], a, b)
+    
+    if reconstructed_output_filename:
+        # Convert it back to an image and write to disk
+        trunc_clm = pyshtools.SHCoeffs.from_array(np.array([g, h]), normalization='schmidt')
+
+        # Scale and unscale to match the compressed model'
+        if should_scale:
+            for n in range(lmax + 1):
+                for m in range(n + 1):
+                    trunc_clm.coeffs[0, n, m] = unscale(scale(trunc_clm.coeffs[0, n, m], a, b), a, b)
+                    trunc_clm.coeffs[1, n, m] = unscale(scale(trunc_clm.coeffs[1, n, m], a, b), a, b)
+
+        # Reconstruct the grid from the truncated coefficients
+        trunc_grid = trunc_clm.expand(grid='DH2')
+
+        # Convert back to numpy array for saving
+        reconstructed_array = trunc_grid.to_array()
+        reconstructed_array_norm = reconstructed_array - np.min(reconstructed_array)
+        reconstructed_array_norm /= np.max(reconstructed_array_norm)
+        reconstructed_array_uint8 = (reconstructed_array_norm * 255).astype(np.uint8)
+
+        # Save as image
+        img = Image.fromarray(reconstructed_array_uint8)
+        img.save(reconstructed_output_filename)
+    
+    return {
+        'g': new_g,
+        'h': new_h
+    }
+
 
 def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, quality, lossless, size=None, grouping=3, should_print=True, a_override=None, b_override=None):
     Image.MAX_IMAGE_PIXELS = None

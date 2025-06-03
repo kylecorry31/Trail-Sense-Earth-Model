@@ -17,3 +17,4 @@ astroquery
 timezonefinder
 markdownify
 beautifulsoup4
+pyshtools
