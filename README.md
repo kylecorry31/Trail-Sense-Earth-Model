@@ -23,6 +23,8 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-cell-tower-model.py**: The script to generate a cell tower model. It will output a SQLLite DB to output/cell_towers.db.
 
+**generate-magnetic-field-model.py**: The script to generate the World Magnetic Model coefficients. It will output the WMM coefficients as Java arrays into the console.
+
 # Credits
 ## CRU
 Climatic Research Unit (University of East Anglia) and Met Office (https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/). Listed under the Open Government Licence: http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
@@ -57,6 +59,8 @@ MIT License, Copyright (c) 2017 Tyler C Sutterley
 
 ## NOAA
 NOAA CO-OPS API: https://api.tidesandcurrents.noaa.gov/mdapi/prod/ and https://api.tidesandcurrents.noaa.gov/api/prod/
+
+WMM: https://www.ncei.noaa.gov/products/world-magnetic-model/wmm-coefficients
 
 ## EOT20
 https://creativecommons.org/licenses/by/4.0/
