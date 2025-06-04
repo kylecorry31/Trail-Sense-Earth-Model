@@ -158,3 +158,48 @@ def split_16_bits(path, output_path_lower, output_path_upper, a=1, b=0):
     # Save both images
     to_tif(lower_image, output_path_lower)
     to_tif(upper_image, output_path_upper)
+
+def __create_condensed_image(image, valid_indices, final_width=250):
+    updated = image[valid_indices]
+    total_values = len(updated)
+    updated = np.append(updated, np.zeros(final_width - (total_values % final_width)))
+    updated = updated.reshape((-1, final_width))
+    return updated
+
+def index(image, ignored_value, final_width):
+    non_zero_bool_array = image != ignored_value
+    indices_x = np.zeros(image.shape)
+    indices_y = np.zeros(image.shape)
+    non_zero_indices = np.argwhere(non_zero_bool_array)
+    for i in range(len(non_zero_indices)):
+        source_x = non_zero_indices[i][1]
+        source_y = non_zero_indices[i][0]
+        destination_x = i % final_width + 1
+        destination_y = i // final_width + 1
+        indices_x[source_y, source_x] = destination_x
+        indices_y[source_y, source_x] = destination_y
+    return indices_x, indices_y, lambda i: __create_condensed_image(i, non_zero_bool_array, final_width), non_zero_bool_array
+
+def normalize(image, minimum, maximum, ignored_value = None):
+    if minimum is None:
+        minimum = np.min(image[image != ignored_value]) if ignored_value is not None else np.min(image)
+    if maximum is None:
+        maximum = np.max(image[image != ignored_value]) if ignored_value is not None else np.max(image)
+
+    if ignored_value is None:
+        return (image - minimum) / (maximum - minimum), minimum, maximum
+    normalized = (image[image != 100000] - minimum) / (maximum - minimum)
+    normalized[normalized < 0] = 0
+    result = image.copy()
+    result[result != 100000] = normalized
+    return result, minimum, maximum
+
+def extract_large_values(image, threshold, replacement = 0, ignored_value = None):
+    large_values = []
+    result = image.copy()
+    large_amplitude_indices = np.argwhere((image > threshold) & (image != ignored_value))
+    for idx in large_amplitude_indices:
+        large_values.append((int(idx[0]), int(idx[1]), image[idx[0], idx[1]]))
+        if replacement is not None:
+            result[idx[0], idx[1]] = replacement
+    return result, large_values

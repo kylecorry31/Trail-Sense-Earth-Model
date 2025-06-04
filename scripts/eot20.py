@@ -1,11 +1,8 @@
 import netCDF4
 import os
-from scripts import progress, to_tif, natural_earth
-import numpy as np
+from scripts import progress, to_tif, natural_earth, compression, reshape
 import shutil
-import rasterio
 import requests
-from PIL import Image
 
 # Load the data
 source_directory = 'source/eot20'
@@ -32,57 +29,6 @@ def download():
             os.remove(f'{source_directory}/ocean_tides.zip')
             shutil.rmtree(f'{source_directory}/__MACOSX')
         pbar.update(1)
-    
-def __create_condensed_image(image, valid_indices, final_width=250):
-    updated = image[valid_indices]
-    total_values = len(updated)
-    updated = np.append(updated, np.zeros(final_width - (total_values % final_width)))
-    updated = updated.reshape((-1, final_width))
-    return updated
-
-def __create_index_image(image, ignored_value, final_width):
-    non_zero_bool_array = image != ignored_value
-    indices_x = np.zeros(image.shape)
-    indices_y = np.zeros(image.shape)
-    non_zero_indices = np.argwhere(non_zero_bool_array)
-    for i in range(len(non_zero_indices)):
-        source_x = non_zero_indices[i][1]
-        source_y = non_zero_indices[i][0]
-        destination_x = i % final_width + 1
-        destination_y = i // final_width + 1
-        indices_x[source_y, source_x] = destination_x
-        indices_y[source_y, source_x] = destination_y
-    return indices_x, indices_y, lambda i: __create_condensed_image(i, non_zero_bool_array, final_width), non_zero_bool_array
-
-def __reshape(image, shape):
-    if shape is not None:
-        img = Image.fromarray(image).resize(shape, Image.NEAREST)
-        return np.array(img).reshape((shape[1], shape[0]))
-    return image
-
-def __normalize(image, minimum, maximum, ignored_value = None):
-    if minimum is None:
-        minimum = np.min(image[image != ignored_value]) if ignored_value is not None else np.min(image)
-    if maximum is None:
-        maximum = np.max(image[image != ignored_value]) if ignored_value is not None else np.max(image)
-
-    if ignored_value is None:
-        return (image - minimum) / (maximum - minimum), minimum, maximum
-    normalized = (image[image != 100000] - minimum) / (maximum - minimum)
-    normalized[normalized < 0] = 0
-    result = image.copy()
-    result[result != 100000] = normalized
-    return result, minimum, maximum
-
-def __extract_large_values(image, threshold, replacement = 0, ignored_value = None):
-    large_values = []
-    result = image.copy()
-    large_amplitude_indices = np.argwhere((image > threshold) & (image != ignored_value))
-    for idx in large_amplitude_indices:
-        large_values.append((int(idx[0]), int(idx[1]), image[idx[0], idx[1]]))
-        if replacement is not None:
-            result[idx[0], idx[1]] = replacement
-    return result, large_values
 
 def process_ocean_tides(final_shape):
     os.makedirs(output_directory, exist_ok=True)
@@ -102,27 +48,27 @@ def process_ocean_tides(final_shape):
                 amplitude = file.variables['amplitude'][:]
                 amplitude = to_tif(amplitude, f'{output_directory}/{constituent}-amplitude.tif', True, amplitude.shape[1] // 2, 100000)
                 amplitude = natural_earth.remove_oceans(amplitude, dilation=5, replacement=100000, scale=4)
-                amplitude = __reshape(amplitude, final_shape)
+                amplitude = reshape(amplitude, final_shape)
 
                 # Remove large amplitudes to avoid compression loss before normalizing
-                amplitude, large_values = __extract_large_values(amplitude, 500, ignored_value = 100000)
+                amplitude, large_values = compression.extract_large_values(amplitude, 500, ignored_value = 100000)
                 for value in large_values:
                     large_amplitudes.append((constituent, value[0], value[1], int(value[2])))
                 
                 # Normalize amplitudes
-                amplitude, _, max_amplitude = __normalize(amplitude, 0.0, None, 100000)
+                amplitude, _, max_amplitude = compression.normalize(amplitude, 0.0, None, 100000)
                 amplitudes[constituent] = float(max_amplitude)           
 
                 # PHASE
                 phase = file.variables['phase'][:]
-                phase, _, _ = __normalize(phase, -180.0, 180.0)
+                phase, _, _ = compression.normalize(phase, -180.0, 180.0)
                 phase = to_tif(phase, f'{output_directory}/{constituent}-phase.tif', True, phase.shape[1] // 2, 100000)
                 phase = natural_earth.remove_oceans(phase, dilation=5, replacement=100000, scale=4)
-                phase = __reshape(phase, final_shape)
+                phase = reshape(phase, final_shape)
 
                 # Create the indices images
                 if not indices_images_created:
-                    indices_x, indices_y, condenser, _ = __create_index_image(amplitude, 100000, final_width)
+                    indices_x, indices_y, condenser, _ = compression.index(amplitude, 100000, final_width)
                     to_tif(indices_x, f'{output_directory}/indices-x.tif')
                     to_tif(indices_y, f'{output_directory}/indices-y.tif')
 

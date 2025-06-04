@@ -90,3 +90,9 @@ def resize(path, output, size):
     im = im.resize(size, Image.NEAREST)
     im.save(output, format='TIFF')
     im.save(output + '.webp', format='WEBP')
+
+def reshape(image, shape):
+    if shape is not None:
+        img = Image.fromarray(image).resize(shape, Image.NEAREST)
+        return np.array(img).reshape((shape[1], shape[0]))
+    return image
