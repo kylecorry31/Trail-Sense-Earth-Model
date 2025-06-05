@@ -7,8 +7,11 @@ class RemoveOceans(ImageOperator):
         self.replacement = replacement
         self.scale = scale
 
-    def apply(self, image):
-        return remove_oceans(image, dilation=self.dilation, replacement=self.replacement, scale=self.scale), {}
+    def apply(self, images):
+        output = []
+        for image in images:
+            output.append(remove_oceans(image, dilation=self.dilation, replacement=self.replacement, scale=self.scale))
+        return output, {}
 
 class RemoveLand(ImageOperator):
     def __init__(self, dilation=5, replacement=0, scale=4):
@@ -16,5 +19,8 @@ class RemoveLand(ImageOperator):
         self.replacement = replacement
         self.scale = scale
 
-    def apply(self, image):
-        return remove_oceans(image, inverted=True, dilation=self.dilation, replacement=self.replacement, scale=self.scale), {}
+    def apply(self, images):
+        output = []
+        for image in images:
+            output.append(remove_oceans(image, inverted=True, dilation=self.dilation, replacement=self.replacement, scale=self.scale))
+        return output, {}

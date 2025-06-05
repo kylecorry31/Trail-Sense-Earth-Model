@@ -1,10 +1,10 @@
 import netCDF4
 import os
-from scripts import progress, to_tif, natural_earth, compression, reshape
+from scripts import progress
 import shutil
 import requests
 from .operators import process
-from .operators.basic import FlipY, ReplaceInvalid, Reshape, ShiftX, Float, Normalize, ReplaceLargeValues, Save
+from .operators.basic import FlipY, ReplaceInvalid, Reshape, ShiftX, Normalize, ReplaceLargeValues, Save
 from .operators.compression import Index
 from .operators.masking import RemoveOceans
 
@@ -51,7 +51,7 @@ def process_ocean_tides(final_shape):
             with netCDF4.Dataset(file_path, 'r') as file:
                 # AMPLITUDE
                 _, amplitude_results = process(
-                    file.variables['amplitude'][:],
+                    [file.variables['amplitude'][:]],
                     ReplaceInvalid(invalid_value),
                     ShiftX(0.5, True),
                     FlipY(),
@@ -60,7 +60,7 @@ def process_ocean_tides(final_shape):
                     ReplaceLargeValues(500, invalid_value=invalid_value),
                     Normalize(0.0, invalid_value=invalid_value),
                     Index(condenser, final_width, invalid_value),
-                    Save(f'{output_directory}/{constituent}-amplitude.tif')
+                    Save([f'{output_directory}/{constituent}-amplitude.tif'])
                 )
 
                 replace_large_values_idx = 5
@@ -68,7 +68,7 @@ def process_ocean_tides(final_shape):
                 index_index = 7
 
                 # Extract results
-                for value in amplitude_results[replace_large_values_idx]['large_values']:
+                for value in amplitude_results[replace_large_values_idx]['large_values'][0]:
                     large_amplitudes.append((constituent, value[0], value[1], int(value[2])))
 
                 amplitudes[constituent] = float(amplitude_results[normalize_index]['maximum'])           
@@ -77,13 +77,13 @@ def process_ocean_tides(final_shape):
                     condenser = amplitude_results[index_index]['condenser']
                 
                 if not indices_images_created:
-                    process(amplitude_results[index_index]['indices_x'], Save(f'{output_directory}/indices-x.tif'))
-                    process(amplitude_results[index_index]['indices_y'], Save(f'{output_directory}/indices-y.tif'))
+                    process([amplitude_results[index_index]['indices_x']], Save([f'{output_directory}/indices-x.tif']))
+                    process([amplitude_results[index_index]['indices_y']], Save([f'{output_directory}/indices-y.tif']))
                     indices_images_created = True
 
                 # PHASE
                 process(
-                    file.variables['phase'][:],
+                    [file.variables['phase'][:]],
                     Normalize(-180.0, 180.0, invalid_value),
                     ReplaceInvalid(invalid_value),
                     ShiftX(0.5, True),
@@ -91,7 +91,7 @@ def process_ocean_tides(final_shape):
                     RemoveOceans(dilation=5, replacement=invalid_value),
                     Reshape(final_shape),
                     Index(condenser, final_width, invalid_value),
-                    Save(f'{output_directory}/{constituent}-phase.tif')
+                    Save([f'{output_directory}/{constituent}-phase.tif'])
                 )
 
                 pbar.update(1)

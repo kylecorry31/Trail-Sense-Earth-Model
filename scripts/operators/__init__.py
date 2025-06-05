@@ -1,6 +1,6 @@
-def process(image, *operators):
+def process(images, *operators):
     results = []
     for operator in operators:
-        image, data = operator.apply(image)
+        images, data = operator.apply(images)
         results.append(data)
-    return image, results
+    return images, results
