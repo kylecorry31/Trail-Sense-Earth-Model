@@ -66,22 +66,36 @@ def get_min_max(paths, map_point=lambda x: x, invalid_value=-999, resize=None):
         max_value = max(max_value, np.max(im[im != invalid_value]))
     return (map_point(min_value), map_point(max_value))
 
-def to_tif(values, output, is_inverted=False, x_shift=0, masked_value_replacement=0):
-    values_array = np.ma.masked_invalid(values)
-    values_array = np.where(values_array.mask, masked_value_replacement, values_array)
+def flip_vertical(image):
+    return np.flipud(image)
+
+def shift_x(image, x_shift):
+    return np.roll(image, x_shift, axis=1)
+
+def replace_invalid(image, replacement=0):
+    values_array = np.ma.masked_invalid(image)
+    values_array = np.where(values_array.mask, replacement, values_array)
+    return values_array
+
+def to_float(image):
+    return image.astype(np.float32)
+
+def to_tif(values, output=None, is_inverted=False, x_shift=0, masked_value_replacement=0):
+    values_array = replace_invalid(values, masked_value_replacement)
 
     if x_shift != 0:
-        values_array = np.roll(values_array, x_shift, axis=1)
+        values_array = shift_x(values_array, x_shift)
     
     if is_inverted:
-        values_array = np.flipud(values_array)
+        values_array = flip_vertical(values_array)
 
-    values_array = values_array.astype(np.float32)
+    values_array = to_float(values_array)
     img = Image.fromarray(values_array, mode='F')
-    if not os.path.exists(output.rsplit('/', 1)[0]):
-        os.makedirs(output.rsplit('/', 1)[0])
-    img.save(output, format='TIFF')
-    img.save(output + '.webp', format='WEBP')
+    if output is not None:
+        if not os.path.exists(output.rsplit('/', 1)[0]):
+            os.makedirs(output.rsplit('/', 1)[0])
+        img.save(output, format='TIFF')
+        img.save(output + '.webp', format='WEBP')
     return values_array
 
 def resize(path, output, size):

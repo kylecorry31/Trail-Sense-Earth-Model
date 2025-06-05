@@ -10,6 +10,7 @@ output_directory = 'images/eot20'
 
 # This needs to be less than 255
 final_width = 250
+invalid_value = 100000
 
 shapefile_path = "source/natural-earth/ne_10m_land.shp"
 island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
@@ -46,29 +47,29 @@ def process_ocean_tides(final_shape):
             with netCDF4.Dataset(file_path, 'r') as file:
                 # AMPLITUDE
                 amplitude = file.variables['amplitude'][:]
-                amplitude = to_tif(amplitude, f'{output_directory}/{constituent}-amplitude.tif', True, amplitude.shape[1] // 2, 100000)
-                amplitude = natural_earth.remove_oceans(amplitude, dilation=5, replacement=100000, scale=4)
+                amplitude = to_tif(amplitude, is_inverted=True, x_shift=amplitude.shape[1] // 2, masked_value_replacement=invalid_value)
+                amplitude = natural_earth.remove_oceans(amplitude, dilation=5, replacement=invalid_value, scale=4)
                 amplitude = reshape(amplitude, final_shape)
 
                 # Remove large amplitudes to avoid compression loss before normalizing
-                amplitude, large_values = compression.extract_large_values(amplitude, 500, ignored_value = 100000)
+                amplitude, large_values = compression.extract_large_values(amplitude, 500, ignored_value = invalid_value)
                 for value in large_values:
                     large_amplitudes.append((constituent, value[0], value[1], int(value[2])))
                 
                 # Normalize amplitudes
-                amplitude, _, max_amplitude = compression.normalize(amplitude, 0.0, None, 100000)
+                amplitude, _, max_amplitude = compression.normalize(amplitude, 0.0, None, invalid_value)
                 amplitudes[constituent] = float(max_amplitude)           
 
                 # PHASE
                 phase = file.variables['phase'][:]
                 phase, _, _ = compression.normalize(phase, -180.0, 180.0)
-                phase = to_tif(phase, f'{output_directory}/{constituent}-phase.tif', True, phase.shape[1] // 2, 100000)
-                phase = natural_earth.remove_oceans(phase, dilation=5, replacement=100000, scale=4)
+                phase = to_tif(phase, is_inverted=True, x_shift=phase.shape[1] // 2, masked_value_replacement=invalid_value)
+                phase = natural_earth.remove_oceans(phase, dilation=5, replacement=invalid_value, scale=4)
                 phase = reshape(phase, final_shape)
 
                 # Create the indices images
                 if not indices_images_created:
-                    indices_x, indices_y, condenser, _ = compression.index(amplitude, 100000, final_width)
+                    indices_x, indices_y, condenser, _ = compression.index(amplitude, invalid_value, final_width)
                     to_tif(indices_x, f'{output_directory}/indices-x.tif')
                     to_tif(indices_y, f'{output_directory}/indices-y.tif')
 
