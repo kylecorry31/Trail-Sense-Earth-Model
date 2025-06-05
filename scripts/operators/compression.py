@@ -41,4 +41,5 @@ class Index(ImageOperator):
                     'condenser': lambda i: self.__create_condensed_image(i, non_zero_bool_array, self.final_width),
                     'non_zero_bool_array': non_zero_bool_array
                 }
+                output.append(data['condenser'](image))
         return output, data
