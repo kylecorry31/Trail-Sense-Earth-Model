@@ -4,7 +4,7 @@ from scripts import progress
 import shutil
 import requests
 from .operators import process
-from .operators.basic import FlipY, ReplaceInvalid, Reshape, ShiftX, Normalize, ReplaceLargeValues, Save
+from .operators.basic import FlipY, ReplaceInvalid, Reshape, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing
 from .operators.compression import Index
 from .operators.masking import RemoveOceans
 
@@ -58,7 +58,7 @@ def process_ocean_tides(final_shape):
                     RemoveOceans(dilation=5, replacement=invalid_value),
                     Reshape(final_shape),
                     ReplaceLargeValues(500, invalid_value=invalid_value),
-                    Normalize(0.0, invalid_value=invalid_value),
+                    SplitProcessing(Normalize(0.0, invalid_value=invalid_value)),
                     Index(condenser, final_width, invalid_value),
                     Save([f'{output_directory}/{constituent}-amplitude.tif'])
                 )
@@ -71,7 +71,7 @@ def process_ocean_tides(final_shape):
                 for value in amplitude_results[replace_large_values_idx]['large_values'][0]:
                     large_amplitudes.append((constituent, value[0], value[1], int(value[2])))
 
-                amplitudes[constituent] = float(amplitude_results[normalize_index]['maximum'])           
+                amplitudes[constituent] = float(amplitude_results[normalize_index]['data'][0][0]['maximum'])           
                 
                 if condenser is None:
                     condenser = amplitude_results[index_index]['condenser']
