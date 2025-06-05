@@ -188,10 +188,10 @@ def normalize(image, minimum, maximum, ignored_value = None):
 
     if ignored_value is None:
         return (image - minimum) / (maximum - minimum), minimum, maximum
-    normalized = (image[image != 100000] - minimum) / (maximum - minimum)
+    normalized = (image[image != ignored_value] - minimum) / (maximum - minimum)
     normalized[normalized < 0] = 0
     result = image.copy()
-    result[result != 100000] = normalized
+    result[result != ignored_value] = normalized
     return result, minimum, maximum
 
 def extract_large_values(image, threshold, replacement = 0, ignored_value = None):

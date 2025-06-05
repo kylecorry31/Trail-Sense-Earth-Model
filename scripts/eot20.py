@@ -3,6 +3,10 @@ import os
 from scripts import progress, to_tif, natural_earth, compression, reshape
 import shutil
 import requests
+from .operators import process
+from .operators.basic import FlipY, ReplaceInvalid, Reshape, ShiftX, Float, Normalize, ReplaceLargeValues, Save
+from .operators.compression import Index
+from .operators.masking import RemoveOceans
 
 # Load the data
 source_directory = 'source/eot20'
@@ -46,36 +50,50 @@ def process_ocean_tides(final_shape):
             file_path = f'{source_directory}/ocean_tides/{constituent}_ocean_eot20.nc'
             with netCDF4.Dataset(file_path, 'r') as file:
                 # AMPLITUDE
-                amplitude = file.variables['amplitude'][:]
-                amplitude = to_tif(amplitude, is_inverted=True, x_shift=amplitude.shape[1] // 2, masked_value_replacement=invalid_value)
-                amplitude = natural_earth.remove_oceans(amplitude, dilation=5, replacement=invalid_value, scale=4)
-                amplitude = reshape(amplitude, final_shape)
+                _, amplitude_results = process(
+                    file.variables['amplitude'][:],
+                    ReplaceInvalid(invalid_value),
+                    ShiftX(0.5, True),
+                    FlipY(),
+                    RemoveOceans(dilation=5, replacement=invalid_value),
+                    Reshape(final_shape),
+                    ReplaceLargeValues(500, invalid_value=invalid_value),
+                    Normalize(0.0, invalid_value=invalid_value),
+                    Index(condenser, final_width, invalid_value),
+                    Save(f'{output_directory}/{constituent}-amplitude.tif')
+                )
 
-                # Remove large amplitudes to avoid compression loss before normalizing
-                amplitude, large_values = compression.extract_large_values(amplitude, 500, ignored_value = invalid_value)
-                for value in large_values:
+                replace_large_values_idx = 5
+                normalize_index = 6
+                index_index = 7
+
+                # Extract results
+                for value in amplitude_results[replace_large_values_idx]['large_values']:
                     large_amplitudes.append((constituent, value[0], value[1], int(value[2])))
+
+                amplitudes[constituent] = float(amplitude_results[normalize_index]['maximum'])           
                 
-                # Normalize amplitudes
-                amplitude, _, max_amplitude = compression.normalize(amplitude, 0.0, None, invalid_value)
-                amplitudes[constituent] = float(max_amplitude)           
+                if condenser is None:
+                    condenser = amplitude_results[index_index]['condenser']
+                
+                if not indices_images_created:
+                    process(amplitude_results[index_index]['indices_x'], Save(f'{output_directory}/indices-x.tif'))
+                    process(amplitude_results[index_index]['indices_y'], Save(f'{output_directory}/indices-y.tif'))
+                    indices_images_created = True
 
                 # PHASE
-                phase = file.variables['phase'][:]
-                phase, _, _ = compression.normalize(phase, -180.0, 180.0)
-                phase = to_tif(phase, is_inverted=True, x_shift=phase.shape[1] // 2, masked_value_replacement=invalid_value)
-                phase = natural_earth.remove_oceans(phase, dilation=5, replacement=invalid_value, scale=4)
-                phase = reshape(phase, final_shape)
+                process(
+                    file.variables['phase'][:],
+                    Normalize(-180.0, 180.0, invalid_value),
+                    ReplaceInvalid(invalid_value),
+                    ShiftX(0.5, True),
+                    FlipY(),
+                    RemoveOceans(dilation=5, replacement=invalid_value),
+                    Reshape(final_shape),
+                    Index(condenser, final_width, invalid_value),
+                    Save(f'{output_directory}/{constituent}-phase.tif')
+                )
 
-                # Create the indices images
-                if not indices_images_created:
-                    indices_x, indices_y, condenser, _ = compression.index(amplitude, invalid_value, final_width)
-                    to_tif(indices_x, f'{output_directory}/indices-x.tif')
-                    to_tif(indices_y, f'{output_directory}/indices-y.tif')
-
-                # Create condensed images
-                to_tif(condenser(amplitude), f'{output_directory}/{constituent}-amplitude.tif')                
-                to_tif(condenser(phase), f'{output_directory}/{constituent}-phase.tif')
                 pbar.update(1)
 
     return amplitudes, large_amplitudes
