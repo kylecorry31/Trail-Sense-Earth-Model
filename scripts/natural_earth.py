@@ -52,6 +52,7 @@ def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, 
     image = np.array(load(image_path, resize))
     image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation, scale, bbox)
     to_tif(image, output_path)
+    return image
 
 def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None):
     global last_mask, last_mask_replacement, last_mask_inverted, last_mask_x_scale, last_mask_y_scale, last_mask_dilation, last_mask_scale

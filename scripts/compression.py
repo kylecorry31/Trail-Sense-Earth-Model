@@ -119,13 +119,13 @@ def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, qualit
     
     return float(a), float(b)
 
-def minify(path, map_point, invalid_value, output_filename, quality, lossless, size=None, a_override=None, b_override=None):
+def minify(path, map_point, invalid_value, output_filename, quality, lossless, size=None, a_override=None, b_override=None, should_print=True):
     Image.MAX_IMAGE_PIXELS = None
     if a_override is not None and b_override is not None:
         a = a_override
         b = b_override
     else:
-        with progress('Calculating compression offset', 1) as pbar:
+        with progress('Calculating compression offset', 1, disable=not should_print) as pbar:
             offset = get_min_max([path], map_point, invalid_value)
             pbar.update(1)
 
@@ -135,11 +135,14 @@ def minify(path, map_point, invalid_value, output_filename, quality, lossless, s
         if np.isinf(a):
             a = 1
 
-    print(f'A: {a}, B: {b}')
+    if should_print:
+        print(f'A: {a}, B: {b}')
     
-    with progress('Compressing', 1) as pbar:
+    with progress('Compressing', 1, disable=not should_print) as pbar:
         compress_to_webp2([path], output_filename, map_point, a, b, invalid_value, quality, lossless, size)
         pbar.update(1)
+    
+    return (a, b)
 
 def split_16_bits(path, output_path_lower, output_path_upper, a=1, b=0):
     # Load the TIF

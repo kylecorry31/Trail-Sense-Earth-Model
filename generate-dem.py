@@ -6,6 +6,7 @@ import re
 
 resolution = 15
 image_resolution = (360 * 40, 180 * 40)
+compress_images = True
 
 # Increase the maximum image pixel limit to avoid DecompressionBombError
 Image.MAX_IMAGE_PIXELS = None
@@ -36,6 +37,7 @@ else:
         os.makedirs('output/dem')
 
     with progress.progress('Processing DEM files', len(files)) as pbar:
+        compression_factors = []
         for file in files:
             region = file.split('_')[-2]
 
@@ -53,9 +55,28 @@ else:
             end_latitude = latitude - resolution
             end_longitude = longitude + resolution
 
-            natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=2, bbox=(longitude, end_latitude, end_longitude, latitude))
+            image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=2, bbox=(longitude, end_latitude, end_longitude, latitude))
 
-            compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif')
-            compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], None, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)
-            os.rename(f'output/dem-{region}-1-3.webp', f'output/dem/{region}.webp')
+            # If all pixels are black, skip
+            if np.all(image == 0):
+                print(f'Skipping {region} as it contains no data')
+                continue
+
+            if compress_images:
+                a, b = compression.minify('images/dem_no_oceans.tif', lambda x: x, -99999, f'output/dem/{region}.webp', 100, False, should_print=False)
+                compression_factors.append((region, a, b, latitude, longitude, end_latitude, end_longitude))
+            else:
+                compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif')
+                compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], None, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)
+                os.rename(f'output/dem-{region}-1-3.webp', f'output/dem/{region}.webp')
             pbar.update(1)
+    
+    if compress_images:
+        kotlin = "arrayOf(\n"
+        for factor in compression_factors:
+            kotlin += f'    arrayOf("{factor[0]}", {factor[1]}f, {factor[2]}f, {factor[3]}.0, {factor[4]}.0, {factor[5]}.0, {factor[6]}.0),\n'
+        kotlin += ")"
+        print(kotlin)
+
+        with open('output/dem/compression_factors.kt', 'w') as f:
+            f.write(kotlin)
