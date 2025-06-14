@@ -15,7 +15,7 @@ natural_earth.download()
 
 if resolution == 60:
     with progress.progress('Removing oceans', 1) as pbar:
-        natural_earth.remove_oceans_from_tif(etopo.surface_path, 'images/dem_no_oceans.tif', resize=resolution, scale=1)
+        natural_earth.remove_oceans_from_tif(etopo.surface_path, 'images/dem_no_oceans.tif', resize=image_resolution, scale=1)
         pbar.update(1)
 
     dem_app = 'images/dem_no_oceans.tif'#images/dem_app.tif'
