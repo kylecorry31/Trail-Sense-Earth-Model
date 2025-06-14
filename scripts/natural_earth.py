@@ -48,24 +48,30 @@ def download(redownload=False):
                 zip_ref.extractall(f'source/natural-earth')
             pbar.update(1)
 
-def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4):
+def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None):
     image = np.array(load(image_path, resize))
-    image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation, scale)
+    image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation, scale, bbox)
     to_tif(image, output_path)
 
-def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4):
+def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None):
     global last_mask, last_mask_replacement, last_mask_inverted, last_mask_x_scale, last_mask_y_scale, last_mask_dilation, last_mask_scale
     # Render the shapefiles to an image
     width = image.shape[1]
     height = image.shape[0]
 
+    # Default to global extent if no bbox specified
+    if bbox is None:
+        bbox = (-180, -90, 180, 90)  # (west, south, east, north)
+    
+    west, south, east, north = bbox
+    
     if x_scale is None:
-        x_scale = 360 / width
+        x_scale = (east - west) / width
     
     if y_scale is None:
-        y_scale = 180 / height
+        y_scale = (north - south) / height
 
-    if last_mask is not None and last_mask_replacement == replacement and last_mask_inverted == inverted and last_mask_x_scale == x_scale and last_mask_y_scale == y_scale and last_mask_dilation == dilation and last_mask_scale == scale:
+    if last_mask is not None and last_mask_replacement == replacement and last_mask_inverted == inverted and last_mask_x_scale == x_scale and last_mask_y_scale == y_scale and last_mask_dilation == dilation and last_mask_scale == scale and bbox is None:
         mask = last_mask
     else:
         shapefile_path = "source/natural-earth/ne_10m_land.shp"
@@ -74,10 +80,10 @@ def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=No
         gdf = gpd.read_file(shapefile_path)
         gdf_islands = gpd.read_file(island_shapefile_path)
 
-        mask = rasterize(gdf.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
+        mask = rasterize(gdf.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(west, north, x_scale / scale, y_scale / scale), dtype=np.float32)
         mask[mask > 0] = 255
 
-        img_islands = rasterize(gdf_islands.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(-180, 90, x_scale / scale, y_scale / scale), dtype=np.float32)
+        img_islands = rasterize(gdf_islands.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(west, north, x_scale / scale, y_scale / scale), dtype=np.float32)
         img_islands[img_islands > 0] = 255
 
         mask = np.maximum(mask, img_islands)

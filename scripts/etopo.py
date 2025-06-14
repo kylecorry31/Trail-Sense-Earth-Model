@@ -30,19 +30,51 @@ def __download(url, redownload=False):
     if not os.path.exists(f'source/etopo'):
         os.makedirs(f'source/etopo')
     if not os.path.exists(f'source/etopo/{filename}') or redownload:
-        r = requests.get(url)
-        if r.status_code == 200:
-            with open(f'source/etopo/{filename}', 'wb') as f:
-                f.write(r.content)
-        else:
-            raise Exception(f'Error {r.status_code} downloading {url}')
+        max_retries = 1
+        for attempt in range(max_retries + 1):
+            try:
+                r = requests.get(url)
+                if r.status_code == 200:
+                    with open(f'source/etopo/{filename}', 'wb') as f:
+                        f.write(r.content)
+                        break
+                else:
+                    raise Exception(f'Error {r.status_code} downloading {url}')
+            except Exception as e:
+                if attempt == max_retries:
+                    raise e
 
-def download(redownload=False):
-    with progress("Downloading ETOPO data", 2) as pbar:
-        __download(__get_url(90, -180, 60, 'geoid'), redownload)
+def get_file_paths(resolution, model):
+    regions = []
+    if resolution == 60:
+        regions.append([90, -180])
+    else:
+        for lat in range(-90+resolution, 91, resolution):
+            for lon in range(-180, 180, resolution):
+                regions.append([lat, lon])
+    
+    urls = []
+    for region in regions:
+        urls.append(__get_url(region[0], region[1], resolution, model, 'surface_elev' if model == 'surface' else None))
+    
+    return [f'source/etopo/{url.split('/')[-1]}' for url in urls]
+
+
+def download(redownload=False, geoid_resolution=60, surface_resolution=60):
+    surface_regions = []
+    if surface_resolution == 60:
+        surface_regions.append([90, -180])
+    else:
+        for lat in range(-90+surface_resolution, 91, surface_resolution):
+            for lon in range(-180, 180, surface_resolution):
+                surface_regions.append([lat, lon])
+
+    with progress("Downloading ETOPO data", 1 + len(surface_regions)) as pbar:
+        __download(__get_url(90, -180, geoid_resolution, 'geoid'), redownload)
         pbar.update(1)
-        __download(__get_url(90, -180, 60, 'surface', 'surface_elev'), redownload)
-        pbar.update(1)
+        for region in surface_regions:
+            __download(__get_url(region[0], region[1], surface_resolution, 'surface', 'surface_elev'), redownload)
+            pbar.update(1)
 
 def process_dem(include_islands=True):
     with progress("Loading land masks", 2) as pbar:

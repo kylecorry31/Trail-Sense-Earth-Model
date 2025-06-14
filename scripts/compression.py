@@ -97,7 +97,7 @@ def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, qualit
         a = a_override
         b = b_override
     else:
-        with progress(f'Calculating compression offset ({data_point})', 1) as pbar:
+        with progress(f'Calculating compression offset ({data_point})', 1, disable=not should_print) as pbar:
             offset = get_min_max(files, map_point, invalid_value, size)
             pbar.update(1)
 
@@ -112,7 +112,7 @@ def minify_multiple(files, map_point, invalid_value, data_point, use_rgb, qualit
 
     grouping = grouping if use_rgb else 1
     
-    with progress(f'Compressing ({data_point})', len(files)) as pbar:
+    with progress(f'Compressing ({data_point})', len(files), disable=not should_print) as pbar:
         for i in range(0, len(files), grouping):
             compress_to_webp2(files[i:i+grouping], f'output/{data_point}-{i + 1}-{i + grouping}.webp', map_point, a, b, invalid_value, quality, lossless, size)
             pbar.update(grouping)

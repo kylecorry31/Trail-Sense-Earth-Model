@@ -20,18 +20,39 @@ def compress_to_webp2(paths, output_filename, map_point=lambda x: x, a=1, b=0, i
     images = [load(path, resize_source) for path in paths]
 
     image_arrays = [np.array(im) for im in images]
-    if len(images) == 1:
-        image_arrays = image_arrays[0]
-        mask = (image_arrays == invalid_value) | np.isnan(image_arrays)
-        mapped = np.where(mask, 0, np.int32(a * (map_point(image_arrays) + b)))
-        new_im = Image.fromarray(mapped.astype(np.uint8), mode='L')
+    # Skip extra calculations if no transformations are needed
+    if map_point is None and invalid_value is None and a == 1 and b == 0:
+        if len(images) == 1:
+            new_im = images[0].convert('L')
+        else:
+            # Stack images into RGBA
+            if len(images) == 3:
+                r, g, b = images
+                new_im = Image.merge('RGB', (r.convert('L'), g.convert('L'), b.convert('L')))
+            elif len(images) == 4:
+                r, g, b, a = images
+                new_im = Image.merge('RGBA', (r.convert('L'), g.convert('L'), b.convert('L'), a.convert('L')))
+            else:
+                # Fallback for other cases
+                mapped = np.zeros((*image_arrays[0].shape, 4), dtype=np.uint8)
+                mapped[..., 3] = 255
+                for i in range(len(images)):
+                    mapped[..., i] = image_arrays[i]
+                new_im = Image.fromarray(mapped)
     else:
-        mask = np.any([(image_arrays[i] == invalid_value) | np.isnan(image_arrays[i]) for i in range(len(images))], axis=0)
-        mapped = np.zeros((*image_arrays[0].shape, 4), dtype=np.uint8)
-        mapped[..., 3] = 255
-        for i in range(len(images)):
-            mapped[..., i] = np.where(mask, 0, np.int32(a * (map_point(image_arrays[i]) + b)))
-        new_im = Image.fromarray(mapped, mode='RGBA')
+        # Original calculation logic
+        if len(images) == 1:
+            image_arrays = image_arrays[0]
+            mask = (image_arrays == invalid_value) | np.isnan(image_arrays)
+            mapped = np.where(mask, 0, np.int32(a * (map_point(image_arrays) + b)))
+            new_im = Image.fromarray(mapped.astype(np.uint8), mode='L')
+        else:
+            mask = np.any([(image_arrays[i] == invalid_value) | np.isnan(image_arrays[i]) for i in range(len(images))], axis=0)
+            mapped = np.zeros((*image_arrays[0].shape, 4), dtype=np.uint8)
+            mapped[..., 3] = 255
+            for i in range(len(images)):
+                mapped[..., i] = np.where(mask, 0, np.int32(a * (map_point(image_arrays[i]) + b)))
+            new_im = Image.fromarray(mapped, mode='RGBA')
     new_im.save(output_filename, quality=quality, lossless=lossless, format='WEBP')
 
 def compress_to_webp(paths, output_filename, map_point=lambda x: x, offset=0, invalid_value=-999, quality=100, lossless=False, resize_source=None):
