@@ -53,7 +53,7 @@ def compress_to_webp2(paths, output_filename, map_point=lambda x: x, a=1, b=0, i
             for i in range(len(images)):
                 mapped[..., i] = np.where(mask, 0, np.int32(a * (map_point(image_arrays[i]) + b)))
             new_im = Image.fromarray(mapped, mode='RGBA')
-    new_im.save(output_filename, quality=quality, lossless=lossless, format='WEBP', method=6, alpha_quality=0 if len(images) < 3 else quality)
+    new_im.save(output_filename, quality=quality, lossless=lossless, format='PNG' if output_filename.endswith('png') else 'WEBP', method=6, alpha_quality=0 if len(images) < 3 else quality, optimize=True, compress_level=9)
 
 def compress_to_webp(paths, output_filename, map_point=lambda x: x, offset=0, invalid_value=-999, quality=100, lossless=False, resize_source=None):
     if '/' in output_filename and not os.path.exists(output_filename.rsplit('/', 1)[0]):

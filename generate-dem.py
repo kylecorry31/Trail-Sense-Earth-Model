@@ -63,7 +63,7 @@ else:
             image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude))
 
             # If all pixels are black, skip
-            if np.all(image == 0):
+            if np.all(image < 2) and np.all(image > -2):
                 print(f'Skipping {region} as it contains no data')
                 continue
 
