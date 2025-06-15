@@ -3,6 +3,8 @@ from PIL import Image
 import numpy as np
 import os
 import re
+import json
+import zipfile
 
 resolution = 15
 image_resolution = (360 * 40, 180 * 40)
@@ -69,20 +71,44 @@ else:
 
             if compress_images:
                 a, b = compression.minify('images/dem_no_oceans.tif', lambda x: x, -99999, f'output/dem/{region}.webp', 100, False, should_print=False)
-                compression_factors.append((region, a, b, latitude, longitude, end_latitude, end_longitude))
+                compression_factors.append({
+                    "filename": f'{region}.webp',
+                    "a": float(a),
+                    "b": float(b),
+                    "latitude_start": float(latitude),
+                    "longitude_start": float(longitude),
+                    "latitude_end": float(end_latitude),
+                    "longitude_end": float(end_longitude),
+                    "width": int(image.shape[1]),
+                    "height": int(image.shape[0])
+                })
             else:
                 offset = compression.get_min_max(['images/dem_no_oceans.tif'])[0]
-                compression_factors.append((region, 0.05, -offset, latitude, longitude, end_latitude, end_longitude))
+                compression_factors.append({
+                    "filename": f'{region}.webp',
+                    "a": 0.05,
+                    "b": -offset,
+                    "latitude_start": latitude,
+                    "longitude_start": longitude,
+                    "latitude_end": end_latitude,
+                    "longitude_end": end_longitude,
+                    "width": image.shape[1],
+                    "height": image.shape[0]
+                })
                 compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif', 0.05, -offset)
                 compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], lambda x: x, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)
                 os.rename(f'output/dem-{region}-1-3.webp', f'output/dem/{region}.webp')
             pbar.update(1)
     
-    kotlin = "arrayOf(\n"
-    for factor in compression_factors:
-        kotlin += f'    arrayOf("{factor[0]}", {factor[1]}, {factor[2]}, {factor[3]}.0, {factor[4]}.0, {factor[5]}.0, {factor[6]}.0),\n'
-    kotlin += ")"
-    print(kotlin)
-
-    with open('output/dem/compression_factors.kt', 'w') as f:
-        f.write(kotlin)
+    with open('output/dem/index.json', 'w') as f:
+        json.dump({
+            "resolution_arc_seconds": resolution,
+            "files": compression_factors,
+            "compression_method": "8-bit" if compress_images else "16-bit"
+        }, f, indent=4)
+    
+    # Compress the contents of the dem directory to a zip file
+    with zipfile.ZipFile('output/dem.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk('output/dem'):
+            for file in files:
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), 'output/dem'))
