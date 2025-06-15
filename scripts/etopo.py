@@ -12,6 +12,7 @@ from scripts.progress import progress
 shapefile_path = "source/natural-earth/ne_10m_land.shp"
 island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 surface_path = "source/etopo/ETOPO_2022_v1_60s_N90W180_surface.tif"
+surface_path_30 = "source/etopo/ETOPO_2022_v1_30s_N90W180_surface.tif"
 geoid_path = "source/etopo/ETOPO_2022_v1_60s_N90W180_geoid.tif"
 dem_path = "images/dem-etopo.tif"
 dem_land_path = "images/dem-land-etopo.tif"
@@ -46,7 +47,7 @@ def __download(url, redownload=False):
 
 def get_file_paths(resolution, model):
     regions = []
-    if resolution == 60:
+    if resolution != 15:
         regions.append([90, -180])
     else:
         for lat in range(-90+resolution, 91, resolution):
@@ -62,7 +63,7 @@ def get_file_paths(resolution, model):
 
 def download(redownload=False, geoid_resolution=60, surface_resolution=60):
     surface_regions = []
-    if surface_resolution == 60:
+    if surface_resolution != 15:
         surface_regions.append([90, -180])
     else:
         for lat in range(-90+surface_resolution, 91, surface_resolution):

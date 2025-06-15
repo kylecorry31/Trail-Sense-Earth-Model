@@ -1,4 +1,4 @@
-from scripts import etopo, compression, natural_earth, clip, progress
+from scripts import etopo, compression, natural_earth, progress
 from PIL import Image
 import numpy as np
 import os
@@ -41,11 +41,16 @@ else:
         for file in files:
             region = file.split('_')[-2]
 
+            if region.startswith('S60') or region.startswith('S75') or region.startswith('N90'):
+                pbar.update(1)
+                continue
+
             # First letter is either N or S followed by 2 digits and E or W and then 3 digits
             regex = r'([NS]\d{2})([EW]\d{3})'
             match = re.search(regex, region)
             if not match:
                 print(f'Invalid region format: {region}')
+                pbar.update(1)
                 continue
             latitude, longitude = match.groups()
 
@@ -55,7 +60,7 @@ else:
             end_latitude = latitude - resolution
             end_longitude = longitude + resolution
 
-            image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=2, bbox=(longitude, end_latitude, end_longitude, latitude))
+            image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude))
 
             # If all pixels are black, skip
             if np.all(image == 0):
@@ -66,17 +71,18 @@ else:
                 a, b = compression.minify('images/dem_no_oceans.tif', lambda x: x, -99999, f'output/dem/{region}.webp', 100, False, should_print=False)
                 compression_factors.append((region, a, b, latitude, longitude, end_latitude, end_longitude))
             else:
-                compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif')
-                compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], None, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)
+                offset = compression.get_min_max(['images/dem_no_oceans.tif'])[0]
+                compression_factors.append((region, 0.05, -offset, latitude, longitude, end_latitude, end_longitude))
+                compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif', 0.05, -offset)
+                compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], lambda x: x, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)
                 os.rename(f'output/dem-{region}-1-3.webp', f'output/dem/{region}.webp')
             pbar.update(1)
     
-    if compress_images:
-        kotlin = "arrayOf(\n"
-        for factor in compression_factors:
-            kotlin += f'    arrayOf("{factor[0]}", {factor[1]}f, {factor[2]}f, {factor[3]}.0, {factor[4]}.0, {factor[5]}.0, {factor[6]}.0),\n'
-        kotlin += ")"
-        print(kotlin)
+    kotlin = "arrayOf(\n"
+    for factor in compression_factors:
+        kotlin += f'    arrayOf("{factor[0]}", {factor[1]}, {factor[2]}, {factor[3]}.0, {factor[4]}.0, {factor[5]}.0, {factor[6]}.0),\n'
+    kotlin += ")"
+    print(kotlin)
 
-        with open('output/dem/compression_factors.kt', 'w') as f:
-            f.write(kotlin)
+    with open('output/dem/compression_factors.kt', 'w') as f:
+        f.write(kotlin)
