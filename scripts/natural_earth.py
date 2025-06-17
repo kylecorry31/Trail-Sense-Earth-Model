@@ -34,6 +34,7 @@ def download(redownload=False):
     files = [
         'https://naciscdn.org/naturalearth/10m/physical/ne_10m_land.zip',
         'https://naciscdn.org/naturalearth/10m/physical/ne_10m_minor_islands.zip',
+        'https://naciscdn.org/naturalearth/10m/physical/ne_10m_lakes.zip'
     ]
     with progress("Downloading Natural Earth data", len(files)) as pbar:
         for file in files:
@@ -108,6 +109,47 @@ def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=No
     last_mask_y_scale = y_scale
     last_mask_dilation = dilation
     last_mask_scale = scale
+
+    image = image * mask
+    image[mask == 0] = replacement
+    return image
+
+def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None):
+    # Render the shapefiles to an image
+    width = image.shape[1]
+    height = image.shape[0]
+
+    # Default to global extent if no bbox specified
+    if bbox is None:
+        bbox = (-180, -90, 180, 90)  # (west, south, east, north)
+    
+    west, south, east, north = bbox
+    
+    if x_scale is None:
+        x_scale = (east - west) / width
+    
+    if y_scale is None:
+        y_scale = (north - south) / height
+
+    
+    shapefile_path = "source/natural-earth/ne_10m_lakes.shp"
+
+    gdf = gpd.read_file(shapefile_path)
+
+    mask = rasterize(gdf.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(west, north, x_scale / scale, y_scale / scale), dtype=np.float32)
+    mask[mask > 0] = 255
+
+    # Invert the mask
+    mask = 255 - mask
+
+    # Dilate the image
+    mask = mask > 0
+    mask = binary_dilation(mask, iterations=dilation * scale)
+    mask = mask.astype(np.float32)
+    
+    # Downsample the image
+    mask = mask[::scale, ::scale]
+
 
     image = image * mask
     image[mask == 0] = replacement

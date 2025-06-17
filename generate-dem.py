@@ -1,4 +1,4 @@
-from scripts import etopo, compression, natural_earth, progress, clip
+from scripts import etopo, compression, natural_earth, progress, clip, to_tif
 from PIL import Image
 import numpy as np
 import os
@@ -7,7 +7,7 @@ import json
 import zipfile
 
 scale=1.0
-compress_images = True
+compress_images = False
 compression_quality = 100
 ignore_threshold = 2
 version = '0.1.0'
@@ -56,11 +56,15 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
         initial_size = 3600
         image_size = (int(initial_size * scale), int(initial_size * scale)) if scale is not None else None
         image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), resize=image_size)
+        image = natural_earth.remove_inland_water(image, scale=4, bbox=(longitude, end_latitude, end_longitude, latitude))
 
         # If all pixels are black, skip
         if np.all(image < ignore_threshold):
             print(f'Skipping {region} as it contains no data')
             continue
+
+        # Image is not allowed to be lower than the lowest place on land
+        image[image < -430.5] = -430.5
 
         if compress_images:
             a, b = compression.minify('images/dem_no_oceans.tif', lambda x: x, -99999, f'output/dem/{region}.webp', compression_quality, False, should_print=False)
@@ -76,19 +80,20 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
                 "height": int(image.shape[0])
             })
         else:
-            offset = compression.get_min_max(['images/dem_no_oceans.tif'])[0]
+            a = 0.125
+            b = -compression.get_min_max(['images/dem_no_oceans.tif'])[0]
             compression_factors.append({
                 "filename": f'{region}.webp',
-                "a": 0.05,
-                "b": -offset,
-                "latitude_start": latitude,
-                "longitude_start": longitude,
-                "latitude_end": end_latitude,
-                "longitude_end": end_longitude,
-                "width": image.shape[1],
-                "height": image.shape[0]
+                "a": float(a),
+                "b": float(b),
+                "latitude_start": float(latitude),
+                "longitude_start": float(longitude),
+                "latitude_end": float(end_latitude),
+                "longitude_end": float(end_longitude),
+                "width": int(image.shape[1]),
+                "height": int(image.shape[0])
             })
-            compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif', 0.05, -offset)
+            compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif', a, b)
             compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], lambda x: x, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)
             os.rename(f'output/dem-{region}-1-3.webp', f'output/dem/{region}.webp')
         pbar.update(1)
