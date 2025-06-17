@@ -7,10 +7,10 @@ import json
 import zipfile
 
 scale=1.0
-compress_images = False
+compress_images = True
 compression_quality = 100
 ignore_threshold = 2
-version = '0.1.0'
+version = '0.2.0'
 
 # High resolution: resolution = 15, scale = 1.0, quality = 100, ignore_threshold = 2, compress_images = True
 # Low resolution: resolution = 15, scale = 0.2, quality = 60, ignore_threshold = 10, compress_images = True
@@ -55,16 +55,17 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
 
         initial_size = 3600
         image_size = (int(initial_size * scale), int(initial_size * scale)) if scale is not None else None
-        image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), resize=image_size)
-        image = natural_earth.remove_inland_water(image, scale=4, bbox=(longitude, end_latitude, end_longitude, latitude))
+        image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), resize=image_size, dilation=-20)
+        image = natural_earth.remove_inland_water(image, scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), replacement=0)
 
         # If all pixels are black, skip
         if np.all(image < ignore_threshold):
-            print(f'Skipping {region} as it contains no data')
+            pbar.update(1)
             continue
 
         # Image is not allowed to be lower than the lowest place on land
-        image[image < -430.5] = -430.5
+        image[image < -430.5] = 0
+        to_tif(image, 'images/dem_no_oceans.tif')
 
         if compress_images:
             a, b = compression.minify('images/dem_no_oceans.tif', lambda x: x, -99999, f'output/dem/{region}.webp', compression_quality, False, should_print=False)
@@ -94,7 +95,7 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
                 "height": int(image.shape[0])
             })
             compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif', a, b)
-            compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], lambda x: x, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)
+            compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], None, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)
             os.rename(f'output/dem-{region}-1-3.webp', f'output/dem/{region}.webp')
         pbar.update(1)
 

@@ -6,7 +6,7 @@ import zipfile
 import geopandas as gpd
 import rasterio.transform
 import rasterio
-from scipy.ndimage import binary_dilation
+from scipy.ndimage import binary_dilation, binary_erosion
 from rasterio.features import rasterize
 import numpy as np
 
@@ -96,7 +96,10 @@ def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=No
 
         # Dilate the image
         mask = mask > 0
-        mask = binary_dilation(mask, iterations=dilation * scale)
+        if dilation < 0:
+            mask = binary_erosion(mask, iterations=-dilation * scale)
+        elif dilation > 0:
+            mask = binary_dilation(mask, iterations=dilation * scale)
         mask = mask.astype(np.float32)
         
         # Downsample the image
@@ -144,7 +147,10 @@ def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilati
 
     # Dilate the image
     mask = mask > 0
-    mask = binary_dilation(mask, iterations=dilation * scale)
+    if dilation < 0:
+        mask = binary_erosion(mask, iterations=-dilation * scale)
+    elif dilation > 0:
+        mask = binary_dilation(mask, iterations=dilation * scale)
     mask = mask.astype(np.float32)
     
     # Downsample the image
