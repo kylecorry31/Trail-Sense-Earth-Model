@@ -101,7 +101,7 @@ def replace_invalid(image, replacement=0):
 def to_float(image):
     return image.astype(np.float32)
 
-def to_tif(values, output=None, is_inverted=False, x_shift=0, masked_value_replacement=0):
+def to_tif(values, output=None, is_inverted=False, x_shift=0, masked_value_replacement=0, generate_webp=False):
     values_array = replace_invalid(values, masked_value_replacement)
 
     if x_shift != 0:
@@ -116,7 +116,8 @@ def to_tif(values, output=None, is_inverted=False, x_shift=0, masked_value_repla
         if not os.path.exists(output.rsplit('/', 1)[0]):
             os.makedirs(output.rsplit('/', 1)[0])
         img.save(output, format='TIFF')
-        # img.save(output + '.webp', format='WEBP')
+        if generate_webp:
+            img.save(output + '.webp', format='WEBP')
     return values_array
 
 def resize(path, output, size):
