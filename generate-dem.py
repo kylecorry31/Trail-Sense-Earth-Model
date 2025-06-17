@@ -1,4 +1,4 @@
-from scripts import etopo, compression, natural_earth, progress, clip, to_tif
+from scripts import srtm, compression, progress, to_tif, load_pixels
 from PIL import Image
 import numpy as np
 import os
@@ -7,7 +7,7 @@ import json
 import zipfile
 
 preset = 'high'
-version = '0.2.0'
+version = '0.3.0'
 
 presets = [
     { 
@@ -60,10 +60,11 @@ Image.MAX_IMAGE_PIXELS = None
 resolution = 15
 true_resolution = int(resolution / scale)
 
-etopo.download(surface_resolution=resolution)
-natural_earth.download()
+srtm.download()
+if not os.path.exists('images/srtm'):
+    srtm.process()
 
-files = etopo.get_file_paths(resolution, 'surface')
+files = srtm.get_file_paths()
 
 if os.path.exists('output/dem'):
     for file in os.listdir('output/dem'):
@@ -75,7 +76,7 @@ if not os.path.exists('output/dem'):
 with progress.progress('Processing DEM files', len(files)) as pbar:
     compression_factors = []
     for file in files:
-        region = file.split('_')[-2]
+        region = file.split('/')[-1].split('.')[0]
 
         if region.startswith('S60') or region.startswith('S75') or region.startswith('N90'):
             pbar.update(1)
@@ -101,17 +102,13 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
 
         initial_size = 3600
         image_size = (int(initial_size * scale), int(initial_size * scale)) if scale is not None else None
-        image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), resize=image_size, dilation=-int(round(20 * scale)))
-        image = natural_earth.remove_inland_water(image, scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), replacement=0, dilation=int(round(-1 * scale)))
+        image = load_pixels(file, image_size)
 
         # If all pixels are black, skip
         if np.all(image < ignore_threshold):
             pbar.update(1)
             continue
 
-        # Image is not allowed to be lower than the lowest place on land
-        # TODO: Create a map of tile to lowest land elevation
-        image[image < -430.5] = 0
         to_tif(image, 'images/dem_no_oceans.tif')
 
         if compress_images:

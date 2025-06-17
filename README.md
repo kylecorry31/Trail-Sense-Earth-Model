@@ -98,3 +98,7 @@ https://en.wikipedia.org (see the wikipedia link in each species catalog notes s
 OpenCelliD Project is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License
 
 https://opencellid.org/
+
+# SRTM
+NASA Shuttle Radar Topography Mission, public domain
+https://data.noaa.gov/onestop/collections/details/96d77f2d-1ec2-4967-baa0-89626dc803bf
