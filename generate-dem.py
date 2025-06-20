@@ -6,7 +6,7 @@ import re
 import json
 import zipfile
 
-preset = 'high'
+preset = 'mini'
 version = '0.2.0'
 
 presets = [
@@ -16,6 +16,7 @@ presets = [
         "compress_images": False,
         "compression_quality": 100,
         "above_N60_quality": 100,
+        "above_N60_scale": 1.0,
         "ignore_threshold": 2
     },
     {   
@@ -24,6 +25,7 @@ presets = [
         "compress_images": True,
         "compression_quality": 100,
         "above_N60_quality": 100,
+        "above_N60_scale": 1.0,
         "ignore_threshold": 2
     },
     {   
@@ -32,15 +34,17 @@ presets = [
         "compress_images": True,
         "compression_quality": 90,
         "above_N60_quality": 60,
+        "above_N60_scale": 0.75,
         "ignore_threshold": 8
     },
     { 
         "id": "mini",
-        "scale": 0.2,
+        "scale": 0.25,
         "compress_images": True,
-        "compression_quality": 60,
+        "compression_quality": 75,
         "above_N60_quality": 10,
-        "ignore_threshold": 10
+        "above_N60_scale": 0.1,
+        "ignore_threshold": 20
     }
 ]
 
@@ -51,6 +55,7 @@ compress_images = presets[preset_idx]['compress_images']
 compression_quality = presets[preset_idx]['compression_quality']
 ignore_threshold = presets[preset_idx]['ignore_threshold']
 above_N60_quality = presets[preset_idx]['above_N60_quality']
+above_N60_scale = presets[preset_idx]['above_N60_scale']
 
 version += f'-{presets[preset_idx]["id"]}'
 
@@ -83,6 +88,7 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
 
         # N75 covers 60 - 75, 75-90 are already removed
         actual_quality = above_N60_quality if region.startswith('N75') else compression_quality
+        actual_scale = above_N60_scale if region.startswith('N75') else scale
 
         # First letter is either N or S followed by 2 digits and E or W and then 3 digits
         regex = r'([NS]\d{2})([EW]\d{3})'
@@ -100,9 +106,9 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
         end_longitude = longitude + resolution
 
         initial_size = 3600
-        image_size = (int(initial_size * scale), int(initial_size * scale)) if scale is not None else None
-        image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), resize=image_size, dilation=-int(round(20 * scale)))
-        image = natural_earth.remove_inland_water(image, scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), replacement=0, dilation=int(round(-1 * scale)))
+        image_size = (int(initial_size * actual_scale), int(initial_size * actual_scale)) if actual_scale is not None else None
+        image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), resize=image_size, dilation=-int(round(20 * actual_scale)))
+        image = natural_earth.remove_inland_water(image, scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), replacement=0, dilation=int(round(-1 * actual_scale)))
 
         # If all pixels are black, skip
         if np.all(image < ignore_threshold):
