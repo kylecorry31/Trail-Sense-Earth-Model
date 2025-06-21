@@ -71,10 +71,11 @@ def download(redownload=False, geoid_resolution=60, surface_resolution=60):
                 surface_regions.append([lat, lon])
 
     with progress("Downloading ETOPO data", 1 + len(surface_regions)) as pbar:
-        __download(__get_url(90, -180, geoid_resolution, 'geoid'), redownload)
+        # __download(__get_url(90, -180, geoid_resolution, 'geoid'), redownload)
         pbar.update(1)
         for region in surface_regions:
             __download(__get_url(region[0], region[1], surface_resolution, 'surface', 'surface_elev'), redownload)
+            __download(__get_url(region[0], region[1], surface_resolution, 'surface_sid'), redownload)
             pbar.update(1)
 
 def process_dem(include_islands=True):

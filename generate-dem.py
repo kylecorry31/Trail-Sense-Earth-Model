@@ -1,4 +1,4 @@
-from scripts import etopo, compression, natural_earth, progress, clip, to_tif
+from scripts import etopo, compression, natural_earth, progress, clip, to_tif, load_pixels, resize, reshape
 from PIL import Image
 import numpy as np
 import os
@@ -7,7 +7,7 @@ import json
 import zipfile
 
 preset = 'mini'
-version = '0.2.0'
+version = '0.3.0'
 
 presets = [
     { 
@@ -107,21 +107,45 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
 
         initial_size = 3600
         image_size = (int(initial_size * actual_scale), int(initial_size * actual_scale)) if actual_scale is not None else None
-        image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), resize=image_size, dilation=-int(round(20 * actual_scale)))
-        image = natural_earth.remove_inland_water(image, scale=4, bbox=(longitude, end_latitude, end_longitude, latitude), replacement=0, dilation=int(round(-1 * actual_scale)))
 
-        # If all pixels are black, skip
+        # While the source image removes most of the water, this will get ones missed in the US
+        # Look into switching to https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod44w-061
+        # TODO: Only apply mask to areas < 0
+        # image = natural_earth.remove_oceans_from_tif(file, 'images/dem_no_oceans.tif', scale=2, bbox=(longitude, end_latitude, end_longitude, latitude), dilation=-20, only_replace_negative_pixels=True)
+        # image = natural_earth.remove_inland_water(image, scale=2, bbox=(longitude, end_latitude, end_longitude, latitude), replacement=0, dilation=-1, only_replace_negative_pixels=True)
+        image = load_pixels(file)
+        source_image = load_pixels(file.replace('surface', 'surface_sid'))
+
+        # Zero out image where the source is bathymetry
+        image[~np.isin(source_image, [9, 10, 11, 13])] = 0
+
+        # If it is 13 and below 0, set it to 0 (13 is US coastline)
+        mask = (source_image == 13) & (image < 0)
+        image[mask] = 0
+        
+        # Image is not allowed to be lower than the lowest place on land
+        image[image < -430.5] = 0
+
+        # This image has inland water that is not properly masked
+        if region == 'S30W060':
+            image[image < 0] = 0
+        
+        image = reshape(image, image_size)
+
+        # Skip images with no valid land data
         if np.all(image < ignore_threshold):
             pbar.update(1)
             continue
 
-        # Image is not allowed to be lower than the lowest place on land
-        # TODO: Create a map of tile to lowest land elevation
-        image[image < -430.5] = 0
         to_tif(image, 'images/dem_no_oceans.tif')
 
         if compress_images:
             a, b = compression.minify('images/dem_no_oceans.tif', lambda x: x, -99999, f'output/dem/{region}.webp', actual_quality, False, should_print=False)
+            if a == 1 and b == 0:
+                # No actual data
+                print(f'Skipping {region} - no data after resizing.')
+                pbar.update(1)
+                continue
             compression_factors.append({
                 "filename": f'{region}.webp',
                 "a": float(a),
@@ -130,8 +154,8 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
                 "longitude_start": float(longitude),
                 "latitude_end": float(end_latitude),
                 "longitude_end": float(end_longitude),
-                "width": int(image.shape[1]),
-                "height": int(image.shape[0])
+                "width": int(image_size[0]),
+                "height": int(image_size[1])
             })
         else:
             a = 0.25
@@ -144,8 +168,8 @@ with progress.progress('Processing DEM files', len(files)) as pbar:
                 "longitude_start": float(longitude),
                 "latitude_end": float(end_latitude),
                 "longitude_end": float(end_longitude),
-                "width": int(image.shape[1]),
-                "height": int(image.shape[0])
+                "width": int(image_size[0]),
+                "height": int(image_size[1])
             })
             compression.split_16_bits('images/dem_no_oceans.tif', 'images/dem_lower.tif', 'images/dem_upper.tif', a, b)
             compression.minify_multiple(['images/dem_lower.tif', 'images/dem_upper.tif'], None, None, f'dem-{region}', True, 100, True, should_print=False, a_override=1, b_override=0)

@@ -49,13 +49,13 @@ def download(redownload=False):
                 zip_ref.extractall(f'source/natural-earth')
             pbar.update(1)
 
-def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None):
+def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
     image = np.array(load(image_path, resize))
-    image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation, scale, bbox)
+    image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation, scale, bbox, only_replace_negative_pixels)
     to_tif(image, output_path)
     return image
 
-def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None):
+def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
     global last_mask, last_mask_replacement, last_mask_inverted, last_mask_x_scale, last_mask_y_scale, last_mask_dilation, last_mask_scale
     # Render the shapefiles to an image
     width = image.shape[1]
@@ -113,11 +113,13 @@ def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=No
     last_mask_dilation = dilation
     last_mask_scale = scale
 
-    image = image * mask
-    image[mask == 0] = replacement
+    if only_replace_negative_pixels:
+        image[(mask == 0) & (image < 0)] = replacement
+    else:
+        image[mask == 0] = replacement
     return image
 
-def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None):
+def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
     # Render the shapefiles to an image
     width = image.shape[1]
     height = image.shape[0]
@@ -156,8 +158,9 @@ def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilati
     # Downsample the image
     mask = mask[::scale, ::scale]
 
-
-    image = image * mask
-    image[mask == 0] = replacement
+    if only_replace_negative_pixels:
+        image[(mask == 0) & (image < 0)] = replacement
+    else:
+        image[mask == 0] = replacement
     return image
     
