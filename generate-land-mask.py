@@ -3,7 +3,7 @@ from PIL import Image
 import numpy as np
 import os
 
-pixels_per_degree = 8
+pixels_per_degree = 15
 
 # Increase the maximum image pixel limit to avoid DecompressionBombError
 Image.MAX_IMAGE_PIXELS = None
@@ -17,6 +17,7 @@ if not os.path.exists('output'):
 image = np.full((180 * pixels_per_degree, 360 * pixels_per_degree), 255, dtype=np.uint8)
 
 image = natural_earth.remove_oceans(image, scale=2, dilation=0)
+image = natural_earth.remove_inland_water(image, scale=2, dilation=0)
 to_tif(image, 'images/land.tif')
 
 compression.minify('images/land.tif', lambda x: x, -99999, 'output/land.webp', 100, True, a_override=1, b_override=0)

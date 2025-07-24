@@ -34,7 +34,8 @@ def download(redownload=False):
     files = [
         'https://naciscdn.org/naturalearth/10m/physical/ne_10m_land.zip',
         'https://naciscdn.org/naturalearth/10m/physical/ne_10m_minor_islands.zip',
-        'https://naciscdn.org/naturalearth/10m/physical/ne_10m_lakes.zip'
+        'https://naciscdn.org/naturalearth/10m/physical/ne_10m_lakes.zip',
+        'https://naciscdn.org/naturalearth/10m/physical/ne_10m_rivers_lake_centerlines.zip'
     ]
     with progress("Downloading Natural Earth data", len(files)) as pbar:
         for file in files:
@@ -49,10 +50,10 @@ def download(redownload=False):
                 zip_ref.extractall(f'source/natural-earth')
             pbar.update(1)
 
-def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
+def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False, mode='F'):
     image = np.array(load(image_path, resize))
     image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation, scale, bbox, only_replace_negative_pixels)
-    to_tif(image, output_path)
+    to_tif(image, output_path, mode=mode)
     return image
 
 def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
@@ -119,7 +120,7 @@ def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=No
         image[mask == 0] = replacement
     return image
 
-def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
+def remove_geometry(image, shapefile_path, replacement=0, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
     # Render the shapefiles to an image
     width = image.shape[1]
     height = image.shape[0]
@@ -135,9 +136,6 @@ def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilati
     
     if y_scale is None:
         y_scale = (north - south) / height
-
-    
-    shapefile_path = "source/natural-earth/ne_10m_lakes.shp"
 
     gdf = gpd.read_file(shapefile_path)
 
@@ -163,4 +161,10 @@ def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilati
     else:
         image[mask == 0] = replacement
     return image
+
+def remove_inland_water(image, replacement=0, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False, remove_rivers=False):
+    new_image = remove_geometry(image, "source/natural-earth/ne_10m_lakes.shp", replacement, x_scale, y_scale, dilation, scale, bbox, only_replace_negative_pixels)
+    if remove_rivers:
+        new_image = remove_geometry(new_image, "source/natural-earth/ne_10m_rivers_lake_centerlines.shp", replacement, x_scale, y_scale, dilation, scale, bbox, only_replace_negative_pixels)
+    return new_image
     
