@@ -14,7 +14,7 @@ colors = [
 ]
 
 images = []
-with progress.progress('Processing world map', 4) as pbar:
+with progress.progress('Processing world map', 12) as pbar:
     for month in range(1, 13):
         image = load_pixels(f"images/world-map-{month}.tif")
         images.append(image)
