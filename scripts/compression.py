@@ -3,6 +3,7 @@ from .progress import progress
 from PIL import Image
 import numpy as np
 import pyshtools
+from scipy.ndimage import binary_closing
 
 # Pixel = a * value + b
 # Value = (pixel - b) / a
@@ -206,3 +207,35 @@ def extract_large_values(image, threshold, replacement = 0, ignored_value = None
         if replacement is not None:
             result[idx[0], idx[1]] = replacement
     return result, large_values
+
+def restrict_palette(image, palette_image, closing_size=3, closing_iterations=2, format="HSV"):
+    # TODO: Add option to auto detect palette
+    # Get unique colors from reference image
+    converted_palette_image = palette_image.convert(format)
+    palette_pixels = np.array(converted_palette_image)
+    palette_pixels_reshaped = palette_pixels.reshape(-1, 3)
+    palette = np.unique(palette_pixels_reshaped, axis=0)
+
+    target_image = image.convert(format)
+    target_pixels = np.array(target_image)
+    original_shape = target_pixels.shape
+    target_pixels_reshaped = target_pixels.reshape(-1, 3)
+
+    # Find closest color for each pixel in the target image
+    distances = np.linalg.norm(target_pixels_reshaped[:, np.newaxis].astype(np.int16) - palette[np.newaxis, :].astype(np.int16), axis=2)
+    closest_indices = np.argmin(distances, axis=1)
+    
+    # Replace with closest colors
+    compressed_pixels = palette[closest_indices]
+    compressed_pixels = compressed_pixels.reshape(original_shape)
+
+    # Close small holes for each color
+    for i in range(len(palette)):
+        mask = (compressed_pixels == palette[i]).all(axis=-1)
+        closed_mask = binary_closing(mask, structure=np.ones((closing_size, closing_size)), iterations=closing_iterations)
+        compressed_pixels[closed_mask] = palette[i]
+
+    # Convert the image back to RGB
+    compressed_image = Image.fromarray(compressed_pixels, format).convert("RGB")
+
+    return compressed_image

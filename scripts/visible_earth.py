@@ -1,9 +1,6 @@
 import requests
 import os
 import PIL.Image as Image
-import numpy as np
-from sklearn.cluster import KMeans
-from scipy.ndimage import binary_closing
 from .progress import progress
 from tqdm import tqdm
 
@@ -56,72 +53,12 @@ def download():
             pbar.update(1)
 
 
-def __simplify(reference_image, target_image, colors, closing_size=3, closing_iterations=2, format="HSV"):
-    global kmeans
-    if kmeans is None:
-        # Convert the reference image to HSV
-        reference_image_hsv = reference_image.convert(format)
-        reference_pixels = np.array(reference_image_hsv)
-        reference_pixels_reshaped = reference_pixels.reshape(-1, 3)
-
-        # Apply K-Means clustering to the HSV pixels of the reference image
-        kmeans = KMeans(n_clusters=colors, random_state=0)
-        kmeans.fit(reference_pixels_reshaped)
-
-    # Convert the target image to HSV
-    target_image_hsv = target_image.convert(format)
-    target_pixels = np.array(target_image_hsv)
-    original_shape = target_pixels.shape
-    target_pixels_reshaped = target_pixels.reshape(-1, 3)
-
-    # Predict the cluster for each pixel in the target image
-    labels = kmeans.predict(target_pixels_reshaped)
-    labels_2d = labels.reshape(original_shape[:2])
-    
-    # Apply morphological closing to each cluster label to fill small holes
-    # and keep colored regions contiguous
-    structure = np.ones((closing_size, closing_size))
-    
-    # Process each cluster separately
-    for cluster_id in range(colors):
-        # Skip if this cluster represents black pixels
-        cluster_center = kmeans.cluster_centers_[cluster_id]
-
-        # Skip if the color is black
-        if np.all(cluster_center < 5):
-            continue
-            
-        # Create binary mask for this cluster
-        mask = (labels_2d == cluster_id)
-        # Apply binary closing to fill small holes
-        closed_mask = binary_closing(mask, structure=structure, iterations=closing_iterations)
-        # Update labels where closing filled holes
-        labels_2d = np.where(closed_mask & ~mask, cluster_id, labels_2d)
-    # Flatten labels back to 1D for color assignment
-    labels = labels_2d.flatten()
-    
-    # Assign cluster center colors to pixels
-    compressed_pixels = kmeans.cluster_centers_[labels]
-    compressed_pixels = compressed_pixels.reshape(original_shape)
-
-    # Ensure values are within valid HSV range
-    compressed_pixels = np.clip(compressed_pixels, 0, 255).astype(np.uint8)
-
-    # Convert the HSV image back to RGB
-    compressed_image = Image.fromarray(compressed_pixels, format).convert("RGB")
-
-    return compressed_image
-
-
-def process_maps(colors = 16):
+def process_maps():
     if not os.path.exists("images"):
         os.makedirs("images")
 
-    reference = Image.open("source/visible-earth/3.jpg")
     with tqdm(total=12, desc="Processing Visible Earth images") as pbar:
         for month in range(1, 13):
             image = Image.open(f"source/visible-earth/{month}.jpg")
-            if colors > 0:
-                image = __simplify(reference, image, colors)
             image.save(f"images/world-map-{month}.tif")
             pbar.update(1)
