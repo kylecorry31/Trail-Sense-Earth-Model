@@ -47,7 +47,7 @@ image = new_image
 image = Image.fromarray(image)
 
 # Simplify colors
-image = compression.restrict_palette(image, colors, smoothing_structure=2, smoothing_iterations=10, format="RGB", ignored_closing_colors=[(0, 0, 0)])
+image = compression.restrict_palette(image, colors, smoothing_structure=2, smoothing_iterations=4, format="RGB", ignored_closing_colors=[(0, 0, 0)])
 image = np.array(image)
 
 # Remove water
