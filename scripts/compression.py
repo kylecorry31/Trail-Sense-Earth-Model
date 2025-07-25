@@ -208,7 +208,14 @@ def extract_large_values(image, threshold, replacement = 0, ignored_value = None
             result[idx[0], idx[1]] = replacement
     return result, large_values
 
-def restrict_palette(image, palette_image, closing_size=3, closing_iterations=2, format="HSV"):
+def restrict_palette(image, palette_image, smoothing_structure=3, smoothing_iterations=2, format="HSV", ignored_closing_colors=[]):
+    # If palette image is an array, construct the image
+    if isinstance(palette_image, list) or isinstance(palette_image, np.ndarray):
+        reference = Image.new("RGB", (len(palette_image), 1), (0, 0, 0))
+        for i in range(len(palette_image)):
+            reference.putpixel((i, 0), palette_image[i])
+        palette_image = reference
+
     # TODO: Add option to auto detect palette
     # Get unique colors from reference image
     converted_palette_image = palette_image.convert(format)
@@ -231,8 +238,10 @@ def restrict_palette(image, palette_image, closing_size=3, closing_iterations=2,
 
     # Close small holes for each color
     for i in range(len(palette)):
+        if tuple(palette[i]) in ignored_closing_colors:
+            continue
         mask = (compressed_pixels == palette[i]).all(axis=-1)
-        closed_mask = binary_closing(mask, structure=np.ones((closing_size, closing_size)), iterations=closing_iterations)
+        closed_mask = binary_closing(mask, structure=np.ones((smoothing_structure, smoothing_structure)), iterations=smoothing_iterations)
         compressed_pixels[closed_mask] = palette[i]
 
     # Convert the image back to RGB
