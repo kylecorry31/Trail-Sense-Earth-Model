@@ -132,3 +132,8 @@ def reshape(image, shape):
         img = Image.fromarray(image).resize(shape, Image.NEAREST)
         return np.array(img).reshape((shape[1], shape[0]))
     return image
+
+def replace_color(image, old_color, new_color):
+    mask = np.linalg.norm(image - old_color, axis=-1) <= 5
+    image[mask] = new_color
+    return image
