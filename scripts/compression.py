@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 import pyshtools
 from scipy.ndimage import binary_closing
+from skimage.morphology import binary_erosion, binary_dilation, remove_small_holes
 
 # Pixel = a * value + b
 # Value = (pixel - b) / a
@@ -248,3 +249,22 @@ def restrict_palette(image, palette_image, smoothing_structure=3, smoothing_iter
     compressed_image = Image.fromarray(compressed_pixels, format).convert("RGB")
 
     return compressed_image
+
+def disk_structure(size):
+    y, x = np.ogrid[:size, :size]
+    center = size // 2
+    mask = (x - center) ** 2 + (y - center) ** 2 <= center ** 2
+    return mask.astype(np.uint8)
+
+def smooth_color(image, color, smoothing_structure=None, smoothing_iterations=2, min_hole_size=None):
+    distances = np.linalg.norm(image.astype(np.int16) - np.array(color).astype(np.int16), axis=-1)
+    mask = distances <= 4
+    for _ in range(smoothing_iterations):
+        mask = binary_dilation(mask, smoothing_structure)
+    for _ in range(smoothing_iterations):
+        mask = binary_erosion(mask, smoothing_structure)
+    if min_hole_size is not None:
+        mask = remove_small_holes(mask, min_hole_size)
+    image[mask] = color
+    return image
+

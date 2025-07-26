@@ -14,7 +14,7 @@ if not os.path.exists('output'):
     os.makedirs('output')
 
 # Create a white image of 360x180
-image = np.full((180 * pixels_per_degree, 360 * pixels_per_degree), 255, dtype=np.uint8)
+image = np.full((2100, 4200), 255, dtype=np.uint8)
 
 image = natural_earth.remove_oceans(image, scale=2, dilation=0)
 image = natural_earth.remove_inland_water(image, scale=2, dilation=0)

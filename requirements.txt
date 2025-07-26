@@ -9,6 +9,7 @@ pydap
 xarray
 cdsapi
 scikit-learn
+scikit-image
 webob
 netCDF4
 scipy
