@@ -5,6 +5,7 @@ import numpy as np
 import pyshtools
 from scipy.ndimage import binary_closing
 from skimage.morphology import binary_erosion, binary_dilation, remove_small_holes
+from skimage import measure
 
 # Pixel = a * value + b
 # Value = (pixel - b) / a
@@ -268,3 +269,59 @@ def smooth_color(image, color, smoothing_structure=None, smoothing_iterations=2,
     image[mask] = color
     return image
 
+def grow_color(image, color, structure=None, iterations=1):
+    distances = np.linalg.norm(image.astype(np.int16) - np.array(color).astype(np.int16), axis=-1)
+    mask = distances <= 4
+    for _ in range(iterations):
+        mask = binary_dilation(mask, structure)
+    image[mask] = color
+    return image
+
+def remove_small_regions(image, color, max_size=10, invalid_colors=None, default_fill=None, search_space=2):
+    distances = np.linalg.norm(image.astype(np.int16) - np.array(color).astype(np.int16), axis=-1)
+    mask = distances <= 4
+
+    # Label connected components
+    labeled = measure.label(mask)
+    props = sorted(measure.regionprops(labeled), key=lambda r: r.area, reverse=True)
+
+    cleaned = image.copy()
+
+    for region in props:
+        if region.area <= max_size:
+            # Get coordinates of the small region
+            coords = region.coords
+            
+            # Find the most common neighboring color for the entire region
+            all_neighbors = []
+            for coord in coords:
+                y, x = coord
+                # Search eighborhood for non-region pixels
+                neighbors = image[max(0, y-(search_space - 1)):y+search_space, max(0, x-(search_space-1)):x+search_space]
+                neighbors_mask = labeled[max(0, y-(search_space - 1)):y+search_space, max(0, x-(search_space-1)):x+search_space] != region.label
+                valid_neighbors = neighbors[neighbors_mask]
+                
+                if len(valid_neighbors) > 0:
+                    if invalid_colors is None:
+                        all_neighbors.extend(valid_neighbors)
+                    else:
+                        invalid_colors_array = np.array(invalid_colors)
+                        valid_mask = ~np.any(np.all(valid_neighbors[:, None] == invalid_colors_array[None, :], axis=-1), axis=1)
+                        all_neighbors.extend(valid_neighbors[valid_mask])
+
+            
+            if len(all_neighbors) > 0:
+                # Find the most frequent neighbor color across all boundary pixels
+                all_neighbors = np.array(all_neighbors)
+                unique_colors, counts = np.unique(all_neighbors.reshape(-1, 3), axis=0, return_counts=True)
+                most_frequent_idx = np.argmax(counts)
+                replacement_color = unique_colors[most_frequent_idx]
+            else:
+                replacement_color = default_fill if default_fill is not None else color
+            
+            # Fill the entire region with the same color
+            for coord in coords:
+                y, x = coord
+                cleaned[y, x] = replacement_color
+    
+    return cleaned
