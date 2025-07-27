@@ -85,7 +85,7 @@ image_area = np.prod(mask.shape)
 min_hole_size = image_area * 0.007
 smoothing_iterations = 5
 
-with progress.progress('Smoothing world map', len(smoothing_order) * 4) as pbar:
+with progress.progress('Smoothing world map', len(smoothing_order) * 5) as pbar:
     for color in smoothing_order:
         image = compression.smooth_color(image, color, smoothing_structure=None, smoothing_iterations=smoothing_iterations, min_hole_size=min_hole_size)
         pbar.update(1)
@@ -96,12 +96,17 @@ with progress.progress('Smoothing world map', len(smoothing_order) * 4) as pbar:
 
     # Fill noise
     for color in smoothing_order:
-        image = compression.remove_small_regions(image, color, 60, invalid_colors=[(0, 0, 0)], search_space=30)
+        image = compression.remove_small_regions(image, color, 100, invalid_colors=[(0, 0, 0)], search_space=30)
         pbar.update(1)
 
     # Grow all colors for extra noise reduction
     for color in smoothing_order:
         image = compression.grow_color(image, color, structure=np.ones((3, 3)), iterations=8)
+        pbar.update(1)
+    
+    # Fill noise again
+    for color in smoothing_order:
+        image = compression.remove_small_regions(image, color, 60, invalid_colors=[(0, 0, 0)], search_space=30)
         pbar.update(1)
 
 # Remove water
