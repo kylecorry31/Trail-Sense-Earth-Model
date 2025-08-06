@@ -5,12 +5,12 @@ import numpy as np
 visible_earth.download()
 visible_earth.process_maps()
 
-DESERT = (180, 135, 90)
-FOREST = (50, 70, 30)
-RAINFOREST = (30, 50, 20)
-RED_SAND = (130, 80, 40)
-GRASS = (115, 110, 70)
-ICE = (200, 200, 200)
+# https://github.com/gravitystorm/openstreetmap-carto/tree/master
+DESERT = (245,233,198)
+# RAINFOREST = (173,209,158)
+ROCK = (242,239,233)
+GRASS = (205,235,176)
+ICE = (221,236,236)
 WATER = (0, 0, 0)
 
 images = []
@@ -20,34 +20,25 @@ with progress.progress('Loading world map', 12) as pbar:
         images.append(image)
         pbar.update(1)
 
-with progress.progress('Processing world map', 8) as pbar:
+with progress.progress('Processing world map', 6) as pbar:
     image = np.min(np.array(images), axis=0).astype(np.uint8)
     image = natural_earth.remove_oceans(image, scale=2, dilation=0)
     image = natural_earth.remove_inland_water(image, scale=2, dilation=0)
+    mean = np.mean(image, axis=-1)
 
     # Desert
     new_image = np.full_like(image, DESERT)
     pbar.update(1)
 
     # Grass
-    mask = (np.mean(image, axis=-1) < 100) & (image[..., 1] > image[..., 0] * 0.9)
+    mask = (mean < 100) & (image[..., 1] > image[..., 0])
     new_image[mask] = GRASS
     pbar.update(1)
 
-    # Forests (green is a large component, but overall not that bright)
-    mask = (np.mean(image, axis=-1) < 100) & (image[..., 1] > image[..., 0] * 1.05)
-    new_image[mask] = FOREST
-    pbar.update(1)
-
     # Rainforests
-    mask = (mask) & (image[..., 1] < 40) & (image[..., 2] < 10) & (image[..., 0] < 30)
-    new_image[mask] = RAINFOREST
-    pbar.update(1)
-
-    # Red sand
-    mask = (image[..., 0] > image[..., 1] * 1.4) & (image[..., 0] > image[..., 2] * 1.4)
-    new_image[mask] = RED_SAND
-    pbar.update(1)
+    # mask = (np.mean(image, axis=-1) < 100) & (image[..., 1] > image[..., 0] * 1.05) & (image[..., 1] < 40) & (image[..., 2] < 10) & (image[..., 0] < 30)
+    # new_image[mask] = RAINFOREST
+    # pbar.update(1)
 
     # Ice (r, g, b above threshold)
     threshold = 150
@@ -55,8 +46,8 @@ with progress.progress('Processing world map', 8) as pbar:
     new_image[mask] = ICE
     pbar.update(1)
 
-    # Fill all pixels below -60 lat or above 72 lat with white
-    north = 72
+    # Fill all pixels near the poles with white
+    north = 75
     south = -60
     height = image.shape[0]
     north_pixel = max(0, min(height, int((90 - north) / 180
@@ -64,6 +55,17 @@ with progress.progress('Processing world map', 8) as pbar:
     south_pixel = max(0, min(height, int((90 - south) / 180 * height)))
     new_image[:north_pixel, :] = ICE
     new_image[south_pixel:, :] = ICE
+    pbar.update(1)
+
+    # Replace all desert color near the poles with rock
+    north = 55
+    south = -55
+    north_pixel = max(0, min(height, int((90 - north) / 180 * height)))
+    south_pixel = max(0, min(height, int((90 - south) / 180 * height)))
+    mask = (new_image[:north_pixel, :] == DESERT).all(axis=-1)
+    new_image[:north_pixel, :][mask] = ROCK
+    mask = (new_image[south_pixel:, :] == DESERT).all(axis=-1)
+    new_image[south_pixel:, :][mask] = ROCK
     pbar.update(1)
 
     image = new_image
@@ -74,10 +76,9 @@ with progress.progress('Processing world map', 8) as pbar:
 
 smoothing_order = [
     ICE,
-    RAINFOREST,
-    FOREST,
+    # RAINFOREST,
     GRASS,
-    RED_SAND,
+    ROCK,
     DESERT,
 ]
 
@@ -96,7 +97,7 @@ with progress.progress('Smoothing world map', len(smoothing_order) * 5) as pbar:
 
     # Fill noise
     for color in smoothing_order:
-        image = compression.remove_small_regions(image, color, 100, invalid_colors=[(0, 0, 0)], search_space=30)
+        image = compression.remove_small_regions(image, color, 100, invalid_colors=[WATER], search_space=30)
         pbar.update(1)
 
     # Grow all colors for extra noise reduction
@@ -106,7 +107,7 @@ with progress.progress('Smoothing world map', len(smoothing_order) * 5) as pbar:
     
     # Fill noise again
     for color in smoothing_order:
-        image = compression.remove_small_regions(image, color, 60, invalid_colors=[(0, 0, 0)], search_space=30)
+        image = compression.remove_small_regions(image, color, 60, invalid_colors=[WATER], search_space=30)
         pbar.update(1)
 
 # Remove water

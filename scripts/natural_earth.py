@@ -18,6 +18,8 @@ last_mask_y_scale = None
 last_mask_dilation = None
 last_mask_scale = None
 
+loaded_shapefiles = {}
+
 def __download(url, redownload=False):
     filename = url.split('/')[-1]
     if not os.path.exists(f'source/natural-earth'):
@@ -50,10 +52,10 @@ def download(redownload=False):
                 zip_ref.extractall(f'source/natural-earth')
             pbar.update(1)
 
-def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False, mode='F'):
+def remove_oceans_from_tif(image_path, output_path, resize=None, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
     image = np.array(load(image_path, resize))
     image = remove_oceans(image, replacement, inverted, x_scale, y_scale, dilation, scale, bbox, only_replace_negative_pixels)
-    to_tif(image, output_path, mode=mode)
+    to_tif(image, output_path)
     return image
 
 def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=None, dilation=5, scale=4, bbox=None, only_replace_negative_pixels=False):
@@ -80,8 +82,15 @@ def remove_oceans(image, replacement=0, inverted=False, x_scale=None, y_scale=No
         shapefile_path = "source/natural-earth/ne_10m_land.shp"
         island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 
-        gdf = gpd.read_file(shapefile_path)
-        gdf_islands = gpd.read_file(island_shapefile_path)
+        if shapefile_path in loaded_shapefiles:
+            gdf = loaded_shapefiles[shapefile_path]
+        else:
+            loaded_shapefiles[shapefile_path] = gdf = gpd.read_file(shapefile_path)
+        
+        if island_shapefile_path in loaded_shapefiles:
+            gdf_islands = loaded_shapefiles[island_shapefile_path]
+        else:
+            loaded_shapefiles[island_shapefile_path] = gdf_islands = gpd.read_file(island_shapefile_path)
 
         mask = rasterize(gdf.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(west, north, x_scale / scale, y_scale / scale), dtype=np.float32)
         mask[mask > 0] = 255
@@ -137,7 +146,11 @@ def remove_geometry(image, shapefile_path, replacement=0, x_scale=None, y_scale=
     if y_scale is None:
         y_scale = (north - south) / height
 
-    gdf = gpd.read_file(shapefile_path)
+    if shapefile_path in loaded_shapefiles:
+        gdf = loaded_shapefiles[shapefile_path]
+    else:
+        loaded_shapefiles[shapefile_path] = gdf = gpd.read_file(shapefile_path)
+
 
     mask = rasterize(gdf.geometry, out_shape=(height * scale, width * scale), transform=rasterio.transform.from_origin(west, north, x_scale / scale, y_scale / scale), dtype=np.float32)
     mask[mask > 0] = 255
