@@ -5,12 +5,12 @@ import numpy as np
 visible_earth.download()
 visible_earth.process_maps()
 
-# https://github.com/gravitystorm/openstreetmap-carto/tree/master
-DESERT = (245,233,198)
-# RAINFOREST = (173,209,158)
-ROCK = (242,239,233)
-GRASS = (205,235,176)
-ICE = (221,236,236)
+# https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Maps/Conventions/Topographic_maps
+DESERT = (232, 225, 182)
+# RAINFOREST = (168, 198, 143)
+ROCK = (202, 195, 184)
+GRASS = (189, 204, 150)
+ICE = (245, 244, 242)
 WATER = (0, 0, 0)
 
 images = []
