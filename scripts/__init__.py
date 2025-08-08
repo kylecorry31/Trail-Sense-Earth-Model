@@ -115,9 +115,18 @@ def to_tif(values, output=None, is_inverted=False, x_shift=0, masked_value_repla
     if output is not None:
         if not os.path.exists(output.rsplit('/', 1)[0]):
             os.makedirs(output.rsplit('/', 1)[0])
-        img.save(output, format='TIFF')
+        img.save(output, format='TIFF', compression='tiff_lzw')
         if generate_webp:
-            img.save(output + '.webp', format='WEBP')
+            # Scale values from min/max to 0-255 for WebP
+            min_val = np.min(values_array)
+            max_val = np.max(values_array)
+            if max_val > min_val:
+                scaled_values = ((values_array - min_val) / (max_val - min_val) * 255).astype(np.uint8)
+            else:
+                scaled_values = np.zeros_like(values_array, dtype=np.uint8)
+            scaled_img = Image.fromarray(scaled_values, mode='L')
+            scaled_img.thumbnail((4000, 4000))
+            scaled_img.save(output + '.webp', format='WEBP')
     return values_array
 
 def resize(path, output, size):
