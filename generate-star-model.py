@@ -83,22 +83,22 @@ stars = [
     'Algieba',
     'Algol',
     'Tiaki',
-    'Gamma Centauri', # Muhlifain
+    'Muhlifain',
     'Aspidiske',
     'Sadr',
     'Naos',
     'Almach',
     'Caph',
-    'Alpha Lupi', # Uridim
+    'Uridim',
     'Epsilon Centauri',
     'Dschubba',
     'Larawag',
     'Eta Centauri',
-    'Kappa Scorpii', # Girtab
+    'Girtab',
     'Scheat',
     'Aludra',
     'Alderamin',
-    'Markeb',
+    # 'Markeb',
     'Gamma Cassiopeiae',
     'Aljanah',
     'Acrab',
@@ -108,5 +108,35 @@ stars = [
 ]
 
 for star in stars:
-    ra, dec, v_mag, pm_ra, pm_dec, color_index = simbad.get_star_details(star)
-    print(f"{star.replace(' ', '')}(EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {(str(color_index) + 'f') if not np.isnan(color_index) else 'null'}),")  
+    id, ra, dec, v_mag, pm_ra, pm_dec, color_index = simbad.get_star_details(star)
+    print(f"Star(\"{star}\", EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {(str(color_index) + 'f') if not np.isnan(color_index) else 'null'}),")  
+
+# stars = simbad.get_bright_objects()
+# stars = [star for star in stars if star[0].startswith('*')]
+
+# to_remove = []
+# for star in stars:
+#     id = star[0]
+#     last = id.split(' ')[-1]
+#     if len(last) == 1 and last.isalpha():
+#         # See if there's a star with the same base id
+#         base_id = id[:-1].strip()
+#         if any(s[0] == base_id for s in stars):
+#             to_remove.append(star)
+
+# for star in to_remove:
+#     stars.remove(star)
+
+# # Sort stars by the second word in the ID and then by the first word
+# stars.sort(key=lambda x: x[0][1:].strip().split(' ')[1].lower() + " " + x[0][1:].strip().split(' ')[0].lower())
+
+# for star in stars:
+#     id = star[0][1:].strip()
+#     names = f'"{",".join([name.title() for name in star[1]])}"'
+#     ra = star[2]
+#     dec = star[3]
+#     v_mag = star[4]
+#     pm_ra = star[5]
+#     pm_dec = star[6]
+#     color_index = star[7]
+#     print(f"Star(\"{id}\", {names}, EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {(str(color_index) + 'f') if not np.isnan(color_index) else 'null'}),")
