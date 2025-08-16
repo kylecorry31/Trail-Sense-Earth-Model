@@ -30,28 +30,28 @@ proper_motion_dec_map = {
 def get_star_details(star_name):
     # Look up the object ID for the star name
     result_table = Simbad.query_objectids(star_name)
-    main_id = result_table["ID"].data[0].decode("utf-8")
+    main_id = result_table["id"].data[0]
 
     # Query SIMBAD for the main ID
     Simbad.add_votable_fields("flux(V)", "pmra", "pmdec", "flux(B)")
     result_table = Simbad.query_object(main_id)
-    ra = Angle(result_table["RA"].data[0], unit='hourangle').degree
-    dec = Angle(result_table["DEC"].data[0], unit='deg').degree
-    v_mag = result_table["FLUX_V"].data[0]
+    ra = Angle(result_table["ra"].data[0], unit='hourangle').degree
+    dec = Angle(result_table["dec"].data[0], unit='deg').degree
+    v_mag = result_table["V"].data[0]
     if np.ma.is_masked(v_mag):
         v_mag = magnitude_map.get(star_name, np.nan)
 
-    pm_ra = result_table["PMRA"].data[0]
+    pm_ra = result_table["pmra"].data[0]
     if np.ma.is_masked(pm_ra):
         pm_ra = proper_motion_ra_map.get(star_name, np.nan)
     pm_ra = pm_ra / (1000 * 3600)
 
-    pm_dec = result_table["PMDEC"].data[0]
+    pm_dec = result_table["pmdec"].data[0]
     if np.ma.is_masked(pm_dec):
         pm_dec = proper_motion_dec_map.get(star_name, np.nan)
     pm_dec = pm_dec / (1000 * 3600)
 
-    b_mag = result_table["FLUX_B"].data[0]
+    b_mag = result_table["B"].data[0]
     if np.ma.is_masked(b_mag):
         b_mag = np.nan
 

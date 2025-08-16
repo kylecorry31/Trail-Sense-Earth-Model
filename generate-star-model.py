@@ -83,18 +83,18 @@ stars = [
     'Algieba',
     'Algol',
     'Tiaki',
-    'Gamma Centauri',
+    'Gamma Centauri', # Muhlifain
     'Aspidiske',
     'Sadr',
     'Naos',
     'Almach',
     'Caph',
-    'Alpha Lupi',
+    'Alpha Lupi', # Uridim
     'Epsilon Centauri',
     'Dschubba',
     'Larawag',
     'Eta Centauri',
-    'Kappa Scorpii',
+    'Kappa Scorpii', # Girtab
     'Scheat',
     'Aludra',
     'Alderamin',
@@ -103,7 +103,8 @@ stars = [
     'Aljanah',
     'Acrab',
     'Ruchbah',
-    'Segin'
+    'Segin',
+    'Izar'
 ]
 
 for star in stars:
