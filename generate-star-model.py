@@ -135,31 +135,6 @@ greek_letters = {
     "ome": "Omega"
 }
 
-proper_name_map = {
-    'Alpha Andromedae': 'Alpheratz',
-    'Beta Centauri': 'Hadar',
-    'Alpha Canis Majoris': 'Sirius',
-    'Alpha Canis Minoris': 'Procyon',
-    'Alpha 1 Crux': 'Acrux',
-    'Alpha Geminorum': 'Castor',
-    'Alpha Lupi': 'Uridim',
-    'Beta Persei': 'Algol',
-    'Tau Puppis': 'Tau Puppis',
-    'Iota 1 Scorpii': 'Apollyon',
-    'Alpha Tucanae': 'Lang-Exster',
-    'Eta Ursae Majoris': 'Alkaid',
-    'Zeta 1 Ursae Majoris': 'Mizar',
-    'Alpha Ursae Minoris': 'Polaris',
-    'Kappa Velorum': 'Markeb',
-    'Alpha Centauri': 'Rigil Kentaurus',
-    'Epsilon Cassiopeiae': 'Segin',
-    'Lambda Orionis': 'Meissa',
-    'Delta Ursae Majoris': 'Megrez',
-    'Epsilon Crux': 'Ginan',
-    'Theta Eridani': 'Acamar',
-    'Delta 1 Velorum': 'Alsephina'
-}
-
 ignored_stars = [
     'Alpha 2 Crux',
     'Gamma 1 Leonis',
@@ -181,44 +156,38 @@ for star_name in additional_stars:
     if star_details is not None:
         stars.append(star_details)
 
-stars = [star for star in stars if star[0].startswith('*')]
+# stars = [star for star in stars if star[0].startswith('*')]
 
 to_remove = []
 for star in stars:
-    id = star[0]
+    id = star['bayer_designation']
     last = id.split(' ')[-1]
     if len(last) == 1 and last.isalpha():
         # See if there's a star with the same base id
         base_id = id[:-1].strip()
-        if any(s[0] == base_id for s in stars):
+        if any(s['bayer_designation'] == base_id for s in stars):
+            # print("Removing star with parent object", star['bayer_designation'])
             to_remove.append(star)
 
 for star in to_remove:
     stars.remove(star)
 
 # Sort stars by the second word in the ID and then by the first word
-stars.sort(key=lambda x: x[0][1:].strip().split(' ')[1].lower() + " " + x[0][1:].strip().split(' ')[0].lower())
-
-found = []
+stars.sort(key=lambda x: x['bayer_designation'].split(' ')[1].lower() + " " + x['bayer_designation'].split(' ')[0].lower())
 
 for star in stars:
-    id = star[0][1:].strip()
-    split_id = [w for w in id.split(' ') if w.strip()]
-    latin_name = greek_letters[split_id[0]] + " " + constellation_abbreviation_to_name[split_id[1]]
-    if latin_name in ignored_stars:
+    split_bayer_designation = star['bayer_designation'].split(' ')
+    full_bayer_designation = greek_letters[split_bayer_designation[0]] + " " + constellation_abbreviation_to_name[split_bayer_designation[1]]
+    if full_bayer_designation in ignored_stars:
         continue
-    name = f'"{",".join([name.title() for name in star[1]])}"'
-    if len(star[1]) == 0:
-        name = f'"{latin_name}"'
-    if latin_name in proper_name_map:
-        name = f'"{proper_name_map[latin_name]}"'
-    
-    found.append(name.replace('"', ''))
+    name = star['proper_name']
+    if name is None:
+        name = full_bayer_designation
 
-    ra = star[2]
-    dec = star[3]
-    v_mag = star[4]
-    pm_ra = star[5]
-    pm_dec = star[6]
-    color_index = star[7]
-    print(f"Star(\"{latin_name}\", {name}, EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {(str(color_index) + 'f') if not np.isnan(color_index) else 'null'}),")
+    ra = star['right_ascension']
+    dec = star['declination']
+    v_mag = star['v_magnitude']
+    pm_ra = star['proper_motion_right_ascension']
+    pm_dec = star['proper_motion_declination']
+    color_index = star['color_index_bv']
+    print(f"Star(\"{full_bayer_designation}\", \"{name}\", EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {(str(color_index) + 'f') if not np.isnan(color_index) else 'null'}),")
