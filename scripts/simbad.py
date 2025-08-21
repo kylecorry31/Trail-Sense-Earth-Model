@@ -29,6 +29,12 @@ proper_name_map = {
     '* alf Cen': 'Rigil Kentaurus'
 }
 
+hip_map = {
+    '* bet Sco': 78820,
+    '* alf01 Cru': 60718,
+    '* alf Cen': 71683 # 71681
+}
+
 def get_id_of_type(ids, type):
     for id in ids:
         cleaned_id = ' '.join(id.split())
@@ -36,6 +42,7 @@ def get_id_of_type(ids, type):
             return cleaned_id[len(type):].strip()
     return None
 
+# TODO: Move to iau
 def get_star_name(ids):
     global star_names
     # TODO: Download the file if it doesn't exist from https://exopla.net/star-names/modern-iau-star-names/
@@ -68,6 +75,8 @@ def parse_object_details(row):
     ids = [main_id] + [p.strip() for p in ids_decoded.split('|')]
     proper_name = get_star_name(ids) if main_id not in proper_name_map else proper_name_map[main_id]
     hip_designation = get_id_of_type(ids, 'HIP')
+    if hip_designation is None and main_id in hip_map:
+        hip_designation = f'{hip_map[main_id]}'
     # TODO: Binary stars?
     bayer_designation = get_id_of_type(ids, '*')
 
@@ -103,7 +112,7 @@ def parse_object_details(row):
     if not np.isnan(pm_dec):
         pm_dec = pm_dec / (1000 * 3600)
     
-    if bayer_designation is None and hip_designation is None:
+    if bayer_designation is None or hip_designation is None:
         # print("No valid designation for", main_id)
         return None
     
@@ -120,23 +129,41 @@ def parse_object_details(row):
         'color_index_bv': float(color_index) if not np.isnan(color_index) else None
     }
 
-def get_star_details(main_id):
+# TODO: Merge this with the bright objects
+def get_all_star_details(ids):
     # Query SIMBAD for the main ID
     Simbad.add_votable_fields("flux(V)", "pmra", "pmdec", "flux(B)")
-    result_table = Simbad.query_object(main_id)
+    result_table = Simbad.query_objects(ids)
 
-    row = {
-        'main_id': main_id,
-        'ids': result_table["ids"].data[0],
-        'ra': result_table["ra"].data[0],
-        'dec': result_table["dec"].data[0],
-        'v': result_table["V"].data[0] if "V" in result_table.colnames else None,
-        'b': result_table["B"].data[0] if "B" in result_table.colnames else None,
-        'pmra': result_table["pmra"].data[0] if "pmra" in result_table.colnames else None,
-        'pmdec': result_table["pmdec"].data[0] if "pmdec" in result_table.colnames else None
-    }
+    objects = []
+    if result_table is None or len(result_table) == 0:
+        return objects
+    
+    # Build a case-insensitive column lookup
+    colmap = {c.lower(): c for c in result_table.colnames}
 
-    return parse_object_details(row)
+    def col(name: str) -> str:
+        return colmap.get(name.lower(), name)
+
+    for row in result_table:
+        new_row = {
+            'main_id': row[col('MAIN_ID')],
+            'ids': row[col('IDS')],
+            'ra': row[col('RA')],
+            'dec': row[col('DEC')],
+            'v': row[col('V')] if col('V') in result_table.colnames else None,
+            'b': row[col('B')] if col('B') in result_table.colnames else None,
+            'pmra': row[col('PMRA')] if col('PMRA') in result_table.colnames else None,
+            'pmdec': row[col('PMDEC')] if col('PMDEC') in result_table.colnames else None
+        }
+
+        obj = parse_object_details(new_row)
+
+        if obj is None:
+            continue
+        objects.append(obj)
+
+    return objects
 
 def get_bright_objects(max_v_mag: float = 4.0):
     """

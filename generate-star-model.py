@@ -1,5 +1,19 @@
-from scripts import simbad
+from scripts import iau, simbad
 import numpy as np
+
+def get_full_bayer_designation(star):
+    split_bayer_designation = star['bayer_designation'].split(' ')
+    first = greek_letters[split_bayer_designation[0]] if split_bayer_designation[0] in greek_letters else split_bayer_designation[0]
+    second = constellation_abbreviation_to_name[split_bayer_designation[1]] if split_bayer_designation[1] in constellation_abbreviation_to_name else split_bayer_designation[1]
+
+    return f"{first} {second}"
+
+def get_hip_number(star):
+    if star['hip_designation'] is None:
+        return None
+    hip = star['hip_designation']
+    hip_number = ''.join(filter(str.isdigit, hip))
+    return int(hip_number) if hip_number else None
 
 constellation_abbreviation_to_name = {
     "And": "Andromedae",
@@ -113,6 +127,8 @@ greek_letters = {
     "eta01": "Eta 1",
     "eta02": "Eta 2",
     "tet": "Theta",
+    "tet01": "Theta 1",
+    "tet02": "Theta 2",
     "iot": "Iota",
     "iot01": "Iota 1",
     "iot02": "Iota 2",
@@ -122,17 +138,27 @@ greek_letters = {
     "mu.01": "Mu 1",
     "mu.02": "Mu 2",
     "nu": "Nu",
+    "nu.": "Nu",
+    "nu.01": "Nu 1",
+    "nu.02": "Nu 2",
     "xi": "Xi",
     "omi": "Omicron",
     "pi.": "Pi",
     "rho": "Rho",
+    "rho01": "Rho 1",
+    "rho02": "Rho 2",
     "sig": "Sigma",
     "tau": "Tau",
     "ups": "Upsilon",
+    "ups01": "Upsilon 1",
+    "ups02": "Upsilon 2",
     "phi": "Phi",
     "chi": "Chi",
     "psi": "Psi",
-    "ome": "Omega"
+    "ome": "Omega",
+    "ksi": "Ksi",
+    "ksi01": "Ksi 1",
+    "ksi02": "Ksi 2",
 }
 
 ignored_stars = [
@@ -151,12 +177,19 @@ additional_stars = [
     '* del01 Vel' # Alsephina
 ]
 
-for star_name in additional_stars:
-    star_details = simbad.get_star_details(star_name)
-    if star_details is not None:
-        stars.append(star_details)
+additional_star_details = simbad.get_all_star_details(additional_stars)
+for star_details in additional_star_details:
+    stars.append(star_details)
 
-# stars = [star for star in stars if star[0].startswith('*')]
+constellation_star_ids = iau.get_constellation_star_ids()
+constallation_stars = []
+for star_id in constellation_star_ids:
+    if not any(star['bayer_designation'] == star_id[2:] for star in stars):
+        constallation_stars.append(star_id)
+
+constellation_star_details = simbad.get_all_star_details(constallation_stars)
+for star_details in constellation_star_details:
+    stars.append(star_details)
 
 to_remove = []
 for star in stars:
@@ -176,8 +209,7 @@ for star in to_remove:
 stars.sort(key=lambda x: x['bayer_designation'].split(' ')[1].lower() + " " + x['bayer_designation'].split(' ')[0].lower())
 
 for star in stars:
-    split_bayer_designation = star['bayer_designation'].split(' ')
-    full_bayer_designation = greek_letters[split_bayer_designation[0]] + " " + constellation_abbreviation_to_name[split_bayer_designation[1]]
+    full_bayer_designation = get_full_bayer_designation(star)
     if full_bayer_designation in ignored_stars:
         continue
     name = star['proper_name']
@@ -187,7 +219,22 @@ for star in stars:
     ra = star['right_ascension']
     dec = star['declination']
     v_mag = star['v_magnitude']
+    v_mag = v_mag if v_mag is not None and not np.isnan(v_mag) else 10
     pm_ra = star['proper_motion_right_ascension']
     pm_dec = star['proper_motion_declination']
     color_index = star['color_index_bv']
-    print(f"Star(\"{full_bayer_designation}\", \"{name}\", EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {(str(color_index) + 'f') if not np.isnan(color_index) else 'null'}),")
+    color_index = color_index if color_index is not None and not np.isnan(color_index) else 0
+    hip = get_hip_number(star)
+    print(f"Star({hip}, \"{name}\", EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {color_index}f),")
+
+print()
+print()
+
+constellations = iau.get_constellations({star['bayer_designation']: get_hip_number(star) for star in stars})
+for constellation in constellations:
+    name = constellation['name']
+    lines = constellation['lines']
+    if len(lines) == 0:
+        continue
+    formatted_lines = f'listOf({", ".join([f"listOf({", ".join([str(point) for point in line])})" for line in lines])})'
+    print(f"Constellation(\"{name}\", {formatted_lines}),")
