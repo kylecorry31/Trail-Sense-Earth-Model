@@ -208,6 +208,8 @@ for star in to_remove:
 # Sort stars by the second word in the ID and then by the first word
 stars.sort(key=lambda x: x['bayer_designation'].split(' ')[1].lower() + " " + x['bayer_designation'].split(' ')[0].lower())
 
+star_kotlin = []
+
 for star in stars:
     full_bayer_designation = get_full_bayer_designation(star)
     if full_bayer_designation in ignored_stars:
@@ -225,11 +227,12 @@ for star in stars:
     color_index = star['color_index_bv']
     color_index = color_index if color_index is not None and not np.isnan(color_index) else 0
     hip = get_hip_number(star)
-    print(f"Star({hip}, \"{name}\", EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {color_index}f),")
+    star_kotlin.append(f"Star({hip}, \"{name}\", EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {color_index}f)")
 
-print()
-print()
+with open('output/stars.kt', 'w') as f:
+    f.write(',\n'.join(star_kotlin))
 
+constellation_kotlin = []
 constellations = iau.get_constellations({star['bayer_designation']: get_hip_number(star) for star in stars})
 for constellation in constellations:
     name = constellation['name']
@@ -237,4 +240,7 @@ for constellation in constellations:
     if len(lines) == 0:
         continue
     formatted_lines = f'listOf({", ".join([f"listOf({", ".join([str(point) for point in line])})" for line in lines])})'
-    print(f"Constellation(\"{name}\", {formatted_lines}),")
+    constellation_kotlin.append(f"Constellation(\"{name}\", {formatted_lines})")
+
+with open('output/constellations.kt', 'w') as f:
+    f.write(',\n'.join(constellation_kotlin))

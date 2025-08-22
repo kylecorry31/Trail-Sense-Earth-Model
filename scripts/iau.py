@@ -122,7 +122,7 @@ constellations = [
       "abbreviation": "CMa",
       "lines": [
           ["eta", "del", "eps", "omi01", "nu.02", "bet", "alf", "del"],
-          ["alf", "iot", "gam", "tet"]
+          ["alf", "iot", "gam", "tet", "iot"]
       ]
   },
   {
@@ -144,6 +144,167 @@ constellations = [
       "abbreviation": "Cas",
       "lines": [
           ["eps", "del", "gam", "alf", "bet"]
+      ]
+  },
+  {
+      "name": "Centaurus",
+      "abbreviation": "Cen",
+      "lines": [
+          ["alf", "bet", "eps", "zet", "ups01", "phi", "eta", "kap"],
+          ["phi", "chi", "psi", "tet", "nu.", "iot"],
+          ["mu.", "zet", "gam", "sig", "del", "pi."],
+          ["sig", "rho", "omi01"],
+          ["eps", "gam"]
+      ]
+  },
+  {
+      "name": "Lupus",
+      "abbreviation": "Lup",
+      "lines": [
+          ["alf", "zet", "eps", "gam", "del", "bet"],
+          ["gam", "eta", "phi01", "chi", "eta", "zet"]
+      ]
+  },
+  {
+      "name": "Cepheus",
+      "abbreviation": "Cep",
+      "lines": [
+          ["tet", "eta", "alf", "mu.", "eps", "zet", "del", "iot", "bet", "alf"],
+          ["bet", "gam", "iot"]
+      ]
+  },
+  {
+      "name": "Cetus",
+      "abbreviation": "Cet",
+      "lines": [
+          ["alf", "lam", "mu.", "ksi02", "gam", "del", "omi", "zet", "tau", "bet", "iot", "eta", "tet", "zet"],
+          ["alf", "gam"]
+      ]
+  },
+  {
+      "name": "Chamaeleon",
+      "abbreviation": "Cha",
+      "lines": [
+          ["alf", "tet", "gam", "eps", "bet", "del02", "gam"]
+      ]
+  },
+  {
+      "name": "Circinus",
+      "abbreviation": "Cir",
+      "lines": [
+          ["gam", "alf", "bet"]
+      ]
+  },
+  {
+      "name": "Columba",
+      "abbreviation": "Col",
+      "lines": [
+          ["eps", "alf", "bet", "gam", "del"],
+          ["bet", "eta"]
+      ]
+  },
+  {
+      "name": "Coma Berenices",
+      "abbreviation": "Com",
+      "lines": [
+          ["alf", "bet", "gam"]
+      ]
+  },
+  {
+      "name": "Corona Australis",
+      "abbreviation": "CrA",
+      "lines": [
+          ["tet", "del", "bet", "alf", "gam"]
+      ]
+  },
+  {
+      "name": "Corona Borealis",
+      "abbreviation": "CrB",
+      "lines": [
+          ["tet", "bet", "alf", "gam", "del", "eps", "iot"]
+      ]
+  },
+  {
+      "name": "Crater",
+      "abbreviation": "Crt",
+      "lines": [
+          ["eta", "zet", "gam", "bet", "alf", "del", "gam"],
+          ["del", "eps", "tet"]
+      ]
+  },
+  {
+      "name": "Crux",
+      "abbreviation": "Cru",
+      "lines": [
+          ["alf", "gam"],
+          ["bet", "del"]
+      ]
+  },
+  {
+      "name": "Cygnus",
+      "abbreviation": "Cyg",
+      "lines": [
+          ["bet01", "gam", "eps", "zet", "nu.", "alf", "omi02", "iot", "del", "gam"],
+          ["iot", "kap"]
+      ]
+  },
+  {
+      "name": "Delphinus",
+      "abbreviation": "Del",
+      "lines": [
+          ["eps", "bet", "del", "gam02", "alf", "bet"]
+      ]
+  },
+  {
+      "name": "Dorado",
+      "abbreviation": "Dor",
+      "lines": [
+          # TODO: HD 40409 is between delta and beta on the way to zeta
+          ["gam", "alf", "bet", "del", "zet", "alf"]
+      ]
+  },
+  {
+      "name": "Draco",
+      "abbreviation": "Dra",
+      "lines": [
+          ["lam", "kap", "alf", "iot", "tet", "eta", "zet", "phi", "del", "ksi", "nu.01", "bet", "gam", "ksi"],
+          ["del", "eps"],
+          ["phi", "chi"]
+      ]
+  },
+  {
+      "name": "Equuleus",
+      "abbreviation": "Equ",
+      "lines": [
+          ["alf", "del", "gam"]
+      ]
+  },
+  {
+      "name": "Eridanus",
+      "abbreviation": "Eri",
+      # TODO: d eri is upsilon 3 eri
+      "lines": [
+          ["alf", "chi", "kap", "s", "iot", "tet", "e", "y", "g", "ups04", "d", "ups02", "ups01", "tau09", "tau08", "tau06", "tau05", "tau04", "tau03", "tau01", "eta", "eps", "del", "pi.", "gam", "omi02", "nu.", "mu.", "bet"] 
+      ]
+  },
+  {
+      "name": "Fornax",
+      "abbreviation": "For",
+      "lines": [
+          ["alf", "bet", "nu."]
+      ]
+  },
+  {
+      "name": "Gemini",
+      "abbreviation": "Gem",
+      "lines": [
+          ["ksi", "lam", "del", "zet", "gam"],
+          ["del", "ups", "iot", "tau", "eps", "mu.", "eta", "1"],
+          ["eps", "nu."],
+          ["tau", "tet"],
+          ["tau", "alf"],
+          ["ups", "bet"],
+          ["ups", "kap"]
       ]
   }
 ]
