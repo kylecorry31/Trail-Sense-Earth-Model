@@ -58,16 +58,39 @@ constellations = [
             ["bet", "alf"]
         ]
     },
-    #   {
-    #     "name": "Carina",
-    #     "abbreviation": "Car",
-    #     "lines": [
-    #         ["alf", "bet", "ome", "tet"]
-    #     ]
-    #   }
-    # Puppis
-    # Pyxis
-    # Vela
+    {
+        "name": "Carina",
+        "abbreviation": "Car",
+        "lines": [
+            ["alf", "bet", "ome", "tet", "z", "y", "x",
+                "u", "w", "iot", "eps", "chi", "gam02 Vel"],
+            ["tet", "w"],
+            ["iot", "del01 Vel"]
+        ]
+    },
+    {
+        "name": "Puppis",
+        "abbreviation": "Pup",
+        "lines": [
+            ["alf Car", "nu.", "pi.", "p", "l", "omi", "ksi", "m", "p"],
+            ["ksi", "rho", "zet", "gam02 Vel"],
+            ["zet", "bet Pyx"]
+        ]
+    },
+    {
+        "name": "Pyxis",
+        "abbreviation": "Pyx",
+        "lines": [
+            ["gam", "alf", "bet"]
+        ]
+    },
+    {
+        "name": "Vela",
+        "abbreviation": "Vel",
+        "lines": [
+            ["gam02", "del01", "kap", "phi", "mu.", "q", "psi", "lam", "gam02"]
+        ]
+    },
     {
         "name": "Aries",
         "abbreviation": "Ari",
@@ -291,9 +314,8 @@ constellations = [
     {
         "name": "Eridanus",
         "abbreviation": "Eri",
-        # TODO: upsilon 3 eri between ups 04 and ups 02
         "lines": [
-            ["alf", "chi", "kap", "s", "iot", "tet", "e", "y", "g", "ups04", "ups02", "ups01", "tau09", "tau08",
+            ["alf", "chi", "kap", "s", "iot", "tet", "e", "y", "g", "ups04", "d", "ups02", "ups01", "tau09", "tau08",
              "tau06", "tau05", "tau04", "tau03", "tau01", "eta", "eps", "del", "pi.", "gam", "omi02", "nu.", "mu.", "bet"]
         ]
     },
@@ -329,8 +351,7 @@ constellations = [
         "name": "Hercules",
         "abbreviation": "Her",
         "lines": [
-            # TODO: 29 hercules in first list after ome
-            ["chi", "phi", "tau", "sig", "eta", "zet", "bet", "gam", "ome"],
+            ["chi", "phi", "tau", "sig", "eta", "zet", "bet", "gam", "ome", "h"],
             ["bet", "alf", "del", "lam", "mu.01", "ksi", "omi"],
             ["del", "eps", "zet"],
             ["eps", "pi.", "eta"],
@@ -355,9 +376,10 @@ constellations = [
         "name": "Hydra",
         "abbreviation": "Hya",
         "lines": [
-            # TODO: IAU shows this as connecting to Crater between ksi and nu
-            ["pi.", "gam", "bet", "ksi", "nu.", "phi", "mu.", "lam", "ups01", "alf", "iot", "tet", "zet", "eps", "del", "sig", "eta", "rho"]
-        ]   
+            ["pi.", "gam", "bet", "ksi", "bet Crt"],
+            ["alf Crt", "nu.", "phi", "mu.", "lam", "ups01", "alf",
+                "iot", "tet", "zet", "eps", "del", "sig", "eta", "rho"]
+        ]
     },
     {
         "name": "Hydrus",
@@ -472,18 +494,18 @@ constellations = [
         "lines": [
             ["alf", "kap", "lam", "del", "eps", "ups", "zet", "phi", "chi"],
             ["del", "kap"],
-            # Ends with 45 Oph, but there's no HIP designation
-            ["zet", "eta", "tet"],
+            ["zet", "eta", "tet", "d"],
             ["eta", "bet", "alf"],
             ["bet", "gam", "nu."]
-        ]        
+        ]
     },
     {
         "name": "Serpens",
         "abbreviation": "Ser",
         "lines": [
             ["tet01", "eta", "ksi", "eta Oph"],
-            ["del Oph", "mu.", "eps", "alf", "del", "bet", "gam", "kap", "iot", "bet"]
+            ["del Oph", "mu.", "eps", "alf", "del",
+                "bet", "gam", "kap", "iot", "bet"]
         ]
     },
     {
@@ -539,6 +561,156 @@ constellations = [
         "abbreviation": "Pic",
         "lines": [
             ["alf", "gam", "bet"]
+        ]
+    },
+    {
+        "name": "Pisces",
+        "abbreviation": "Psc",
+        "lines": [
+            ["phi", "ups", "tau", "phi", "eta", "omi", "alf", "nu.", "eps",
+                "del", "ome", "iot", "tet", "gam", "kap", "lam", "iot"]
+        ]
+    },
+    {
+        "name": "Piscis Austrinus",
+        "abbreviation": "PsA",
+        "lines": [
+            ["iot", "tet", "mu.", "eps", "alf", "del", "gam", "bet", "mu.", "iot"]
+        ]
+    },
+    {
+        "name": "Reticulum",
+        "abbreviation": "Ret",
+        "lines": [
+            ["alf", "eps", "iot", "del", "bet", "alf"]
+        ]
+    },
+    {
+        "name": "Sagitta",
+        "abbreviation": "Sge",
+        "lines": [
+            ["alf", "del", "gam"],
+            ["bet", "del"]
+        ]
+    },
+    {
+        "name": "Sagittarius",
+        "abbreviation": "Sgr",
+        "lines": [
+            ["eta", "eps", "gam02", "del", "lam", "mu."],
+            ["lam", "phi", "del"],
+            ["phi", "sig", "tau", "zet", "eps"],
+            ["phi", "zet"],
+            ["del", "eps"]
+        ]
+    },
+    {
+        "name": "Scorpius",
+        "abbreviation": "Sco",
+        "lines": [
+            ["G", "lam", "ups", "kap", "iot01", "tet", "eta", "zet02", "zet01",
+                "mu.01", "eps", "tau", "alf", "sig", "del", "pi.", "rho"],
+            ["del", "bet", "nu."]
+        ]
+    },
+    {
+        "name": "Sculptor",
+        "abbreviation": "Scl",
+        "lines": [
+            ["bet", "alf", "gam", "del", "bet"]
+        ]
+    },
+    {
+        "name": "Scutum",
+        "abbreviation": "Sct",
+        "lines": [
+            ["bet", "alf", "gam", "del", "bet"]
+        ]
+    },
+    {
+        "name": "Sextans",
+        "abbreviation": "Sex",
+        "lines": [
+            ["del", "bet", "alf", "gam"]
+        ]
+    },
+    {
+        "name": "Taurus",
+        "abbreviation": "Tau",
+        "lines": [
+            ["bet", "eps", "del", "gam", "tet02", "alf", "zet"],
+            ["gam", "lam", "ksi", "nu."],
+            ["omi", "10"]
+        ]
+    },
+    {
+        "name": "Telescopium",
+        "abbreviation": "Tel",
+        "lines": [
+            ["zet", "alf", "eps"]
+        ]
+    },
+    {
+        "name": "Triangulum",
+        "abbreviation": "Tri",
+        "lines": [
+            ["alf", "bet", "gam", "alf"]
+        ]
+    },
+    {
+        "name": "Triangulum Australe",
+        "abbreviation": "TrA",
+        "lines": [
+            ["alf", "bet", "eps", "gam", "alf"]
+        ]
+    },
+    {
+        "name": "Tucana",
+        "abbreviation": "Tuc",
+        "lines": [
+            ["alf", "del", "eps", "zet", "bet01", "gam", "alf"]
+        ]
+    },
+    {
+        "name": "Ursa Major",
+        "abbreviation": "UMa",
+        "lines": [
+            ["eta", "zet", "eps", "del", "gam", "chi", "nu.", "ksi"],
+            ["chi", "psi", "mu.", "lam"],
+            ["gam", "bet", "ups", "tet", "kap", "iot"],
+            ["ups", "omi", "h", "alf", "del"],
+            ["alf", "bet"]
+        ]
+    },
+    {
+        "name": "Ursa Minor",
+        "abbreviation": "UMi",
+        "lines": [
+            ["alf", "del", "eps", "zet", "bet", "gam", "eta", "zet"]
+        ]
+    },
+    {
+        "name": "Virgo",
+        "abbreviation": "Vir",
+        "lines": [
+            ["109", "tau", "zet", "iot", "mu."],
+            ["zet", "gam", "del", "eps"],
+            ["gam", "tet", "alf"],
+            ["gam", "eta", "omi", "nu.", "bet", "eta"]
+        ]
+    },
+    {
+        "name": "Volans",
+        "abbreviation": "Vol",
+        "lines": [
+            ["alf", "bet", "eps", "del", "gam02", "eps", "alf"]
+        ]
+    },
+    {
+        "name": "Vulpecula",
+        "abbreviation": "Vul",
+        "lines": [
+            ["alf", "15"]
         ]
     }
 ]

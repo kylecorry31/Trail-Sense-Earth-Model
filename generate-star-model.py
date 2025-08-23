@@ -4,7 +4,11 @@ import numpy as np
 def get_full_bayer_designation(star):
     split_bayer_designation = star['bayer_designation'].split(' ')
     first = greek_letters[split_bayer_designation[0]] if split_bayer_designation[0] in greek_letters else split_bayer_designation[0]
+    if first == split_bayer_designation[0]:
+        print("Unknown greek letter:", first)
     second = constellation_abbreviation_to_name[split_bayer_designation[1]] if split_bayer_designation[1] in constellation_abbreviation_to_name else split_bayer_designation[1]
+    if second == split_bayer_designation[1]:
+        print("Unknown constellation:", second)
 
     return f"{first} {second}"
 
@@ -81,7 +85,7 @@ constellation_abbreviation_to_name = {
     "Per": "Persei",
     "Phe": "Phoenicis",
     "Pic": "Pictoris",
-    "Pis": "Piscium",
+    "Psc": "Piscium",
     "PsA": "Piscis Austrini",
     "Pup": "Puppis",
     "Pyx": "Pyxidis",
@@ -120,6 +124,8 @@ greek_letters = {
     "del01": "Delta 1",
     "del02": "Delta 2",
     "eps": "Epsilon",
+    "eps01": "Epsilon 1",
+    "eps02": "Epsilon 2",
     "zet": "Zeta",
     "zet01": "Zeta 1",
     "zet02": "Zeta 2",
@@ -133,6 +139,8 @@ greek_letters = {
     "iot01": "Iota 1",
     "iot02": "Iota 2",
     "kap": "Kappa",
+    "kap01": "Kappa 1",
+    "kap02": "Kappa 2",
     "lam": "Lambda",
     "mu.": "Mu",
     "mu.01": "Mu 1",
@@ -143,17 +151,34 @@ greek_letters = {
     "nu.02": "Nu 2",
     "xi": "Xi",
     "omi": "Omicron",
+    "omi01": "Omicron 1",
+    "omi02": "Omicron 2",
     "pi.": "Pi",
     "rho": "Rho",
     "rho01": "Rho 1",
     "rho02": "Rho 2",
     "sig": "Sigma",
     "tau": "Tau",
+    "tau01": "Tau 1",
+    "tau02": "Tau 2",
+    "tau03": "Tau 3",
+    "tau04": "Tau 4",
+    "tau05": "Tau 5",
+    "tau06": "Tau 6",
+    "tau07": "Tau 7",
+    "tau08": "Tau 8",
+    "tau09": "Tau 9",
     "ups": "Upsilon",
     "ups01": "Upsilon 1",
     "ups02": "Upsilon 2",
+    "ups03": "Upsilon 3",
+    "ups04": "Upsilon 4",
     "phi": "Phi",
+    "phi01": "Phi 1",
+    "phi02": "Phi 2",
     "chi": "Chi",
+    "chi01": "Chi 1",
+    "chi02": "Chi 2",
     "psi": "Psi",
     "ome": "Omega",
     "ksi": "Ksi",
