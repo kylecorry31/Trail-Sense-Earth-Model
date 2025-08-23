@@ -419,7 +419,7 @@ constellations = [
         "name": "Leo Minor",
         "abbreviation": "LMi",
         "lines": [
-            ["bet", "10", "21"],
+            ["bet", "21", "10"],
             ["21", "27", "28", "30", "46", "bet"]
         ]
     },
@@ -429,7 +429,7 @@ constellations = [
         "lines": [
             ["tet", "del", "gam", "bet", "eps", "mu.", "alf", "zet", "eta", "tet"],
             ["alf", "bet"],
-            ["mu.", "gam"],
+            ["mu.", "lam"],
             ["mu.", "kap"]
         ]
     },
@@ -471,7 +471,7 @@ constellations = [
         "name": "Musca",
         "abbreviation": "Mus",
         "lines": [
-            ["gam", "eps", "alf", "bet", "del", "gam", "alf"]
+            ["alf", "gam", "del", "bet", "alf", "eps", "lam"]
         ]
     },
     {
@@ -485,7 +485,7 @@ constellations = [
         "name": "Octans",
         "abbreviation": "Oct",
         "lines": [
-            ["del", "bet", "nu."]
+            ["del", "bet", "nu.", "del"]
         ]
     },
     {
@@ -493,7 +493,7 @@ constellations = [
         "abbreviation": "Oph",
         "lines": [
             ["alf", "kap", "lam", "del", "eps", "ups", "zet", "phi", "chi"],
-            ["del", "kap"],
+            ["zet", "kap"],
             ["zet", "eta", "tet", "d"],
             ["eta", "bet", "alf"],
             ["bet", "gam", "nu."]
@@ -617,7 +617,7 @@ constellations = [
         "name": "Sculptor",
         "abbreviation": "Scl",
         "lines": [
-            ["bet", "alf", "gam", "del", "bet"]
+            ["alf", "iot", "del", "gam", "bet"]
         ]
     },
     {

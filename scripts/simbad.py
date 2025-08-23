@@ -5,15 +5,39 @@ import csv
 
 star_names = None
 
+# TODO: This is only needed because binary stars are excluded I think
 magnitude_map = {
     '* del01 Vel': 1.95,
-    '* tet Eri': 3.2
+    '* tet Eri': 3.2,
+    '* alf Cru': 0.67,
+    '* alf Her': 3.08,
+    '* tet Hya': 3.88,
+    '* eps02 Lyr': 4.63,
+    '* bet Mus': 2.97,
+    '* mu. Ori': 4.16,
+    '* iot Per': 4.05,
+    '* alf Psc': 3.81,
+    '* ome Psc': 4.01,
+    '* del Ser': 3.86,
+    '* gam Sex': 5.06,
+    '* zet UMa': 2.25,
+    '* eta UMi': 4.95,
+    '* gam Ari': 3.84,
+    '* pi. Cen': 3.83,
+    '* eps Cep': 4.19,
+    '* gam Cep': 3.38,
+    '* eps Cha': 4.88,
+    '* gam Cir': 4.53,
+    '* gam CrB': 3.81,
+    '* nu.01 Dra': 4.87
 }
 
 color_index_map = {
     '* bet Cen': -0.23,
     '* del01 Vel': 0.04,
-    '* tet Eri': 0.128
+    '* tet Eri': 0.128,
+    '* alf Cru': -0.26,
+    '* alf Her': 1.45
 }
 
 proper_motion_ra_map = {
@@ -26,7 +50,8 @@ proper_motion_dec_map = {
 
 proper_name_map = {
     '* bet Sco': 'Acrab',
-    '* alf Cen': 'Rigil Kentaurus'
+    '* alf Cen': 'Rigil Kentaurus',
+    '* gam Ari': 'Mesarthim',
 }
 
 hip_map = {
@@ -88,6 +113,9 @@ def parse_object_details(row):
     v_mag = row['v']
     if v_mag is None or np.ma.is_masked(v_mag):
         v_mag = magnitude_map.get(main_id, np.nan)
+    
+    if np.isnan(v_mag):
+        print("No V mag for", main_id)
 
     b_mag = row['b']
     if b_mag is None or np.ma.is_masked(b_mag):

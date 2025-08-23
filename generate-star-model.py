@@ -234,6 +234,7 @@ for star in to_remove:
 stars.sort(key=lambda x: x['bayer_designation'].split(' ')[1].lower() + " " + x['bayer_designation'].split(' ')[0].lower())
 
 star_kotlin = []
+seen_hip_ids = set()
 
 for star in stars:
     full_bayer_designation = get_full_bayer_designation(star)
@@ -252,6 +253,9 @@ for star in stars:
     color_index = star['color_index_bv']
     color_index = color_index if color_index is not None and not np.isnan(color_index) else 0
     hip = get_hip_number(star)
+    if hip in seen_hip_ids:
+        continue
+    seen_hip_ids.add(hip)
     star_kotlin.append(f"Star({hip}, \"{name}\", EquatorialCoordinate({dec}, {ra}), {v_mag}f, ProperMotion({pm_dec}, {pm_ra}), {color_index}f)")
 
 with open('output/stars.kt', 'w') as f:
