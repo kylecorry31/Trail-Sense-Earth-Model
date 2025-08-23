@@ -84,14 +84,6 @@ constellations = [
             ["alf", "bet"]
         ]
     },
-    # TODO: Figure out what the IAU means by Argo with sub constellations
-    #   {
-    #     "name": "Puppis",
-    #     "abbreviation": "Pup",
-    #     "lines": [
-    #         ["zet", "pi.", "ksi", "pi.", "nu.", "tau", "sig", "zet"]
-    #     ]
-    #   },
     {
         "name": "Boötes",
         "abbreviation": "Boo",
@@ -299,9 +291,9 @@ constellations = [
     {
         "name": "Eridanus",
         "abbreviation": "Eri",
-        # TODO: d eri is upsilon 3 eri
+        # TODO: upsilon 3 eri between ups 04 and ups 02
         "lines": [
-            ["alf", "chi", "kap", "s", "iot", "tet", "e", "y", "g", "ups04", "d", "ups02", "ups01", "tau09", "tau08",
+            ["alf", "chi", "kap", "s", "iot", "tet", "e", "y", "g", "ups04", "ups02", "ups01", "tau09", "tau08",
              "tau06", "tau05", "tau04", "tau03", "tau01", "eta", "eps", "del", "pi.", "gam", "omi02", "nu.", "mu.", "bet"]
         ]
     },
@@ -399,6 +391,154 @@ constellations = [
             ["tet", "bet", "del", "gam", "eta"],
             ["gam", "zet", "mu.", "eps"],
             ["del", "tet"]
+        ]
+    },
+    {
+        "name": "Leo Minor",
+        "abbreviation": "LMi",
+        "lines": [
+            ["bet", "10", "21"],
+            ["21", "27", "28", "30", "46", "bet"]
+        ]
+    },
+    {
+        "name": "Lepus",
+        "abbreviation": "Lep",
+        "lines": [
+            ["tet", "del", "gam", "bet", "eps", "mu.", "alf", "zet", "eta", "tet"],
+            ["alf", "bet"],
+            ["mu.", "gam"],
+            ["mu.", "kap"]
+        ]
+    },
+    {
+        "name": "Libra",
+        "abbreviation": "Lib",
+        "lines": [
+            ["tau", "ups", "gam", "bet", "alf02", "gam"],
+            ["alf02", "sig"]
+        ]
+    },
+    {
+        "name": "Lynx",
+        "abbreviation": "Lyn",
+        "lines": [
+            # HIP 44700 between 38 and 10 Uma
+            ["alf", "38", "10 UMa", "31", "21", "15", "2"]
+        ]
+    },
+    {
+        "name": "Lyra",
+        "abbreviation": "Lyr",
+        "lines": [
+            ["alf", "eps02", "zet01", "del02", "gam", "bet", "zet01", "alf"]
+        ]
+    },
+    # Mensa has no lines in the offical IAU catalog
+    # Microsopium has no lines in the offical IAU catalog
+    {
+        "name": "Monoceros",
+        "abbreviation": "Mon",
+        "lines": [
+            ["alf", "zet", "del", "bet", "gam"],
+            ["del", "18", "eps Mon A", "13", "18"],
+            ["13", "15"]
+        ]
+    },
+    {
+        "name": "Musca",
+        "abbreviation": "Mus",
+        "lines": [
+            ["gam", "eps", "alf", "bet", "del", "gam", "alf"]
+        ]
+    },
+    {
+        "name": "Norma",
+        "abbreviation": "Nor",
+        "lines": [
+            ["del", "eta", "gam02", "eps", "del"]
+        ]
+    },
+    {
+        "name": "Octans",
+        "abbreviation": "Oct",
+        "lines": [
+            ["del", "bet", "nu."]
+        ]
+    },
+    {
+        "name": "Ophiuchus",
+        "abbreviation": "Oph",
+        "lines": [
+            ["alf", "kap", "lam", "del", "eps", "ups", "zet", "phi", "chi"],
+            ["del", "kap"],
+            # Ends with 45 Oph, but there's no HIP designation
+            ["zet", "eta", "tet"],
+            ["eta", "bet", "alf"],
+            ["bet", "gam", "nu."]
+        ]        
+    },
+    {
+        "name": "Serpens",
+        "abbreviation": "Ser",
+        "lines": [
+            ["tet01", "eta", "ksi", "eta Oph"],
+            ["del Oph", "mu.", "eps", "alf", "del", "bet", "gam", "kap", "iot", "bet"]
+        ]
+    },
+    {
+        "name": "Orion",
+        "abbreviation": "Ori",
+        "lines": [
+            ["kap", "zet", "eps", "del", "eta", "bet"],
+            ["zet", "alf", "gam", "del"],
+            ["gam", "lam", "alf", "mu.", "nu.", "chi01", "chi02", "ksi", "mu."]
+        ]
+    },
+    {
+        "name": "Pavo",
+        "abbreviation": "Pav",
+        "lines": [
+            ["alf", "del", "bet", "gam", "alf"],
+            ["del", "eps"],
+            ["del", "zet"],
+            ["del", "kap", "pi.", "eta"],
+            ["pi.", "ksi", "gam", "del"]
+        ]
+    },
+    {
+        "name": "Pegasus",
+        "abbreviation": "Peg",
+        "lines": [
+            ["eps", "tet", "42", "alf", "gam", "alf And", "bet", "alf"],
+            ["bet", "eta", "pi."],
+            ["bet", "mu.", "lam", "iot", "kap"]
+        ]
+    },
+    {
+        "name": "Perseus",
+        "abbreviation": "Per",
+        "lines": [
+            ["phi", "tet", "iot", "tau", "eta", "gam", "tau"],
+            ["gam", "alf", "iot"],
+            ["alf", "del", "c", "mu.", "b", "lam"],
+            ["del", "eps", "ksi", "zet", "omi"],
+            ["eps", "bet", "rho"],
+            ["bet", "kap", "iot"]
+        ]
+    },
+    {
+        "name": "Phoenix",
+        "abbreviation": "Phe",
+        "lines": [
+            ["alf", "eps", "bet", "zet", "del", "gam", "nu.", "bet", "alf"]
+        ]
+    },
+    {
+        "name": "Pictor",
+        "abbreviation": "Pic",
+        "lines": [
+            ["alf", "gam", "bet"]
         ]
     }
 ]
