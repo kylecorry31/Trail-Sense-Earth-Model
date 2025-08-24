@@ -802,6 +802,10 @@ constellations = [
     }
 ]
 
+proper_name_replacement = {
+    '87108': 'Bake-eo'
+}
+
 def get_constellation_name(abbreviation, for_member=False):
     for constellation in constellations:
         if constellation['abbreviation'].lower() == abbreviation.lower():
@@ -844,7 +848,7 @@ def get_constellations(bayer_designations):
         })
     return filtered_constellations
 
-def get_star_names():
+def __load_star_names():
     global star_names
     # TODO: Download the file if it doesn't exist from https://exopla.net/star-names/modern-iau-star-names/
     if star_names is None:
@@ -852,22 +856,16 @@ def get_star_names():
             reader = csv.DictReader(f)
             star_names = {}
             for row in reader:
-                star_names[row['Designation']] = row['proper names']
-                star_names[f'HIP {row['HIP']}'] = row['proper names']
-    
+                name = proper_name_replacement.get(row['HIP'], row['proper names'])
+                star_names[row['Designation']] = name
+                star_names[f'HIP {row['HIP']}'] = name
     return star_names
 
+def get_star_names():
+    return __load_star_names()
+
 def get_star_name(ids):
-    global star_names
-    # TODO: Download the file if it doesn't exist from https://exopla.net/star-names/modern-iau-star-names/
-    if star_names is None:
-        with open('source/iau/star-names.csv', 'r') as f:
-            reader = csv.DictReader(f)
-            star_names = {}
-            for row in reader:
-                star_names[row['Designation']] = row['proper names']
-                star_names[f'HIP {row['HIP']}'] = row['proper names']
-    
+    star_names = get_star_names()
     for id in ids:
         cleaned_id = ' '.join(id.split())
         if cleaned_id in star_names:
