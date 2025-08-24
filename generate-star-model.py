@@ -6,8 +6,10 @@ def get_full_bayer_designation(star):
     first = greek_letters[split_bayer_designation[0]] if split_bayer_designation[0] in greek_letters else split_bayer_designation[0]
     if first == split_bayer_designation[0]:
         print("Unknown greek letter:", first)
-    second = constellation_abbreviation_to_name[split_bayer_designation[1]] if split_bayer_designation[1] in constellation_abbreviation_to_name else split_bayer_designation[1]
-    if second == split_bayer_designation[1]:
+
+    second = iau.get_constellation_name(split_bayer_designation[1], True)
+    if second is None:
+        second = split_bayer_designation[1]
         print("Unknown constellation:", second)
 
     return f"{first} {second}"
@@ -18,97 +20,6 @@ def get_hip_number(star):
     hip = star['hip_designation']
     hip_number = ''.join(filter(str.isdigit, hip))
     return int(hip_number) if hip_number else None
-
-constellation_abbreviation_to_name = {
-    "And": "Andromedae",
-    "Ant": "Antliae",
-    "Aps": "Apodis",
-    "Aqr": "Aquarii",
-    "Aql": "Aquilae",
-    "Ara": "Arae",
-    "Ari": "Arietis",
-    "Aur": "Aurigae",
-    "Boo": "Boötis",
-    "Cae": "Caeli",
-    "Cam": "Camelopardalis",
-    "Cnc": "Cancri",
-    "CVn": "Canum Venaticorum",
-    "CMa": "Canis Majoris",
-    "CMi": "Canis Minoris",
-    "Cap": "Capricorni",
-    "Car": "Carinae",
-    "Cas": "Cassiopeiae",
-    "Cen": "Centauri",
-    "Cep": "Cephei",
-    "Cet": "Ceti",
-    "Cha": "Chamaeleontis",
-    "Cir": "Circini",
-    "Col": "Columbae",
-    "Com": "Comae Berenices",
-    "CrA": "Coronae Australis",
-    "CrB": "Coronae Borealis",
-    "Crv": "Corvi",
-    "Crt": "Crateris",
-    "Cru": "Crux",
-    "Cyg": "Cygni",
-    "Del": "Delphini",
-    "Dor": "Doradus",
-    "Dra": "Draconis",
-    "Equ": "Equulei",
-    "Eri": "Eridani",
-    "For": "Fornacis",
-    "Gem": "Geminorum",
-    "Gru": "Gruis",
-    "Her": "Herculis",
-    "Hor": "Horologii",
-    "Hya": "Hydrae",
-    "Hyi": "Hydri",
-    "Ind": "Indi",
-    "Lac": "Lacertae",
-    "Leo": "Leonis",
-    "LMi": "Leonis Minoris",
-    "Lep": "Leporis",
-    "Lib": "Librae",
-    "Lup": "Lupi",
-    "Lyn": "Lyncis",
-    "Lyr": "Lyrae",
-    "Men": "Mensae",
-    "Mic": "Microscopii",
-    "Mon": "Monocerotis",
-    "Mus": "Muscae",
-    "Nor": "Normae",
-    "Oct": "Octantis",
-    "Oph": "Ophiuchi",
-    "Ori": "Orionis",
-    "Pav": "Pavonis",
-    "Peg": "Pegasi",
-    "Per": "Persei",
-    "Phe": "Phoenicis",
-    "Pic": "Pictoris",
-    "Psc": "Piscium",
-    "PsA": "Piscis Austrini",
-    "Pup": "Puppis",
-    "Pyx": "Pyxidis",
-    "Ret": "Reticuli",
-    "Sge": "Sagittae",
-    "Sgr": "Sagittarii",
-    "Sco": "Scorpii",
-    "Scl": "Sculptoris",
-    "Sct": "Scuti",
-    "Ser": "Serpentis",
-    "Sex": "Sextantis",
-    "Tau": "Tauri",
-    "Tel": "Telescopii",
-    "Tri": "Trianguli",
-    "TrA": "Trianguli Australis",
-    "Tuc": "Tucanae",
-    "UMa": "Ursae Majoris",
-    "UMi": "Ursae Minoris",
-    "Vel": "Velorum",
-    "Vir": "Virginis",
-    "Vol": "Volantis",
-    "Vul": "Vulpeculae"
-}
 
 greek_letters = {
     "alf": "Alpha",
@@ -149,7 +60,6 @@ greek_letters = {
     "nu.": "Nu",
     "nu.01": "Nu 1",
     "nu.02": "Nu 2",
-    "xi": "Xi",
     "omi": "Omicron",
     "omi01": "Omicron 1",
     "omi02": "Omicron 2",
@@ -181,9 +91,9 @@ greek_letters = {
     "chi02": "Chi 2",
     "psi": "Psi",
     "ome": "Omega",
-    "ksi": "Ksi",
-    "ksi01": "Ksi 1",
-    "ksi02": "Ksi 2",
+    "ksi": "Xi",
+    "ksi01": "Xi 1",
+    "ksi02": "Xi 2",
 }
 
 ignored_stars = [
@@ -194,12 +104,7 @@ ignored_stars = [
 
 stars = simbad.get_bright_objects(3.0)
 additional_stars = [
-    '* eps Cas', # Segin
-    '* lam Ori', # Meissa
-    '* del UMa', # Megrez
     '* eps Cru', # Ginan
-    '* tet Eri', # Acamar
-    '* del01 Vel' # Alsephina
 ]
 
 additional_star_details = simbad.get_all_star_details(additional_stars)
@@ -235,6 +140,7 @@ stars.sort(key=lambda x: x['bayer_designation'].split(' ')[1].lower() + " " + x[
 
 star_kotlin = []
 seen_hip_ids = set()
+seen_proper_names = set()
 
 for star in stars:
     full_bayer_designation = get_full_bayer_designation(star)
@@ -243,6 +149,8 @@ for star in stars:
     name = star['proper_name']
     if name is None:
         name = full_bayer_designation
+    else:
+        seen_proper_names.add(name)
 
     ra = star['right_ascension']
     dec = star['declination']
@@ -260,6 +168,20 @@ for star in stars:
 
 with open('output/stars.kt', 'w') as f:
     f.write(',\n'.join(star_kotlin))
+
+
+# all_names = set(iau.get_star_names().values())
+# missing_names = all_names - seen_proper_names
+# if len(missing_names) > 0:
+#     # Convert names to ascii (replace accented characters)
+#     missing_names = {name.encode('ascii', 'ignore').decode('ascii') for name in missing_names}
+#     # Look up all stars
+#     missing_star_details = simbad.get_all_star_details(list(missing_names))
+#     # Print the bayer designation - proper name
+#     # Sort by second word of bayer designation
+#     missing_star_details.sort(key=lambda x: x['bayer_designation'].split(' ')[1].lower() + " " + x['bayer_designation'].split(' ')[0].lower())
+#     for star in missing_star_details:
+#         print(f"{star['bayer_designation']} - {star['proper_name']}")
 
 constellation_kotlin = []
 constellations = iau.get_constellations({star['bayer_designation']: get_hip_number(star) for star in stars})

@@ -1,11 +1,13 @@
-import json
+import csv
 
+star_names = None
 
 # https://exopla.net/sternbilder/moderne-sternbilder/
 constellations = [
     {
         "name": "Andromeda",
         "abbreviation": "And",
+        "member_name": "Andromedae",
         "lines": [
             ["gam01", "bet", "del", "alf"],
             ["del", "eps", "zet", "eta"],
@@ -18,6 +20,7 @@ constellations = [
     {
         "name": "Antila",
         "abbreviation": "Ant",
+        "member_name": "Antilae",
         "lines": [
             ["iot", "alf", "eps"]
         ]
@@ -25,6 +28,7 @@ constellations = [
     {
         "name": "Apus",
         "abbreviation": "Aps",
+        "member_name": "Apodis",
         "lines": [
             ["gam", "bet", "del01", "alf"]
         ]
@@ -32,6 +36,7 @@ constellations = [
     {
         "name": "Aquarius",
         "abbreviation": "Aqr",
+        "member_name": "Aquarii",
         "lines": [
             ["eps", "mu.", "bet", "alf", "pi.", "zet", "gam",
              "alf", "tet", "rho", "lam", "tau", "del"],
@@ -43,6 +48,7 @@ constellations = [
     {
         "name": "Aquila",
         "abbreviation": "Aql",
+        "member_name": "Aquilae",
         "lines": [
             ["bet", "alf", "gam", "del", "lam"],
             ["tet", "eta", "del", "zet", "eps"],
@@ -53,6 +59,7 @@ constellations = [
     {
         "name": "Ara",
         "abbreviation": "Ara",
+        "member_name": "Arae",
         "lines": [
             ["tet", "alf", "kap", "eps01", "zet", "eta", "del", "gam"],
             ["bet", "alf"]
@@ -61,6 +68,7 @@ constellations = [
     {
         "name": "Carina",
         "abbreviation": "Car",
+        "member_name": "Carinae",
         "lines": [
             ["alf", "bet", "ome", "tet", "z", "y", "x",
                 "u", "w", "iot", "eps", "chi", "gam02 Vel"],
@@ -71,6 +79,7 @@ constellations = [
     {
         "name": "Puppis",
         "abbreviation": "Pup",
+        "member_name": "Puppis",
         "lines": [
             ["alf Car", "nu.", "pi.", "p", "l", "omi", "ksi", "m", "p"],
             ["ksi", "rho", "zet", "gam02 Vel"],
@@ -80,6 +89,7 @@ constellations = [
     {
         "name": "Pyxis",
         "abbreviation": "Pyx",
+        "member_name": "Pyxidis",
         "lines": [
             ["gam", "alf", "bet"]
         ]
@@ -87,6 +97,7 @@ constellations = [
     {
         "name": "Vela",
         "abbreviation": "Vel",
+        "member_name": "Velorum",
         "lines": [
             ["gam02", "del01", "kap", "phi", "mu.", "q", "psi", "lam", "gam02"]
         ]
@@ -94,6 +105,7 @@ constellations = [
     {
         "name": "Aries",
         "abbreviation": "Ari",
+        "member_name": "Arietis",
         "lines": [
             ["gam", "bet", "alf", "41"]
         ]
@@ -101,6 +113,7 @@ constellations = [
     {
         "name": "Auriga",
         "abbreviation": "Aur",
+        "member_name": "Aurigae",
         "lines": [
             ["alf", "del", "pi.", "bet", "tet", "bet Tau",
              "iot", "eta", "zet", "eps", "alf", "eta"],
@@ -110,6 +123,7 @@ constellations = [
     {
         "name": "Boötes",
         "abbreviation": "Boo",
+        "member_name": "Boötis",
         "lines": [
             ["zet", "alf", "eta", "tau"],
             ["alf", "eps", "del", "bet", "gam", "rho", "alf"],
@@ -119,6 +133,7 @@ constellations = [
     {
         "name": "Caelum",
         "abbreviation": "Cae",
+        "member_name": "Caeli",
         "lines": [
             ["gam", "bet", "alf", "del"]
         ]
@@ -126,6 +141,7 @@ constellations = [
     {
         "name": "Camelopardalis",
         "abbreviation": "Cam",
+        "member_name": "Camelopardalis",
         "lines": [
             ["bet", "alf", "gam"]
         ]
@@ -133,6 +149,7 @@ constellations = [
     {
         "name": "Cancer",
         "abbreviation": "Cnc",
+        "member_name": "Cancri",
         "lines": [
             ["alf", "del", "bet"],
             ["del", "gam", "iot"],
@@ -141,6 +158,7 @@ constellations = [
     {
         "name": "Canes Venatici",
         "abbreviation": "CVn",
+        "member_name": "Canum Venaticorum",
         "lines": [
             ["alf02", "bet"]
         ]
@@ -148,6 +166,7 @@ constellations = [
     {
         "name": "Canis Major",
         "abbreviation": "CMa",
+        "member_name": "Canis Majoris",
         "lines": [
             ["eta", "del", "eps", "omi01", "nu.02", "bet", "alf", "del"],
             ["alf", "iot", "gam", "tet", "iot"]
@@ -156,6 +175,7 @@ constellations = [
     {
         "name": "Canis Minor",
         "abbreviation": "CMi",
+        "member_name": "Canis Minoris",
         "lines": [
             ["alf", "bet"]
         ]
@@ -163,14 +183,16 @@ constellations = [
     {
         "name": "Capricornus",
         "abbreviation": "Cap",
+        "member_name": "Capricorni",
         "lines": [
-            ["alf01", "bet01", "psi", "ome", "zet",
-             "eps", "del", "gam", "tet", "alf01"]
+            ["alf02", "bet01", "psi", "ome", "zet",
+             "eps", "del", "gam", "tet", "alf02"]
         ]
     },
     {
         "name": "Cassiopeia",
         "abbreviation": "Cas",
+        "member_name": "Cassiopeiae",
         "lines": [
             ["eps", "del", "gam", "alf", "bet"]
         ]
@@ -178,6 +200,7 @@ constellations = [
     {
         "name": "Centaurus",
         "abbreviation": "Cen",
+        "member_name": "Centauri",
         "lines": [
             ["alf", "bet", "eps", "zet", "ups01", "phi", "eta", "kap"],
             ["phi", "chi", "psi", "tet", "nu.", "iot"],
@@ -189,6 +212,7 @@ constellations = [
     {
         "name": "Lupus",
         "abbreviation": "Lup",
+        "member_name": "Lupi",
         "lines": [
             ["alf", "zet", "eps", "gam", "del", "bet"],
             ["gam", "eta", "phi01", "chi", "eta", "zet"]
@@ -197,6 +221,7 @@ constellations = [
     {
         "name": "Cepheus",
         "abbreviation": "Cep",
+        "member_name": "Cephei",
         "lines": [
             ["tet", "eta", "alf", "mu.", "eps", "zet", "del", "iot", "bet", "alf"],
             ["bet", "gam", "iot"]
@@ -205,6 +230,7 @@ constellations = [
     {
         "name": "Cetus",
         "abbreviation": "Cet",
+        "member_name": "Ceti",
         "lines": [
             ["alf", "lam", "mu.", "ksi02", "gam", "del", "omi",
              "zet", "tau", "bet", "iot", "eta", "tet", "zet"],
@@ -214,6 +240,7 @@ constellations = [
     {
         "name": "Chamaeleon",
         "abbreviation": "Cha",
+        "member_name": "Chamaeleontis",
         "lines": [
             ["alf", "tet", "gam", "eps", "bet", "del02", "gam"]
         ]
@@ -221,6 +248,7 @@ constellations = [
     {
         "name": "Circinus",
         "abbreviation": "Cir",
+        "member_name": "Circini",
         "lines": [
             ["gam", "alf", "bet"]
         ]
@@ -228,6 +256,7 @@ constellations = [
     {
         "name": "Columba",
         "abbreviation": "Col",
+        "member_name": "Columbae",
         "lines": [
             ["eps", "alf", "bet", "gam", "del"],
             ["bet", "eta"]
@@ -236,6 +265,7 @@ constellations = [
     {
         "name": "Coma Berenices",
         "abbreviation": "Com",
+        "member_name": "Comae Berenices",
         "lines": [
             ["alf", "bet", "gam"]
         ]
@@ -243,6 +273,7 @@ constellations = [
     {
         "name": "Corona Australis",
         "abbreviation": "CrA",
+        "member_name": "Coronae Australis",
         "lines": [
             ["tet", "del", "bet", "alf", "gam"]
         ]
@@ -250,6 +281,7 @@ constellations = [
     {
         "name": "Corona Borealis",
         "abbreviation": "CrB",
+        "member_name": "Coronae Borealis",
         "lines": [
             ["tet", "bet", "alf", "gam", "del", "eps", "iot"]
         ]
@@ -257,6 +289,7 @@ constellations = [
     {
         "name": "Crater",
         "abbreviation": "Crt",
+        "member_name": "Crateris",
         "lines": [
             ["eta", "zet", "gam", "bet", "alf", "del", "gam"],
             ["del", "eps", "tet"]
@@ -265,6 +298,7 @@ constellations = [
     {
         "name": "Crux",
         "abbreviation": "Cru",
+        "member_name": "Crucis",
         "lines": [
             ["alf", "gam"],
             ["bet", "del"]
@@ -273,6 +307,7 @@ constellations = [
     {
         "name": "Cygnus",
         "abbreviation": "Cyg",
+        "member_name": "Cygni",
         "lines": [
             ["bet01", "gam", "eps", "zet", "nu.",
              "alf", "omi02", "iot", "del", "gam"],
@@ -282,6 +317,7 @@ constellations = [
     {
         "name": "Delphinus",
         "abbreviation": "Del",
+        "member_name": "Delphini",
         "lines": [
             ["eps", "bet", "del", "gam02", "alf", "bet"]
         ]
@@ -289,6 +325,7 @@ constellations = [
     {
         "name": "Dorado",
         "abbreviation": "Dor",
+        "member_name": "Doradus",
         "lines": [
             # TODO: HD 40409 is between delta and beta on the way to zeta
             ["gam", "alf", "bet", "del", "zet", "alf"]
@@ -297,6 +334,7 @@ constellations = [
     {
         "name": "Draco",
         "abbreviation": "Dra",
+        "member_name": "Draconis",
         "lines": [
             ["lam", "kap", "alf", "iot", "tet", "eta", "zet",
              "phi", "del", "ksi", "nu.01", "bet", "gam", "ksi"],
@@ -307,6 +345,7 @@ constellations = [
     {
         "name": "Equuleus",
         "abbreviation": "Equ",
+        "member_name": "Equulei",
         "lines": [
             ["alf", "del", "gam"]
         ]
@@ -314,6 +353,7 @@ constellations = [
     {
         "name": "Eridanus",
         "abbreviation": "Eri",
+        "member_name": "Eridani",
         "lines": [
             ["alf", "chi", "kap", "s", "iot", "tet", "e", "y", "g", "ups04", "d", "ups02", "ups01", "tau09", "tau08",
              "tau06", "tau05", "tau04", "tau03", "tau01", "eta", "eps", "del", "pi.", "gam", "omi02", "nu.", "mu.", "bet"]
@@ -322,6 +362,7 @@ constellations = [
     {
         "name": "Fornax",
         "abbreviation": "For",
+        "member_name": "Fornacis",
         "lines": [
             ["alf", "bet", "nu."]
         ]
@@ -329,6 +370,7 @@ constellations = [
     {
         "name": "Gemini",
         "abbreviation": "Gem",
+        "member_name": "Geminorum",
         "lines": [
             ["ksi", "lam", "del", "zet", "gam"],
             ["del", "ups", "iot", "tau", "eps", "mu.", "eta", "1"],
@@ -342,6 +384,7 @@ constellations = [
     {
         "name": "Grus",
         "abbreviation": "Gru",
+        "member_name": "Gruis",
         "lines": [
             ["gam", "lam", "mu.01", "del01", "bet", "eps", "zet"],
             ["del01", "alf", "bet"]
@@ -350,6 +393,7 @@ constellations = [
     {
         "name": "Hercules",
         "abbreviation": "Her",
+        "member_name": "Herculis",
         "lines": [
             ["chi", "phi", "tau", "sig", "eta", "zet", "bet", "gam", "ome", "h"],
             ["bet", "alf", "del", "lam", "mu.01", "ksi", "omi"],
@@ -361,6 +405,7 @@ constellations = [
     {
         "name": "Horologium",
         "abbreviation": "Hor",
+        "member_name": "Horologii",
         "lines": [
             ["bet", "mu.", "zet", "eta", "iot", "alf"]
         ]
@@ -368,6 +413,7 @@ constellations = [
     {
         "name": "Corvus",
         "abbreviation": "Crv",
+        "member_name": "Corvi",
         "lines": [
             ["alf", "eps", "gam", "del", "bet", "eps"]
         ]
@@ -375,6 +421,7 @@ constellations = [
     {
         "name": "Hydra",
         "abbreviation": "Hya",
+        "member_name": "Hydrae",
         "lines": [
             ["pi.", "gam", "bet", "ksi", "bet Crt"],
             ["alf Crt", "nu.", "phi", "mu.", "lam", "ups01", "alf",
@@ -384,6 +431,7 @@ constellations = [
     {
         "name": "Hydrus",
         "abbreviation": "Hyi",
+        "member_name": "Hydri",
         "lines": [
             ["alf", "bet", "gam", "alf"]
         ]
@@ -391,6 +439,7 @@ constellations = [
     {
         "name": "Indus",
         "abbreviation": "Ind",
+        "member_name": "Indi",
         "lines": [
             ["alf", "eta", "bet", "del", "tet", "alf"]
         ]
@@ -398,6 +447,7 @@ constellations = [
     {
         "name": "Lacerta",
         "abbreviation": "Lac",
+        "member_name": "Lacertae",
         "lines": [
             # TODO: HIP 109754 before 1 on first line
             ["bet", "alf", "5", "11", "6", "1"],
@@ -407,6 +457,7 @@ constellations = [
     {
         "name": "Leo",
         "abbreviation": "Leo",
+        "member_name": "Leonis",
         "lines": [
             ["mu.", "kap", "lam", "eps", "eta", "alf"],
             ["eta", "tet", "iot", "sig"],
@@ -418,6 +469,7 @@ constellations = [
     {
         "name": "Leo Minor",
         "abbreviation": "LMi",
+        "member_name": "Leonis Minoris",
         "lines": [
             ["bet", "21", "10"],
             ["21", "27", "28", "30", "46", "bet"]
@@ -426,6 +478,7 @@ constellations = [
     {
         "name": "Lepus",
         "abbreviation": "Lep",
+        "member_name": "Leporis",
         "lines": [
             ["tet", "del", "gam", "bet", "eps", "mu.", "alf", "zet", "eta", "tet"],
             ["alf", "bet"],
@@ -436,6 +489,7 @@ constellations = [
     {
         "name": "Libra",
         "abbreviation": "Lib",
+        "member_name": "Librae",
         "lines": [
             ["tau", "ups", "gam", "bet", "alf02", "gam"],
             ["alf02", "sig"]
@@ -444,6 +498,7 @@ constellations = [
     {
         "name": "Lynx",
         "abbreviation": "Lyn",
+        "member_name": "Lyncis",
         "lines": [
             # HIP 44700 between 38 and 10 Uma
             ["alf", "38", "10 UMa", "31", "21", "15", "2"]
@@ -452,6 +507,7 @@ constellations = [
     {
         "name": "Lyra",
         "abbreviation": "Lyr",
+        "member_name": "Lyrae",
         "lines": [
             ["alf", "eps02", "zet01", "del02", "gam", "bet", "zet01", "alf"]
         ]
@@ -461,6 +517,7 @@ constellations = [
     {
         "name": "Monoceros",
         "abbreviation": "Mon",
+        "member_name": "Monocerotis",
         "lines": [
             ["alf", "zet", "del", "bet", "gam"],
             ["del", "18", "eps Mon A", "13", "18"],
@@ -470,6 +527,7 @@ constellations = [
     {
         "name": "Musca",
         "abbreviation": "Mus",
+        "member_name": "Muscae",
         "lines": [
             ["alf", "gam", "del", "bet", "alf", "eps", "lam"]
         ]
@@ -477,6 +535,7 @@ constellations = [
     {
         "name": "Norma",
         "abbreviation": "Nor",
+        "member_name": "Normae",
         "lines": [
             ["del", "eta", "gam02", "eps", "del"]
         ]
@@ -484,6 +543,7 @@ constellations = [
     {
         "name": "Octans",
         "abbreviation": "Oct",
+        "member_name": "Octantis",
         "lines": [
             ["del", "bet", "nu.", "del"]
         ]
@@ -491,6 +551,7 @@ constellations = [
     {
         "name": "Ophiuchus",
         "abbreviation": "Oph",
+        "member_name": "Ophiuchi",
         "lines": [
             ["alf", "kap", "lam", "del", "eps", "ups", "zet", "phi", "chi"],
             ["zet", "kap"],
@@ -502,6 +563,7 @@ constellations = [
     {
         "name": "Serpens",
         "abbreviation": "Ser",
+        "member_name": "Serpentis",
         "lines": [
             ["tet01", "eta", "ksi", "eta Oph"],
             ["del Oph", "mu.", "eps", "alf", "del",
@@ -511,6 +573,7 @@ constellations = [
     {
         "name": "Orion",
         "abbreviation": "Ori",
+        "member_name": "Orionis",
         "lines": [
             ["kap", "zet", "eps", "del", "eta", "bet"],
             ["zet", "alf", "gam", "del"],
@@ -520,6 +583,7 @@ constellations = [
     {
         "name": "Pavo",
         "abbreviation": "Pav",
+        "member_name": "Pavonis",
         "lines": [
             ["alf", "del", "bet", "gam", "alf"],
             ["del", "eps"],
@@ -531,6 +595,7 @@ constellations = [
     {
         "name": "Pegasus",
         "abbreviation": "Peg",
+        "member_name": "Pegasi",
         "lines": [
             ["eps", "tet", "42", "alf", "gam", "alf And", "bet", "alf"],
             ["bet", "eta", "pi."],
@@ -540,6 +605,7 @@ constellations = [
     {
         "name": "Perseus",
         "abbreviation": "Per",
+        "member_name": "Persei",
         "lines": [
             ["phi", "tet", "iot", "tau", "eta", "gam", "tau"],
             ["gam", "alf", "iot"],
@@ -552,6 +618,7 @@ constellations = [
     {
         "name": "Phoenix",
         "abbreviation": "Phe",
+        "member_name": "Phoenicis",
         "lines": [
             ["alf", "eps", "bet", "zet", "del", "gam", "nu.", "bet", "alf"]
         ]
@@ -559,6 +626,7 @@ constellations = [
     {
         "name": "Pictor",
         "abbreviation": "Pic",
+        "member_name": "Pictoris",
         "lines": [
             ["alf", "gam", "bet"]
         ]
@@ -566,6 +634,7 @@ constellations = [
     {
         "name": "Pisces",
         "abbreviation": "Psc",
+        "member_name": "Piscium",
         "lines": [
             ["phi", "ups", "tau", "phi", "eta", "omi", "alf", "nu.", "eps",
                 "del", "ome", "iot", "tet", "gam", "kap", "lam", "iot"]
@@ -574,6 +643,7 @@ constellations = [
     {
         "name": "Piscis Austrinus",
         "abbreviation": "PsA",
+        "member_name": "Piscis Austrini",
         "lines": [
             ["iot", "tet", "mu.", "eps", "alf", "del", "gam", "bet", "mu.", "iot"]
         ]
@@ -581,6 +651,7 @@ constellations = [
     {
         "name": "Reticulum",
         "abbreviation": "Ret",
+        "member_name": "Reticuli",
         "lines": [
             ["alf", "eps", "iot", "del", "bet", "alf"]
         ]
@@ -588,6 +659,7 @@ constellations = [
     {
         "name": "Sagitta",
         "abbreviation": "Sge",
+        "member_name": "Sagittae",
         "lines": [
             ["alf", "del", "gam"],
             ["bet", "del"]
@@ -596,6 +668,7 @@ constellations = [
     {
         "name": "Sagittarius",
         "abbreviation": "Sgr",
+        "member_name": "Sagittarii",
         "lines": [
             ["eta", "eps", "gam02", "del", "lam", "mu."],
             ["lam", "phi", "del"],
@@ -607,6 +680,7 @@ constellations = [
     {
         "name": "Scorpius",
         "abbreviation": "Sco",
+        "member_name": "Scorpii",
         "lines": [
             ["G", "lam", "ups", "kap", "iot01", "tet", "eta", "zet02", "zet01",
                 "mu.01", "eps", "tau", "alf", "sig", "del", "pi.", "rho"],
@@ -616,6 +690,7 @@ constellations = [
     {
         "name": "Sculptor",
         "abbreviation": "Scl",
+        "member_name": "Sculptoris",
         "lines": [
             ["alf", "iot", "del", "gam", "bet"]
         ]
@@ -623,6 +698,7 @@ constellations = [
     {
         "name": "Scutum",
         "abbreviation": "Sct",
+        "member_name": "Scuti",
         "lines": [
             ["bet", "alf", "gam", "del", "bet"]
         ]
@@ -630,6 +706,7 @@ constellations = [
     {
         "name": "Sextans",
         "abbreviation": "Sex",
+        "member_name": "Sextantis",
         "lines": [
             ["del", "bet", "alf", "gam"]
         ]
@@ -637,6 +714,7 @@ constellations = [
     {
         "name": "Taurus",
         "abbreviation": "Tau",
+        "member_name": "Tauri",
         "lines": [
             ["bet", "eps", "del", "gam", "tet02", "alf", "zet"],
             ["gam", "lam", "ksi", "nu."],
@@ -646,6 +724,7 @@ constellations = [
     {
         "name": "Telescopium",
         "abbreviation": "Tel",
+        "member_name": "Telescopii",
         "lines": [
             ["zet", "alf", "eps"]
         ]
@@ -653,6 +732,7 @@ constellations = [
     {
         "name": "Triangulum",
         "abbreviation": "Tri",
+        "member_name": "Trianguli",
         "lines": [
             ["alf", "bet", "gam", "alf"]
         ]
@@ -660,6 +740,7 @@ constellations = [
     {
         "name": "Triangulum Australe",
         "abbreviation": "TrA",
+        "member_name": "Trianguli Australis",
         "lines": [
             ["alf", "bet", "eps", "gam", "alf"]
         ]
@@ -667,6 +748,7 @@ constellations = [
     {
         "name": "Tucana",
         "abbreviation": "Tuc",
+        "member_name": "Tucanae",
         "lines": [
             ["alf", "del", "eps", "zet", "bet01", "gam", "alf"]
         ]
@@ -674,6 +756,7 @@ constellations = [
     {
         "name": "Ursa Major",
         "abbreviation": "UMa",
+        "member_name": "Ursae Majoris",
         "lines": [
             ["eta", "zet", "eps", "del", "gam", "chi", "nu.", "ksi"],
             ["chi", "psi", "mu.", "lam"],
@@ -685,6 +768,7 @@ constellations = [
     {
         "name": "Ursa Minor",
         "abbreviation": "UMi",
+        "member_name": "Ursae Minoris",
         "lines": [
             ["alf", "del", "eps", "zet", "bet", "gam", "eta", "zet"]
         ]
@@ -692,6 +776,7 @@ constellations = [
     {
         "name": "Virgo",
         "abbreviation": "Vir",
+        "member_name": "Virginis",
         "lines": [
             ["109", "tau", "zet", "iot", "mu."],
             ["zet", "gam", "del", "eps"],
@@ -702,6 +787,7 @@ constellations = [
     {
         "name": "Volans",
         "abbreviation": "Vol",
+        "member_name": "Volantis",
         "lines": [
             ["alf", "bet", "eps", "del", "gam02", "eps", "alf"]
         ]
@@ -709,12 +795,18 @@ constellations = [
     {
         "name": "Vulpecula",
         "abbreviation": "Vul",
+        "member_name": "Vulpeculae",
         "lines": [
             ["alf", "15"]
         ]
     }
 ]
 
+def get_constellation_name(abbreviation, for_member=False):
+    for constellation in constellations:
+        if constellation['abbreviation'].lower() == abbreviation.lower():
+            return constellation['member_name'] if for_member else constellation['name']
+    return None
 
 def get_constellation_star_ids():
     stars = set()
@@ -751,3 +843,34 @@ def get_constellations(bayer_designations):
             "lines": adjusted_lines
         })
     return filtered_constellations
+
+def get_star_names():
+    global star_names
+    # TODO: Download the file if it doesn't exist from https://exopla.net/star-names/modern-iau-star-names/
+    if star_names is None:
+        with open('source/iau/star-names.csv', 'r') as f:
+            reader = csv.DictReader(f)
+            star_names = {}
+            for row in reader:
+                star_names[row['Designation']] = row['proper names']
+                star_names[f'HIP {row['HIP']}'] = row['proper names']
+    
+    return star_names
+
+def get_star_name(ids):
+    global star_names
+    # TODO: Download the file if it doesn't exist from https://exopla.net/star-names/modern-iau-star-names/
+    if star_names is None:
+        with open('source/iau/star-names.csv', 'r') as f:
+            reader = csv.DictReader(f)
+            star_names = {}
+            for row in reader:
+                star_names[row['Designation']] = row['proper names']
+                star_names[f'HIP {row['HIP']}'] = row['proper names']
+    
+    for id in ids:
+        cleaned_id = ' '.join(id.split())
+        if cleaned_id in star_names:
+            return star_names[cleaned_id]
+        
+    return None

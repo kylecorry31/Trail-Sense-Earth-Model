@@ -1,7 +1,6 @@
 from astroquery.simbad import Simbad
-from astropy.coordinates import Angle
 import numpy as np
-import csv
+from . import iau
 
 star_names = None
 
@@ -67,26 +66,6 @@ def get_id_of_type(ids, type):
             return cleaned_id[len(type):].strip()
     return None
 
-# TODO: Move to iau
-def get_star_name(ids):
-    global star_names
-    # TODO: Download the file if it doesn't exist from https://exopla.net/star-names/modern-iau-star-names/
-    if star_names is None:
-        with open('source/iau/star-names.csv', 'r') as f:
-            reader = csv.DictReader(f)
-            star_names = {}
-            for row in reader:
-                star_names[row['Designation']] = row['proper names']
-                star_names[f'HIP {row['HIP']}'] = row['proper names']
-    
-    for id in ids:
-        cleaned_id = ' '.join(id.split())
-        if cleaned_id in star_names:
-            return star_names[cleaned_id]
-        
-    return None
-
-
 def parse_object_details(row):
     # Name
     main_id = row['main_id']
@@ -98,12 +77,14 @@ def parse_object_details(row):
     ids_decoded = ids_value.decode('utf-8', errors='ignore') if isinstance(
         ids_value, (bytes, bytearray)) else str(ids_value)
     ids = [main_id] + [p.strip() for p in ids_decoded.split('|')]
-    proper_name = get_star_name(ids) if main_id not in proper_name_map else proper_name_map[main_id]
+    proper_name = iau.get_star_name(ids) if main_id not in proper_name_map else proper_name_map[main_id]
     hip_designation = get_id_of_type(ids, 'HIP')
     if hip_designation is None and main_id in hip_map:
         hip_designation = f'{hip_map[main_id]}'
     # TODO: Binary stars?
     bayer_designation = get_id_of_type(ids, '*')
+    if bayer_designation is None and get_id_of_type(ids, '**') is not None:
+        print("Skipping binary star", main_id, get_id_of_type(ids, '**'))
 
     # Coordinates
     ra_str = row['ra']
