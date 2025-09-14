@@ -4,7 +4,10 @@ import gzip
 import shutil
 import csv
 from scripts.progress import progress
-import PIL.Image as Image
+from .operators.basic import Save
+import numpy as np
+from scripts.operators import process
+from .operators.masking import RemoveOceans
 
 api_key_file = 'opencellid-api-key.txt'
 source_folder = 'source/opencellid'
@@ -44,7 +47,7 @@ def download(redownload=False):
         pbar.update(1)
 
 
-def process(resolution = 0.05):
+def process_towers(resolution = 0.05):
     if not os.path.exists(images_folder):
         os.makedirs(images_folder)
 
@@ -52,8 +55,7 @@ def process(resolution = 0.05):
 
     pixels_per_degree = 1 / resolution
 
-    # Create an image of 3600x1800 pixels
-    image = Image.new('L', (int(360 * pixels_per_degree), int(180 * pixels_per_degree)), 0)
+    image = np.zeros((int(180 * pixels_per_degree), int(360 * pixels_per_degree)), dtype=np.uint8)
 
     # Get the line count
     with open(f'{source_folder}/cell_towers.csv', 'r') as file:
@@ -66,14 +68,20 @@ def process(resolution = 0.05):
             for row in reader:
                 lat = float(row['lat'])
                 lon = float(row['lon'])
+                # samples = int(row['samples'])
+                # if samples < 3:
+                #     pbar.update(1)
+                #     continue
                 radios = {
-                    'GSM': 1,
-                    'UMTS': 2,
-                    'LTE': 4,
-                    'NR': 8,
-                    'CDMA': 16,
+                    'GSM': 127,
+                    'UMTS': 127,
+                    'LTE': 127,
+                    'NR': 127
                 }
-                radio = radios.get(row['radio'])
+                raw_radio = row['radio']
+                if raw_radio == 'CDMA':
+                    raw_radio = 'UMTS'
+                radio = radios.get(raw_radio)
                 rounded_lat = round(lat * pixels_per_degree) / pixels_per_degree
                 rounded_lon = round(lon * pixels_per_degree) / pixels_per_degree
 
@@ -88,7 +96,7 @@ def process(resolution = 0.05):
                     cell_towers[(rounded_lat, rounded_lon)] |= radio
                 
                 new_radio = cell_towers[(rounded_lat, rounded_lon)]
-                image.putpixel((int((rounded_lon + 180) * pixels_per_degree), int((90 - rounded_lat) * pixels_per_degree),), new_radio)
+                image[int((90 - rounded_lat) * pixels_per_degree), int((rounded_lon + 180) * pixels_per_degree)] = new_radio
                 pbar.update(1)
 
-    image.save(f'{images_folder}/cell_towers.tif')
+    process([image], RemoveOceans(dilation=0, scale=1), Save([f'{images_folder}/cell_towers.tif']))

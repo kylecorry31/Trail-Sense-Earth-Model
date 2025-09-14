@@ -137,6 +137,25 @@ class ReplaceLargeValues(ImageOperator):
             output.append(result)
         return output, {'large_values': all_large_values}
 
+class Tile(ImageOperator):
+    def __init__(self, tile_size):
+        self.tile_size = tile_size
+
+    def apply(self, images):
+        output = []
+        for image in images:
+            tiles_x = int(np.ceil(image.shape[1] / self.tile_size[1]))
+            tiles_y = int(np.ceil(image.shape[0] / self.tile_size[0]))
+            for ty in range(tiles_y):
+                for tx in range(tiles_x):
+                    x_start = tx * self.tile_size[1]
+                    y_start = ty * self.tile_size[0]
+                    x_end = min(x_start + self.tile_size[1], image.shape[1])
+                    y_end = min(y_start + self.tile_size[0], image.shape[0])
+                    tile = image[y_start:y_end, x_start:x_end]
+                    output.append(tile)
+        return output, {}
+
 class Save(ImageOperator):
     def __init__(self, paths, mode='F'):
         self.paths = paths
@@ -146,14 +165,15 @@ class Save(ImageOperator):
             'jpg': 'JPEG'
         }
         self.formats = []
-        for path in paths:
-            self.formats.append(format_map.get(path.rsplit('.', 1)[-1].lower(), 'WEBP'))
+        if not callable(paths):
+            for path in paths:
+                self.formats.append(format_map.get(path.rsplit('.', 1)[-1].lower(), 'WEBP'))
         self.mode = mode
 
     def apply(self, images):
         i = 0
         for image in images:
-            path = self.paths[i]
+            path = self.paths(i) if callable(self.paths) else self.paths[i]
             if self.mode == 'F':
                 image_to_save = image.astype(np.float32)
             else:
@@ -161,6 +181,6 @@ class Save(ImageOperator):
             img = Image.fromarray(image_to_save, mode=self.mode)
             if not os.path.exists(path.rsplit('/', 1)[0]):
                 os.makedirs(path.rsplit('/', 1)[0])
-            img.save(path, format=self.formats[i])
+            img.save(path, format=self.formats[i] if len(self.formats) > i else 'TIFF')
             i += 1
         return images, {}
