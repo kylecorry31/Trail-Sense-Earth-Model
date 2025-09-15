@@ -1,9 +1,9 @@
 import PIL.Image as Image
 import os
 from pydap.client import open_url
-from pydap.cas.urs import setup_session
 from scripts import to_tif, load_pixels
 from scripts.progress import progress
+import earthaccess
 
 # Dew point / humidity might be retrieved from here: https://goldsmr4.gesdisc.eosdis.nasa.gov/opendap/hyrax/MERRA2_MONTHLY/M2TMNXSLV.5.12.4/2022/contents.html
 
@@ -35,10 +35,10 @@ def __get_version(year, month):
     else:
         return 400
 
-def __get_data(year, month, username, password, data_point):
+def __get_data(year, month, data_point):
     version = __get_version(year, month)
     dataset_url = f'https://goldsmr4.gesdisc.eosdis.nasa.gov/opendap/MERRA2_MONTHLY/M2SMNXSLV.5.12.4/{year}/MERRA2_{version}.statM_2d_slv_Nx.{year}{str(month).zfill(2)}.nc4?{data_point}'
-    session = setup_session(username, password, check_url=dataset_url)
+    session = earthaccess.get_requests_https_session()
     data = open_url(dataset_url, session=session)
     session.close()
     values = data[data_point][0, :, :][0]
@@ -80,6 +80,10 @@ def download(start_year=1991, end_year=2020, redownload = False):
         username = f.readline().strip()
         password = f.readline().strip()
     
+    os.environ['EARTHDATA_USERNAME'] = username
+    os.environ['EARTHDATA_PASSWORD'] = password
+    earthaccess.login()
+    
     data_points = ['T2MMIN', 'T2MMAX']
     
     # TODO: download both T2MMIN and T2MMAX at the same time
@@ -88,7 +92,7 @@ def download(start_year=1991, end_year=2020, redownload = False):
             for year in range(start_year, end_year + 1):
                 for month in range(1, 13):
                     if not os.path.exists(f'{source_folder}/{year}-{month}-{data_point}.tif') or redownload:
-                        values = __get_data(year, month, username, password, data_point)
+                        values = __get_data(year, month, data_point)
                         __write_img(year, month, values, data_point)
                     pbar.update(1)
 

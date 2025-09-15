@@ -19,3 +19,5 @@ timezonefinder
 markdownify
 beautifulsoup4
 pyshtools
+earthaccess
+jinja2
