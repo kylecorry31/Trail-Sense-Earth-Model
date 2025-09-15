@@ -1,7 +1,7 @@
-from scripts import etopo, compression, load_pixels
+from scripts import etopo, compression
 
 etopo.download()
-compression.minify(etopo.geoid_path, lambda x: x, -99999, 'output/geoids.webp', 100, False, (361, 181))
+compression.minify(etopo.geoid_path, lambda x: x, -99999, 'output/geoids.webp', 100, False, (360, 180))
 
 print()
 print("SPHERICAL HARMONICS MODEL")
