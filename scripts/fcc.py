@@ -19,7 +19,7 @@ def download(redownload=False):
     if not redownload and os.path.exists(f'{source_folder}/CO.dat'):
         return
 
-    with progress("Downloading antenna data", 1) as pbar:
+    with progress("Downloading FCC antenna data", 1) as pbar:
         r = requests.get('https://data.fcc.gov/download/pub/uls/complete/r_tower.zip')
         with open(f'{source_folder}/r_towers.zip', 'wb') as f:
             f.write(r.content)
@@ -47,7 +47,7 @@ def process_towers(resolution = 0.05):
     with open(f'{source_folder}/CO.dat', 'r') as file:
         line_count = sum(1 for _ in file)
 
-    with progress("Processing antenna data", line_count) as pbar:
+    with progress("Processing FCC antenna data", line_count) as pbar:
         with open(f'{source_folder}/CO.dat', 'r') as file:
             reader = csv.reader(file, delimiter='|')
 

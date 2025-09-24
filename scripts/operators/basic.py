@@ -137,6 +137,17 @@ class ReplaceLargeValues(ImageOperator):
             output.append(result)
         return output, {'large_values': all_large_values}
 
+
+class BitwiseOr(ImageOperator):
+    def apply(self, images):
+        if len(images) == 0:
+            return images, {}
+        output_image = images[0].copy()
+        for image in images[1:]:
+            output_image = np.bitwise_or(output_image, image)
+        return [output_image], {}
+    
+
 class Tile(ImageOperator):
     def __init__(self, tile_size):
         self.tile_size = tile_size
