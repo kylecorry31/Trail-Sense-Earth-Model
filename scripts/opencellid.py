@@ -13,6 +13,7 @@ source_folder = 'source/opencellid'
 images_folder = 'images/opencellid'
 
 
+# TODO: Keep older versions of the opencellid dataset and merge it into the new one
 def download(redownload=False):
     if not os.path.exists(source_folder):
         os.makedirs(source_folder)

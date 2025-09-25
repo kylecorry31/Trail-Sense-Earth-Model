@@ -7,7 +7,7 @@ from PIL import Image
 import numpy as np
 from scripts.operators.masking import RemoveOceans
 
-resolution = 0.008
+resolution = 0.01
 
 def get_tile_size(width, height, max_width, max_height):
     dividers = [5, 4, 3, 2, 1]
