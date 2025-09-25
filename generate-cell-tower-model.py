@@ -1,4 +1,4 @@
-from scripts import opencellid, compression, load_pixels, fcc
+from scripts import opencellid, compression, load_pixels, fcc, mls
 from scripts.operators import process
 from scripts.operators.basic import Tile, Save, BitwiseOr
 import os
@@ -24,13 +24,19 @@ def get_tile_size(width, height, max_width, max_height):
 fcc.download()
 fcc.process_towers(resolution)
 
+# TODO: Merge these datasets before deduplicating
 opencellid.download()
 opencellid.process_towers(resolution)
+
+# TODO: MLS will likely only be valid for a few more years
+mls.download()
+mls.process_towers(resolution)
 
 Image.MAX_IMAGE_PIXELS = None
 
 fcc_image = load_pixels('images/fcc/cell_towers.tif').astype(np.uint8)
 openceillid_image = load_pixels('images/opencellid/cell_towers.tif').astype(np.uint8)
+mls_image = load_pixels('images/mls/cell_towers.tif').astype(np.uint8)
 
 total_width = fcc_image.shape[1]
 total_height = fcc_image.shape[0]
@@ -48,7 +54,7 @@ shutil.rmtree('output/towers', ignore_errors=True)
 os.makedirs('output/towers', exist_ok=True)
 
 process(
-    [fcc_image, openceillid_image],
+    [fcc_image, openceillid_image, mls_image],
     BitwiseOr(),
     RemoveOceans(dilation=0, scale=1),
     Tile((tile_height, tile_width)),

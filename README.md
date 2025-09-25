@@ -103,3 +103,8 @@ https://opencellid.org/
 Public domain antenna registrations
 
 https://www.fcc.gov/uls/transactions/daily-weekly
+
+# Mozilla Location Service (MLS)
+Public domain, final cell tower export. By Mozilla Corporation. Discontinued in 2024.
+
+https://archive.org/details/MLS_Full_Cell_Export_Final
