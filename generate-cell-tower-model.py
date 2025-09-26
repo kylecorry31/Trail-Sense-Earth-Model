@@ -22,12 +22,11 @@ def get_tile_size(width, height, max_width, max_height):
 
 
 fcc.download()
-fcc.process_towers(resolution)
-
 opencellid.download()
 # TODO: MLS will likely only be valid for a few more years
 mls.download()
 
+fcc.process_towers(resolution)
 towers = cell_towers.get_all_towers(opencellid.csv_path, 'OpenCellID')
 towers = cell_towers.get_all_towers(mls.csv_path, 'MLS', towers)
 cell_towers.create_tower_image(towers, resolution, 'images/cell_towers')

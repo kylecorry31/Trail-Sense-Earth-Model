@@ -26,6 +26,10 @@ def get_all_towers(csv_path, name, towers={}):
                         pbar.update(1)
                         continue
                 samples = int(row['samples'])
+                # Exclude towers without enough samples, these are likely not accurate
+                if samples < 3 and row['changeable'] != '0':
+                    pbar.update(1)
+                    continue
                 mnc = row['net']
                 mcc = row['mcc']
                 lac = row['area']
