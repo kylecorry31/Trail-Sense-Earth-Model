@@ -23,7 +23,7 @@ with progress.progress('Loading world map', 12) as pbar:
 with progress.progress('Processing world map', 6) as pbar:
     image = np.min(np.array(images), axis=0).astype(np.uint8)
     image = natural_earth.remove_oceans(image, scale=2, dilation=0)
-    image = natural_earth.remove_inland_water(image, scale=2, dilation=0)
+    image = natural_earth.remove_inland_water(image, replacement=127, scale=2, dilation=0)
     mean = np.mean(image, axis=-1)
 
     # Desert
@@ -71,7 +71,7 @@ with progress.progress('Processing world map', 6) as pbar:
     image = new_image
 
     image = natural_earth.remove_oceans(image, scale=2, dilation=0)
-    image = natural_earth.remove_inland_water(image, scale=2, dilation=0)
+    image = natural_earth.remove_inland_water(image, replacement=127, scale=2, dilation=0)
     pbar.update(1)
 
 smoothing_order = [
@@ -112,7 +112,7 @@ with progress.progress('Smoothing world map', len(smoothing_order) * 5) as pbar:
 
 # Remove water
 image = natural_earth.remove_oceans(image, scale=2, dilation=0)
-image = natural_earth.remove_inland_water(image, scale=2, dilation=0)
+image = natural_earth.remove_inland_water(image, replacement=127, scale=2, dilation=0)
 
 # Resize
 image = Image.fromarray(image)
