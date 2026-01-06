@@ -43,3 +43,25 @@ class Index(ImageOperator):
                 }
                 output.append(data['condenser'](image))
         return output, data
+
+class LinearCompression(ImageOperator):
+    def __init__(self, a=1.0, b=0.0):
+        self.a = a
+        self.b = b
+
+    def apply(self, images):
+        output = []
+        for image in images:
+            compressed_image = (image - self.b) * self.a
+            output.append(compressed_image.astype(np.uint16))
+        return output, {}
+
+class Split16Bits(ImageOperator):
+    def apply(self, images):
+        output = []
+        for image in images:
+            lower_bits = (image & 0xFF).astype(np.uint8)
+            upper_bits = ((image >> 8) & 0xFF).astype(np.uint8)
+            output.append(lower_bits)
+            output.append(upper_bits)
+        return output, {}
