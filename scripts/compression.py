@@ -4,7 +4,7 @@ from PIL import Image
 import numpy as np
 import pyshtools
 from scipy.ndimage import binary_closing
-from skimage.morphology import binary_erosion, binary_dilation, remove_small_holes
+from skimage.morphology import erosion, dilation, remove_small_holes
 from skimage import measure
 
 # Pixel = a * value + b
@@ -261,11 +261,11 @@ def smooth_color(image, color, smoothing_structure=None, smoothing_iterations=2,
     distances = np.linalg.norm(image.astype(np.int16) - np.array(color).astype(np.int16), axis=-1)
     mask = distances <= 4
     for _ in range(smoothing_iterations):
-        mask = binary_dilation(mask, smoothing_structure)
+        mask = dilation(mask, footprint=smoothing_structure)
     for _ in range(smoothing_iterations):
-        mask = binary_erosion(mask, smoothing_structure)
+        mask = erosion(mask, footprint=smoothing_structure)
     if min_hole_size is not None:
-        mask = remove_small_holes(mask, min_hole_size)
+        mask = remove_small_holes(mask, max_size=min_hole_size)
     image[mask] = color
     return image
 
@@ -273,7 +273,7 @@ def grow_color(image, color, structure=None, iterations=1):
     distances = np.linalg.norm(image.astype(np.int16) - np.array(color).astype(np.int16), axis=-1)
     mask = distances <= 4
     for _ in range(iterations):
-        mask = binary_dilation(mask, structure)
+        mask = dilation(mask, footprint=structure)
     image[mask] = color
     return image
 
