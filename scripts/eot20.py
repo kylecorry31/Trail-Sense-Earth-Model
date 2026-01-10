@@ -13,7 +13,7 @@ source_directory = 'source/eot20'
 output_directory = 'images/eot20'
 
 # This needs to be less than 255
-final_width = 250
+final_width = 128
 invalid_value = 100000
 
 shapefile_path = "source/natural-earth/ne_10m_land.shp"
