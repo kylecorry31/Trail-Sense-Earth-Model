@@ -47,17 +47,18 @@ class Index(ImageOperator):
         return output, data
 
 class LinearCompression(ImageOperator):
-    def __init__(self, a=None, b=None, calculate_per_image=False):
+    def __init__(self, a=None, b=None, calculate_per_image=False, target_max=255):
         self.a = a
         self.b = b
         self.calculate_per_image = calculate_per_image
+        self.target_max = target_max
 
     def apply(self, images):
-        # Calculate global min/max if needed
-        data_a = self.a
-        data_b = self.b
+        a = self.a
+        b = self.b
+        coefficients = []
 
-        if not self.calculate_per_image and (data_a is None or data_b is None):
+        if not self.calculate_per_image and (a is None or b is None):
              min_value = np.inf
              max_value = -np.inf
              for image in images:
@@ -65,41 +66,35 @@ class LinearCompression(ImageOperator):
                  max_value = max(max_value, np.max(image))
              
              if np.isinf(min_value):
-                 data_b = 0
-                 data_a = 1
+                 b = 0
+                 a = 1
              else:
-                 data_b = -min_value
-                 # Avoid division by zero
-                 denom = max_value + data_b
-                 data_a = 255 / denom if denom != 0 else 1
+                 b = -min_value
+                 denom = max_value + b
+                 a = self.target_max / denom if denom != 0 else 1
         else:
-            # Use provided or default (will be overwritten if calculate_per_image is True)
-            data_a = self.a if self.a is not None else 1.0
-            data_b = self.b if self.b is not None else 0.0
+            a = self.a if self.a is not None else 1.0
+            b = self.b if self.b is not None else 0.0
 
         output = []
         for image in images:
-            current_a = data_a
-            current_b = data_b
+            current_a = a
+            current_b = b
             
             if self.calculate_per_image:
                  local_min = np.min(image)
                  local_max = np.max(image)
                  current_b = -local_min
                  denom = local_max + current_b
-                 current_a = 255 / denom if denom != 0 else 1
+                 current_a = self.target_max / denom if denom != 0 else 1
+            coefficients.append((current_a, current_b))
 
-            # Apply compression
             compressed = (image + current_b) * current_a
-            
-            # Cast to uint8
-            output.append(compressed.astype(np.uint8))
+            output.append(compressed)
         
-        # Return the global a/b if we calculated them globally
-        metadata = {}
-        if not self.calculate_per_image:
-            metadata['a'] = data_a
-            metadata['b'] = data_b
+        metadata = {
+            'coefficients': (a, b)
+        }
 
         return output, metadata
 

@@ -10,33 +10,33 @@ version = '0.3.0'
 preset_filter = None
 
 presets = [
-    # {
-    #     "id": "high",
-    #     "scale": 1.0,
-    #     "compress_images": False,
-    #     "compression_quality": 100,
-    #     "above_N60_quality": 100,
-    #     "above_N60_scale": 1.0,
-    #     "ignore_threshold": 2
-    # },
-    # {
-    #     "id": "medium",
-    #     "scale": 1.0,
-    #     "compress_images": True,
-    #     "compression_quality": 100,
-    #     "above_N60_quality": 100,
-    #     "above_N60_scale": 1.0,
-    #     "ignore_threshold": 2
-    # },
-    # {
-    #     "id": "low",
-    #     "scale": 0.75,
-    #     "compress_images": True,
-    #     "compression_quality": 90,
-    #     "above_N60_quality": 60,
-    #     "above_N60_scale": 0.75,
-    #     "ignore_threshold": 8
-    # },
+    {
+        "id": "high",
+        "scale": 1.0,
+        "compress_images": False,
+        "compression_quality": 100,
+        "above_N60_quality": 100,
+        "above_N60_scale": 1.0,
+        "ignore_threshold": 2
+    },
+    {
+        "id": "medium",
+        "scale": 1.0,
+        "compress_images": True,
+        "compression_quality": 100,
+        "above_N60_quality": 100,
+        "above_N60_scale": 1.0,
+        "ignore_threshold": 2
+    },
+    {
+        "id": "low",
+        "scale": 0.75,
+        "compress_images": True,
+        "compression_quality": 90,
+        "above_N60_quality": 60,
+        "above_N60_scale": 0.75,
+        "ignore_threshold": 8
+    },
     {
         "id": "mini",
         "scale": 0.25,
