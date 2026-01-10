@@ -147,4 +147,8 @@ operators.extend(
     ]
 )
 
-process([f"images/world-map-{month}.tif" for month in range(1, 13)], *operators)
+process(
+    [f"images/world-map-{month}.tif" for month in range(1, 13)],
+    *operators,
+    show_progress=True,
+)

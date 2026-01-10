@@ -1,11 +1,19 @@
+from scripts import progress
 from .. import load_pixels
 
-def process(images, *operators):
+def process(images, *operators, show_progress=False):
     if images and isinstance(images[0], str):
-        images = [load_pixels(path) for path in images]
+        with progress.progress("Loading", total=len(images), disable=not show_progress) as pbar:
+            new_images = []
+            for path in images:
+                new_images.append(load_pixels(path))
+                pbar.update(1)
+        images = new_images
     
     results = []
-    for operator in operators:
-        images, data = operator.apply(images)
-        results.append(data)
+    with progress.progress("Processing", total=len(operators), disable=not show_progress) as pbar:
+        for operator in operators:
+            images, data = operator.apply(images)
+            results.append(data)
+            pbar.update(1)
     return images, results
