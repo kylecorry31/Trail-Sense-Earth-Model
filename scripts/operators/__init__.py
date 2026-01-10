@@ -13,6 +13,11 @@ def process(images, *operators, show_progress=False):
     results = []
     with progress.progress("Processing", total=len(operators), disable=not show_progress) as pbar:
         for operator in operators:
+            try:
+                op_name = operator.__class__.__name__
+                pbar.set_description(f"Processing [{op_name}]")
+            except Exception:
+                pass
             images, data = operator.apply(images)
             results.append(data)
             pbar.update(1)
