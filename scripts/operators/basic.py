@@ -1,3 +1,4 @@
+from .. import save_compressed, create_image
 from .interfaces import ImageOperator
 import numpy as np
 from PIL import Image
@@ -47,6 +48,17 @@ class ReplaceInvalid(ImageOperator):
         for image in images:
             values_array = np.ma.masked_invalid(image)
             output.append(np.where(values_array.mask, self.replacement, values_array))
+        return output, {}
+
+class Replace(ImageOperator):
+    def __init__(self, target_value, replacement=0):
+        self.target_value = target_value
+        self.replacement = replacement
+
+    def apply(self, images):
+        output = []
+        for image in images:
+            output.append(np.where(image == self.target_value, self.replacement, image))
         return output, {}
 
 class FlipY(ImageOperator):
@@ -167,31 +179,71 @@ class Tile(ImageOperator):
                     output.append(tile)
         return output, {}
 
+class Group(ImageOperator):
+    def __init__(self, grouping=3):
+        self.grouping = grouping
+
+    def apply(self, images):
+        output = []
+        for i in range(0, len(images), self.grouping):
+            output.append(np.dstack(images[i:i+self.grouping]))
+        return output, {}
+
 class Save(ImageOperator):
-    def __init__(self, paths, mode='F'):
+    def __init__(self, paths, mode=None, quality=100, lossless=True):
         self.paths = paths
+        self.mode = mode
+        self.quality = quality
+        self.lossless = lossless
+
+    def __get_format(self, path):
         format_map = {
             'tif': 'TIFF',
             'webp': 'WEBP',
-            'jpg': 'JPEG'
+            'jpg': 'JPEG',
+            'png': 'PNG',
         }
-        self.formats = []
-        if not callable(paths):
-            for path in paths:
-                self.formats.append(format_map.get(path.rsplit('.', 1)[-1].lower(), 'WEBP'))
-        self.mode = mode
+        return format_map.get(path.rsplit('.', 1)[-1].lower(), 'WEBP')
 
     def apply(self, images):
         i = 0
+        
         for image in images:
             path = self.paths(i) if callable(self.paths) else self.paths[i]
-            if self.mode == 'F':
-                image_to_save = image.astype(np.float32)
-            else:
-                image_to_save = image
-            img = Image.fromarray(image_to_save, mode=self.mode)
+            
             if not os.path.exists(path.rsplit('/', 1)[0]):
                 os.makedirs(path.rsplit('/', 1)[0])
-            img.save(path, format=self.formats[i] if len(self.formats) > i else 'TIFF')
+
+            if isinstance(image, np.ndarray) and image.ndim == 3:
+                channels = [image[:, :, k] for k in range(image.shape[2])]
+            else:
+                channels = image if isinstance(image, (list, tuple)) else [image]
+
+            format = self.__get_format(path)
+            if self.mode is not None:
+                mode = self.mode
+            elif format == 'TIFF':
+                mode = 'F'
+            else:
+                mode = 'L'
+
+            pil_channels = [Image.fromarray(c.astype(np.float32) if mode == 'F' else c.astype(np.uint8), mode=mode) for c in channels]
+            img = pil_channels[0] if len(pil_channels) == 1 else create_image(pil_channels)
+
+            
+            if format != 'TIFF':
+                img.save(
+                    path,
+                    quality=self.quality,
+                    lossless=self.lossless,
+                    format=format,
+                    method=6,
+                    alpha_quality=0 if len(channels) < 3 else self.quality,
+                    optimize=True,
+                    compress_level=9,
+                )
+            else:
+                img.save(path, format=format)
+            
             i += 1
         return images, {}

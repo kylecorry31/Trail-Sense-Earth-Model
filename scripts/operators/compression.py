@@ -1,5 +1,7 @@
 from .interfaces import ImageOperator
+from .. import save_compressed, create_image
 import numpy as np
+from PIL import Image
 
 class Index(ImageOperator):
     def __init__(self, condenser=None, final_width=255, invalid_value=-999):
@@ -45,16 +47,61 @@ class Index(ImageOperator):
         return output, data
 
 class LinearCompression(ImageOperator):
-    def __init__(self, a=1.0, b=0.0):
+    def __init__(self, a=None, b=None, calculate_per_image=False):
         self.a = a
         self.b = b
+        self.calculate_per_image = calculate_per_image
 
     def apply(self, images):
+        # Calculate global min/max if needed
+        data_a = self.a
+        data_b = self.b
+
+        if not self.calculate_per_image and (data_a is None or data_b is None):
+             min_value = np.inf
+             max_value = -np.inf
+             for image in images:
+                 min_value = min(min_value, np.min(image))
+                 max_value = max(max_value, np.max(image))
+             
+             if np.isinf(min_value):
+                 data_b = 0
+                 data_a = 1
+             else:
+                 data_b = -min_value
+                 # Avoid division by zero
+                 denom = max_value + data_b
+                 data_a = 255 / denom if denom != 0 else 1
+        else:
+            # Use provided or default (will be overwritten if calculate_per_image is True)
+            data_a = self.a if self.a is not None else 1.0
+            data_b = self.b if self.b is not None else 0.0
+
         output = []
         for image in images:
-            compressed_image = (image - self.b) * self.a
-            output.append(compressed_image.astype(np.uint16))
-        return output, {}
+            current_a = data_a
+            current_b = data_b
+            
+            if self.calculate_per_image:
+                 local_min = np.min(image)
+                 local_max = np.max(image)
+                 current_b = -local_min
+                 denom = local_max + current_b
+                 current_a = 255 / denom if denom != 0 else 1
+
+            # Apply compression
+            compressed = (image + current_b) * current_a
+            
+            # Cast to uint8
+            output.append(compressed.astype(np.uint8))
+        
+        # Return the global a/b if we calculated them globally
+        metadata = {}
+        if not self.calculate_per_image:
+            metadata['a'] = data_a
+            metadata['b'] = data_b
+
+        return output, metadata
 
 class Split16Bits(ImageOperator):
     def apply(self, images):
