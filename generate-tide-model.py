@@ -8,6 +8,11 @@ natural_earth.download()
 eot20.download()
 amplitudes, large_amplitudes = eot20.process_ocean_tides((720, 360))
 
+def get_file_index(i, group_size):
+    start = i * group_size + 1
+    end = start + group_size - 1
+    return f"{start}-{end}"
+
 constituents = [
     "2N2",
     "J1",
@@ -37,7 +42,7 @@ process(
     Replace(100000),
     LinearCompression(a=255, b=0),
     Group(3),
-    Save(lambda i: f"output/tide-amplitudes-{i+1}.webp", quality=100, lossless=True),
+    Save(lambda i: f"output/tides/tide-amplitudes-{get_file_index(i, 3)}.webp", quality=100, lossless=True),
 )
 
 files = [f"images/eot20/{constituent}-phase.tif" for constituent in constituents]
@@ -47,7 +52,7 @@ process(
     Replace(100000),
     LinearCompression(a=255, b=0),
     Group(3),
-    Save(lambda i: f"output/tide-phases-{i+1}.webp", quality=100, lossless=True),
+    Save(lambda i: f"output/tides/tide-phases-{get_file_index(i, 3)}.webp", quality=100, lossless=True),
 )
 
 files = ["images/eot20/indices-x.tif", "images/eot20/indices-y.tif"]
@@ -55,7 +60,7 @@ images = [load_pixels(file) for file in files]
 process(
     images,
     Group(2),
-    Save(lambda i: f"output/tide-indices-{i+1}.webp", quality=100, lossless=True),
+    Save(lambda i: f"output/tides/tide-indices-{get_file_index(i, 2)}.webp", quality=100, lossless=True),
 )
 
 print()
