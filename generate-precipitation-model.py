@@ -16,9 +16,9 @@ import numpy as np
 start_year = 1991
 end_year = 2020
 
-# era5.download(start_year, end_year)
-# natural_earth.download()
-# era5.process_precipitation(start_year, end_year)
+era5.download(start_year, end_year)
+natural_earth.download()
+era5.process_precipitation(start_year, end_year)
 
 files = [
     f"images/{start_year}-{end_year}-{month}-total_precipitation.tif"
