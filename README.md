@@ -19,8 +19,6 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-timezone-location-map.py**: The script to generate coordinates for each timezone ID.
 
-**generate-species-catalog.py**: The script to generate a species catalog of the most common species. It will output JSON files to output/species-catalog.
-
 **generate-cell-tower-model.py**: The script to generate a cell tower model. It will output a SQLLite DB to output/cell_towers.db.
 
 **generate-magnetic-field-model.py**: The script to generate the World Magnetic Model coefficients. It will output the WMM coefficients as Java arrays into the console.
@@ -72,7 +70,7 @@ https://doi.org/10.1051/aas:2000332
 
 This research has made use of the SIMBAD database, operated at CDS, Strasbourg, France. 2000,A&AS,143,9 , "The SIMBAD astronomical database", Wenger et al.
 
-# timezonefinder
+## timezonefinder
 The MIT License (MIT)
 Copyright (c) 2016 Evan Siroky
 
@@ -82,29 +80,17 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# iNaturalist
-Used to get the most common species.
-
-https://www.inaturalist.org/pages/api+reference
-
-# Wikipedia
-Species catalog information.
-
-https://en.wikipedia.org/api/rest_v1
-
-https://en.wikipedia.org (see the wikipedia link in each species catalog notes section)
-
-# OpenCelliD
+## OpenCelliD
 OpenCelliD Project is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License
 
 https://opencellid.org/
 
-# FCC
+## FCC
 Public domain antenna registrations
 
 https://www.fcc.gov/uls/transactions/daily-weekly
 
-# Mozilla Location Service (MLS)
+## Mozilla Location Service (MLS)
 Public domain, final cell tower export. By Mozilla Corporation. Discontinued in 2024.
 
 https://archive.org/details/MLS_Full_Cell_Export_Final
