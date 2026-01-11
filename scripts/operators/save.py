@@ -1,5 +1,4 @@
 from .interfaces import ImageOperator
-from .. import create_image
 from PIL import Image
 import numpy as np
 import os
@@ -20,6 +19,31 @@ class Save(ImageOperator):
             "png": "PNG",
         }
         return format_map.get(path.rsplit(".", 1)[-1].lower(), "WEBP")
+
+    def __create_image(self, images):
+        if len(images) == 0:
+            return None
+
+        if len(images) == 1:
+            return images[0].convert("L")
+
+        if len(images) == 3:
+            r, g, b = images
+            return Image.merge("RGB", (r.convert("L"), g.convert("L"), b.convert("L")))
+
+        if len(images) == 4:
+            r, g, b, a = images
+            return Image.merge(
+                "RGBA",
+                (r.convert("L"), g.convert("L"), b.convert("L"), a.convert("L")),
+            )
+
+        image_arrays = [np.array(im) for im in images]
+        mapped = np.zeros((*image_arrays[0].shape, 4), dtype=np.uint8)
+        mapped[..., 3] = 255
+        for i in range(len(images)):
+            mapped[..., i] = image_arrays[i]
+        return Image.fromarray(mapped)
 
     def apply(self, images):
         i = 0
@@ -53,7 +77,7 @@ class Save(ImageOperator):
             img = (
                 pil_channels[0]
                 if len(pil_channels) == 1
-                else create_image(pil_channels)
+                else self.__create_image(pil_channels)
             )
 
             if format != "TIFF":
