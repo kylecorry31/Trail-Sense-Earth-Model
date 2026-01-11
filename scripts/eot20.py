@@ -4,9 +4,7 @@ from scripts import progress
 import shutil
 import requests
 from .operators import process
-from .operators.basic import FlipY, ReplaceInvalid, Reshape, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing
-from .operators.compression import Index
-from .operators.masking import RemoveOceans
+from .operators import FlipY, ReplaceInvalid, Reshape, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing, Index, RemoveOceans
 
 # Load the data
 source_directory = 'source/eot20'

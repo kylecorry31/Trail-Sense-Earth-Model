@@ -1,15 +1,11 @@
 from scripts import etopo, natural_earth, progress, load_pixels
-from scripts.operators import process
-from scripts.operators.compression import Split16Bits, LinearCompression
-from scripts.operators.basic import Conditional, Group, Map, Reshape, Save, Type
+from scripts.operators import process, Split16Bits, LinearCompression, Conditional, Group, Map, Reshape, Save, Type, Mask, RemoveInlandWater, RemoveOceans
 from PIL import Image
 import numpy as np
 import os
 import re
 import json
 import zipfile
-
-from scripts.operators.masking import Mask, RemoveInlandWater, RemoveOceans
 
 version = "0.3.0"
 preset_filter = None

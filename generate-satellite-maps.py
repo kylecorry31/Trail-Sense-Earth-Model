@@ -2,8 +2,8 @@ from scripts import load_pixels, visible_earth, natural_earth, compression, prog
 import PIL.Image as Image
 import numpy as np
 
-from scripts.operators import process
-from scripts.operators.basic import (
+from scripts.operators import (
+    process,
     Map,
     SmoothColor,
     RemoveSmallRegions,
@@ -12,8 +12,9 @@ from scripts.operators.basic import (
     Save,
     Min,
     Type,
+    RemoveOceans,
+    RemoveInlandWater,
 )
-from scripts.operators.masking import RemoveOceans, RemoveInlandWater
 
 visible_earth.download()
 visible_earth.process_maps()

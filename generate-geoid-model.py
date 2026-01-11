@@ -1,7 +1,6 @@
 from scripts import etopo
 from scripts.operators import process
-from scripts.operators.compression import LinearCompression
-from scripts.operators.basic import Resize, Save
+from scripts.operators import LinearCompression, Resize, Save
 
 etopo.download()
 _, metadata = process(

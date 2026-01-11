@@ -1,7 +1,5 @@
 from scripts import natural_earth, to_tif, load_pixels
-from scripts.operators import process
-from scripts.operators.compression import LinearCompression
-from scripts.operators.basic import Save
+from scripts.operators import process, LinearCompression, Save
 from PIL import Image
 import numpy as np
 import os

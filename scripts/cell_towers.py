@@ -1,9 +1,8 @@
 import csv
 from scripts.progress import progress
 import os
-from scripts.operators import process
+from scripts.operators import process, Save
 import numpy as np
-from scripts.operators.basic import Save
 import datetime
 
 def get_all_towers(csv_path, name, towers={}):

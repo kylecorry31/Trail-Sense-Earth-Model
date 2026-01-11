@@ -3,7 +3,7 @@ import os
 import zipfile
 from scripts.progress import progress
 import csv
-from .operators.basic import Save
+from .operators import Save
 import numpy as np
 from scripts.operators import process
 
