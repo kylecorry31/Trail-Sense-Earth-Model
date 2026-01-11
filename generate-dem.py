@@ -207,9 +207,8 @@ for preset in presets:
                     Map(lambda image: np.rint(image)),
                     Type(np.uint16),
                     Split16Bits(),
-                    Group(2),
                     Save(
-                        lambda i: f"output/dem/{region}.webp",
+                        lambda: f"output/dem/{region}.webp",
                         quality=100,
                         lossless=True,
                     ),
