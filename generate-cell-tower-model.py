@@ -1,4 +1,4 @@
-from scripts import opencellid, load_pixels, fcc, mls, cell_towers
+from scripts import opencellid, fcc, mls, cell_towers
 from scripts.operators import process, Tile, Save, BitwiseOr, Type
 import os
 import shutil

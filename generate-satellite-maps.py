@@ -1,5 +1,4 @@
-from scripts import load_pixels, visible_earth, natural_earth, compression, progress
-import PIL.Image as Image
+from scripts import visible_earth
 import numpy as np
 
 from scripts.operators import (

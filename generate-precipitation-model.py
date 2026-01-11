@@ -1,5 +1,4 @@
-from scripts import era5, compression, natural_earth, to_tif, progress, load_pixels
-import numpy as np
+from scripts import era5, compression, natural_earth, progress
 import os
 
 # Follow these instructions to sign in: https://cds.climate.copernicus.eu/how-to-api#install-the-cds-api-client

@@ -1,5 +1,5 @@
 from scripts import etopo, natural_earth, progress, load_pixels
-from scripts.operators import process, Split16Bits, LinearCompression, Conditional, Group, Map, Reshape, Save, Type, Mask, RemoveInlandWater, RemoveOceans
+from scripts.operators import process, Split16Bits, LinearCompression, Conditional, Map, Reshape, Save, Type, Mask, RemoveInlandWater, RemoveOceans
 from PIL import Image
 import numpy as np
 import os

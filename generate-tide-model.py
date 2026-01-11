@@ -1,6 +1,5 @@
-from scripts import compression, eot20, natural_earth, load_pixels
+from scripts import eot20, natural_earth, load_pixels
 from scripts.operators import process, LinearCompression, Group, Replace, Save
-import numpy as np
 
 natural_earth.download()
 eot20.download()
