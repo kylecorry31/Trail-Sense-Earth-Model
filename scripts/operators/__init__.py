@@ -1,7 +1,9 @@
 from scripts import progress
 from .. import load_pixels
+import PIL.Image as Image
 
 def process(images, *operators, show_progress=False):
+    Image.MAX_IMAGE_PIXELS = None
     if images and isinstance(images[0], str):
         with progress.progress("Loading", total=len(images), disable=not show_progress) as pbar:
             new_images = []

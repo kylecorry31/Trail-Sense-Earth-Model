@@ -1,28 +1,16 @@
-from scripts import etopo, compression
+from scripts import etopo
+from scripts.operators import process
+from scripts.operators.compression import LinearCompression
+from scripts.operators.basic import Resize, Save
 
 etopo.download()
-compression.minify(etopo.geoid_path, lambda x: x, -99999, 'output/geoids.webp', 100, False, (360, 180))
+_, metadata = process(
+    [etopo.geoid_path],
+    LinearCompression(),
+    Resize((360, 180)),
+    Save(["output/geoids.webp"], quality=100, lossless=False),
+    show_progress=True,
+)
 
-print()
-print("SPHERICAL HARMONICS MODEL")
-print("=========================")
-
-harmonics = compression.spherical_harmonics(etopo.geoid_path, lambda x: x, -99999, 3_000_000, 'output/geoids_reconstructed.webp', True)
-
-code = "private val gCoeff = arrayOf(\n"
-for row in harmonics['g']:
-    code += "    byteArrayOf("
-    code += ", ".join(f"{int(val)}" for val in row)
-    code += "),\n"
-
-code += ");\n\n"
-
-code += "private val hCoeff = arrayOf(\n"
-for row in harmonics['h']:
-    code += "    byteArrayOf("
-    code += ", ".join(f"{int(val)}" for val in row)
-    code += "),\n"
-
-code += ");\n\n"
-
-print(code)
+# Print the coefficients
+print(metadata[0])
