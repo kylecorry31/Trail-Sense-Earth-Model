@@ -1,7 +1,7 @@
 from scripts import etopo, natural_earth, progress, load_pixels
 from scripts.operators import process
 from scripts.operators.compression import Split16Bits, LinearCompression
-from scripts.operators.basic import Conditional, Group, Reshape, Save, Type
+from scripts.operators.basic import Conditional, Group, Map, Reshape, Save, Type
 from PIL import Image
 import numpy as np
 import os
@@ -204,6 +204,7 @@ for preset in presets:
                 _, results = process(
                     [image],
                     LinearCompression(a, b),
+                    Map(lambda image: np.rint(image)),
                     Type(np.uint16),
                     Split16Bits(),
                     Group(2),
