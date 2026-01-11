@@ -1,8 +1,6 @@
 from scripts import opencellid, fcc, mls, cell_towers
-from scripts.operators import process, Tile, Save, BitwiseOr, Type
-import os
+from scripts.operators import process, Tile, Save, BitwiseOr, Type, RemoveOceans
 import shutil
-from PIL import Image
 import numpy as np
 
 
