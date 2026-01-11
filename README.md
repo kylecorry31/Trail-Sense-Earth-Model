@@ -3,7 +3,7 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-temperature-model.py**: The script to generate the global temperature model. This will generate 8 WEBP files in the output directory for the min/max monthly temperatures. Resolution is 576x361.
 
-**generate-humidity-model.py**: The script to generate the global humidity model. This will generate 4 WEBP files in the output directory for the monthly humidity. Resolution is 576x361.
+**generate-dewpoint-model.py**: The script to generate the global dewpoint model. This will generate 4 WEBP files in the output directory for the monthly dewpoint. Resolution is 360x180.
 
 **generate-precipitation-model.py**: The script to generate the global precipitation model. This will generate 4 WEBP files in the output directory for the monthly precipitation (monthly total). Resolution is 576x361.
 
