@@ -133,6 +133,11 @@ for preset in presets:
 
             source_image = load_pixels(file.replace("surface", "surface_sid"))
 
+            valid_sid_overrides = {
+                'N45E030': [1, 9, 10, 11, 13],
+                'N45E045': [1, 9, 10, 11, 13],
+            }
+
             pre_mask, _ = process(
                 [file],
                 RemoveOceans(
@@ -142,7 +147,7 @@ for preset in presets:
                     bbox=(longitude, end_latitude, end_longitude, latitude),
                 ),
                 # Remove bathymetry areas based on the sid image
-                Mask(~np.isin(source_image, [9, 10, 11, 13])),
+                Mask(~np.isin(source_image, valid_sid_overrides.get(region, [9, 10, 11, 13]))),
                 # If it is 13 and below 0, set it to 0 (13 is US coastline)
                 Mask(lambda image: (source_image == 13) & (image < 0)),
                 # Image is not allowed to be lower than the lowest place on land
