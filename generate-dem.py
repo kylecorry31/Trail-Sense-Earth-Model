@@ -7,7 +7,7 @@ import re
 import json
 import zipfile
 
-version = "0.3.0"
+version = "0.4.0"
 preset_filter = None
 
 presets = [
@@ -19,6 +19,7 @@ presets = [
         "above_N60_quality": 100,
         "above_N60_scale": 1.0,
         "ignore_threshold": 2,
+        "ocean_mask": True,
     },
     {
         "id": "medium",
@@ -28,6 +29,7 @@ presets = [
         "above_N60_quality": 100,
         "above_N60_scale": 1.0,
         "ignore_threshold": 2,
+        "ocean_mask": False,
     },
     {
         "id": "low",
@@ -37,6 +39,7 @@ presets = [
         "above_N60_quality": 60,
         "above_N60_scale": 0.75,
         "ignore_threshold": 8,
+        "ocean_mask": False,
     },
     {
         "id": "mini",
@@ -46,6 +49,7 @@ presets = [
         "above_N60_quality": 10,
         "above_N60_scale": 0.1,
         "ignore_threshold": 20,
+        "ocean_mask": False,
     },
 ]
 
@@ -66,6 +70,7 @@ for preset in presets:
     ignore_threshold = preset["ignore_threshold"]
     above_N60_quality = preset["above_N60_quality"]
     above_N60_scale = preset["above_N60_scale"]
+    use_ocean_mask = preset.get("ocean_mask", False)
 
     current_version = f'{version}-{preset["id"]}'
 
@@ -128,17 +133,11 @@ for preset in presets:
 
             source_image = load_pixels(file.replace("surface", "surface_sid"))
 
-            mask, _ = process(
+            pre_mask, _ = process(
                 [file],
                 RemoveOceans(
                     scale=2,
                     dilation=-20,
-                    only_replace_negative_pixels=True,
-                    bbox=(longitude, end_latitude, end_longitude, latitude),
-                ),
-                RemoveInlandWater(
-                    scale=2,
-                    dilation=-1,
                     only_replace_negative_pixels=True,
                     bbox=(longitude, end_latitude, end_longitude, latitude),
                 ),
@@ -148,6 +147,21 @@ for preset in presets:
                 Mask(lambda image: (source_image == 13) & (image < 0)),
                 # Image is not allowed to be lower than the lowest place on land
                 Mask(lambda image: image < -430.5),
+            )
+            pre_mask = pre_mask[0]
+
+            if use_ocean_mask:
+                ocean_mask, _ = process([pre_mask], Type(np.bool))
+                ocean_mask = ocean_mask[0]
+
+            mask, _ = process(
+                [pre_mask],
+                RemoveInlandWater(
+                    scale=2,
+                    dilation=-1,
+                    only_replace_negative_pixels=True,
+                    bbox=(longitude, end_latitude, end_longitude, latitude),
+                ),
                 # This image has inland water that is not properly masked
                 Conditional(region == "S30W060", Mask(lambda image: image < 0)),
                 Type(np.bool),
@@ -157,6 +171,15 @@ for preset in presets:
             # Reapply the mask
             image, _ = process([file], Mask(mask, invert=True), Reshape(image_size))
             image = image[0]
+
+            # Ocean channel: 255 for ocean pixels, 0 for land/inland-water pixels
+            if use_ocean_mask:
+                ocean_channel, _ = process(
+                    [ocean_mask],
+                    Map(lambda image: np.where(image, 0, 255).astype(np.uint8)),
+                    Reshape(image_size),
+                )
+                ocean_channel = ocean_channel[0]
 
             # Skip images with no valid land data
             if np.all(image < ignore_threshold):
@@ -197,14 +220,16 @@ for preset in presets:
                 min_val = np.min(image)
                 a = 0.25
                 b = -min_val
+                _ocean_channel = ocean_channel if use_ocean_mask else None
                 _, results = process(
                     [image],
                     LinearCompression(a, b),
                     Map(lambda image: np.rint(image)),
                     Type(np.uint16),
                     Split16Bits(),
+                    *([Map(lambda image: np.dstack([image, _ocean_channel]))] if use_ocean_mask else []),
                     Save(
-                        lambda: f"output/dem/{region}.webp",
+                        lambda i: f"output/dem/{region}.webp",
                         quality=100,
                         lossless=True,
                     ),
@@ -228,6 +253,7 @@ for preset in presets:
         index = json.dumps(
             {
                 "compression_method": "8-bit" if compress_images else "16-bit",
+                "has_ocean_mask": use_ocean_mask,
                 "version": current_version,
                 "resolution_arc_seconds": true_resolution,
                 "files": compression_factors,
