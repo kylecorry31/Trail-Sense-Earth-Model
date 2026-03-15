@@ -177,13 +177,10 @@ for preset in presets:
             image, _ = process([file], Mask(mask, invert=True), Reshape(image_size))
             image = image[0]
 
-            # Ocean channel: 255 for ocean pixels, 0 for land/inland-water pixels
+            # Water channel: 255 = ocean, 127 = inland water, 0 = land
             if use_ocean_mask:
-                ocean_channel, _ = process(
-                    [ocean_mask],
-                    Map(lambda image: np.where(image, 0, 255).astype(np.uint8)),
-                    Reshape(image_size),
-                )
+                water_channel = np.where(~ocean_mask, 255, np.where(~mask, 127, 0)).astype(np.uint8)
+                ocean_channel, _ = process([water_channel], Reshape(image_size))
                 ocean_channel = ocean_channel[0]
 
             # Skip images with no valid land data
@@ -258,7 +255,7 @@ for preset in presets:
         index = json.dumps(
             {
                 "compression_method": "8-bit" if compress_images else "16-bit",
-                "has_ocean_mask": use_ocean_mask,
+                "has_water_mask": use_ocean_mask,
                 "version": current_version,
                 "resolution_arc_seconds": true_resolution,
                 "files": compression_factors,
