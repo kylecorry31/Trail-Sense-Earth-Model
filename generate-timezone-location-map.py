@@ -70,9 +70,12 @@ for zone in zones:
 
     center_latitude = (min_lat + max_lat) / 2
     center_longitude = (west + east) / 2 if west < east else (west + east + 360) / 2
+    center_longitude = ((center_longitude + 180) % 360) - 180
 
     # Center of the geometry
     center = [center_longitude, center_latitude]
+    assert -180 <= center[0] <= 180
+    assert -90 <= center[1] <= 90
 
     prefix = zone.split("/")[0] + "/"
     zone_with_prefix_replaced = zone.replace(prefix, '') 
