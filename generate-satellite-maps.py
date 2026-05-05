@@ -1,4 +1,4 @@
-from scripts import visible_earth
+from scripts import visible_earth, natural_earth
 import numpy as np
 
 from scripts.operators import (
@@ -17,12 +17,13 @@ from scripts.operators import (
 
 visible_earth.download()
 visible_earth.process_maps()
+natural_earth.download()
 
 # https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Maps/Conventions/Topographic_maps
 DESERT = (232, 225, 182)
 # RAINFOREST = (168, 198, 143)
 ROCK = (202, 195, 184)
-GRASS = (189, 204, 150)
+GRASS = (184, 201, 166)
 ICE = (245, 244, 242)
 WATER = (0, 0, 0)
 INLAND_WATER = (127, 127, 127)
