@@ -9,6 +9,8 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-vegetation-model.py**: The script to generate the global vegetation model. This will generate 1 WEBP file in the output directory for the vegetation types from ERA5. Resolution is 576x361.
 
+**generate-worldcover-map.py**: The script to generate the global worldcover map. This will generate 1 WEBP file in the output directory for worldcover. Resolution is 3800x1900.
+
 **generate-geoid-model.py**: The script to generate the geoid model. This will generate 1 WEBP file in the output directory. Resolution is 361x181.
 
 **generate-tide-model.py**: The script to generate the tide model. This will generate 1 WEBP file for each tidal constituent (currently 17 files) with the red channel being the amplitude (normalized between 0 and 1 and with the 4th root taken on the normalized data) and the green channel being the phase (noramlized between 0 and 1, source is betwen -180 and 180). It will output the max amplitude for each constituent (scale is 0 to max amplitude in cm). Resolution is 720x360.
@@ -49,6 +51,15 @@ R. Stockli, E. Vermote, N. Saleous, R. Simmon and D. Herring (2005). The Blue
 Marble Next Generation - A true color earth dataset including seasonal dynamics
 from MODIS. Published by the NASA Earth Observatory. Corresponding author:
 rstockli@climate.gsfc.nasa.gov
+
+## ESA WorldCover
+© ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data
+(2021) processed by ESA WorldCover consortium.
+
+Zanaga, D., Van De Kerchove, R., Daems, D., et al. (2022). ESA WorldCover 10 m
+2021 v200. https://doi.org/10.5281/zenodo.7254221
+
+https://esa-worldcover.org/en/data-access
 
 ## pyTMD
 https://github.com/tsutterley/pyTMD
