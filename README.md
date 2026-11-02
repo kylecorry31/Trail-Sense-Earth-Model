@@ -13,7 +13,7 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-geoid-model.py**: The script to generate the geoid model. This will generate 1 WEBP file in the output directory. Resolution is 361x181.
 
-**generate-tide-model.py**: The script to generate the tide model. This will generate 1 WEBP file for each tidal constituent (currently 17 files) with the red channel being the amplitude (normalized between 0 and 1 and with the 4th root taken on the normalized data) and the green channel being the phase (noramlized between 0 and 1, source is betwen -180 and 180). It will output the max amplitude for each constituent (scale is 0 to max amplitude in cm). Resolution is 720x360.
+**generate-tide-model.py**: The script to generate the tide model. This will generate WEBP files in the output directory for the amplitude (normalized between 0 and 1, 3 constituents per file) and phase (normalized between 0 and 1, source is between -180 and 180) of each tidal constituent (currently 17), plus an index image which maps each pixel to its position in those files. Each 720x360 pixel is the phasor average of the valid 0.125 degree source cells it covers, so coastal pixels are kept even when only some of their source cells have data. It will output the max amplitude for each constituent (scale is 0 to max amplitude in cm) and the cells with amplitudes too large to store (as row, column, amplitude in cm). Resolution is 720x360.
 
 **generate-tide-corrections.py**: The script to generate the astronomical tide corrections. It will output the corrections for each tide constituent.
 
