@@ -1,5 +1,6 @@
 from scripts import eot20, natural_earth, load_pixels
-from scripts.operators import process, LinearCompression, Group, Replace, Save
+import numpy as np
+from scripts.operators import process, LinearCompression, Group, Map, Replace, Save
 
 natural_earth.download()
 eot20.download()
@@ -38,6 +39,7 @@ process(
     images,
     Replace(100000),
     LinearCompression(a=255, b=0),
+    Map(np.round),
     Group(3),
     Save(lambda i: f"output/tides/tide-amplitudes-{get_file_index(i, 3)}.webp", quality=100, lossless=True),
 )
@@ -48,6 +50,7 @@ process(
     images,
     Replace(100000),
     LinearCompression(a=255, b=0),
+    Map(np.round),
     Group(3),
     Save(lambda i: f"output/tides/tide-phases-{get_file_index(i, 3)}.webp", quality=100, lossless=True),
 )

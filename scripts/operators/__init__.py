@@ -9,6 +9,8 @@ from .replace_invalid import ReplaceInvalid
 from .replace import Replace
 from .flip_y import FlipY
 from .reshape import Reshape
+from .reshape_phasors import ReshapePhasors
+from .crop import Crop
 from .resize import Resize
 from .type import Type
 from .normalize import Normalize
@@ -39,6 +41,8 @@ __all__ = [
     "Replace",
     "FlipY",
     "Reshape",
+    "ReshapePhasors",
+    "Crop",
     "Resize",
     "Type",
     "Normalize",

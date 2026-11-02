@@ -4,7 +4,7 @@ from scripts import progress
 import shutil
 import requests
 from .operators import process
-from .operators import FlipY, ReplaceInvalid, Reshape, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing, Index, RemoveOceans
+from .operators import FlipY, ReplaceInvalid, ReshapePhasors, Crop, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing, Index, RemoveOceans
 
 # Load the data
 source_directory = 'source/eot20'
@@ -47,33 +47,39 @@ def process_ocean_tides(final_shape):
         for constituent in constituents:
             file_path = f'{source_directory}/ocean_tides/{constituent}_ocean_eot20.nc'
             with netCDF4.Dataset(file_path, 'r') as file:
-                # AMPLITUDE
-                _, amplitude_results = process(
-                    [file.variables['amplitude'][:]],
+                # The source grid includes the -90 degree row and a duplicate 360 degree column
+                images, _ = process(
+                    [file.variables['amplitude'][:], file.variables['phase'][:]],
                     ReplaceInvalid(invalid_value),
+                    Crop(top=1, right=1),
                     ShiftX(0.5, True),
                     FlipY(),
                     RemoveOceans(dilation=5, replacement=invalid_value),
-                    Reshape(final_shape),
+                    ReshapePhasors(final_shape, invalid_value),
+                )
+
+                # AMPLITUDE
+                _, amplitude_results = process(
+                    [images[0]],
                     ReplaceLargeValues(500, invalid_value=invalid_value),
                     SplitProcessing(Normalize(0.0, invalid_value=invalid_value)),
                     Index(condenser, final_width, invalid_value),
                     Save([f'{output_directory}/{constituent}-amplitude.tif'])
                 )
 
-                replace_large_values_idx = 5
-                normalize_index = 6
-                index_index = 7
+                replace_large_values_idx = 0
+                normalize_index = 1
+                index_index = 2
 
                 # Extract results
                 for value in amplitude_results[replace_large_values_idx]['large_values'][0]:
                     large_amplitudes.append((constituent, value[0], value[1], int(value[2])))
 
-                amplitudes[constituent] = float(amplitude_results[normalize_index]['data'][0][0]['maximum'])           
-                
+                amplitudes[constituent] = float(amplitude_results[normalize_index]['data'][0][0]['maximum'])
+
                 if condenser is None:
                     condenser = amplitude_results[index_index]['condenser']
-                
+
                 if not indices_images_created:
                     process([amplitude_results[index_index]['indices_x']], Save([f'{output_directory}/indices-x.tif']))
                     process([amplitude_results[index_index]['indices_y']], Save([f'{output_directory}/indices-y.tif']))
@@ -81,13 +87,8 @@ def process_ocean_tides(final_shape):
 
                 # PHASE
                 process(
-                    [file.variables['phase'][:]],
+                    [images[1]],
                     Normalize(-180.0, 180.0, invalid_value),
-                    ReplaceInvalid(invalid_value),
-                    ShiftX(0.5, True),
-                    FlipY(),
-                    RemoveOceans(dilation=5, replacement=invalid_value),
-                    Reshape(final_shape),
                     Index(condenser, final_width, invalid_value),
                     Save([f'{output_directory}/{constituent}-phase.tif'])
                 )
