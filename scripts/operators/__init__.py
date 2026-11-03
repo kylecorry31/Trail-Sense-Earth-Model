@@ -11,6 +11,8 @@ from .flip_y import FlipY
 from .reshape import Reshape
 from .quadtree import Quadtree
 from .hilbert_order import HilbertOrder
+from .fourier_series import FourierSeries
+from .remove_latitude_trend import RemoveLatitudeTrend
 from .condense_labels import CondenseLabels
 from .label_indices import LabelIndices
 from .polar_to_cartesian import PolarToCartesian
@@ -50,6 +52,8 @@ __all__ = [
     "Reshape",
     "Quadtree",
     "HilbertOrder",
+    "FourierSeries",
+    "RemoveLatitudeTrend",
     "CondenseLabels",
     "LabelIndices",
     "PolarToCartesian",

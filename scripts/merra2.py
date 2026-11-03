@@ -1,4 +1,5 @@
 import PIL.Image as Image
+import numpy as np
 import os
 from pydap.client import open_url
 from scripts import to_tif, load_pixels
@@ -48,19 +49,36 @@ def __get_data(year, month, data_point):
 def __write_img(year, month, values, data_point):
     to_tif(values, f'{source_folder}/{year}-{month}-{data_point}.tif', is_inverted=True)
 
+def __get_cell_mean_elevations(elevations, height, width):
+    """
+    The mean elevation of the area each grid point stands for. The temperature of a point is the mean of its whole cell
+    (0.5 degrees by 0.625 degrees, centered on the point), so it is reduced to sea level with the mean elevation of the
+    cell rather than the elevation at the point, which is up to thousands of meters different in the mountains.
+    """
+    rows, columns = elevations.shape
+    elevations = np.where(elevations == elevation_invalid_value, 0, elevations).astype(np.float64)
+    cell_height = 180 / (height - 1)
+    cell_width = 360 / width
+    means = np.zeros((height, width))
+    for y in range(height):
+        latitude = 90 - y * cell_height
+        top = int(np.floor((90 - min(latitude + cell_height / 2, 90)) / 180 * rows))
+        bottom = max(int(np.ceil((90 - max(latitude - cell_height / 2, -90)) / 180 * rows)), top + 1)
+        row = elevations[top:bottom].mean(axis=0)
+        # Cumulative sums around the antimeridian
+        padded = np.concatenate([[0], np.cumsum(np.concatenate([row, row]))])
+        for x in range(width):
+            longitude = -180 + x * cell_width
+            first = int(np.floor((longitude - cell_width / 2 + 180) / 360 * columns))
+            last = int(np.ceil((longitude + cell_width / 2 + 180) / 360 * columns))
+            count = max(last - first, 1)
+            start = first % columns
+            means[y, x] = (padded[start + count] - padded[start]) / count
+    return means
+
 def __to_sea_level(data, elevations):
-    w = len(data[0])
-    h = len(data)
-    for y in range(h):
-        for x in range(w):
-            elevation_x = int(x / w * len(elevations[0]))
-            elevation_y = int(y / h * len(elevations))
-            elevation = elevations[elevation_y, elevation_x]
-            if elevation == elevation_invalid_value:
-                elevation = 0
-            # Invert elevation to bring it back down to sea level
-            data[y, x] = data[y, x] + 0.0065 * elevation
-    return data
+    # Invert elevation to bring it back down to sea level
+    return data + 0.0065 * elevations
 
 def __load_data(year, month, data_point):
     return load_pixels(f'source/merra2/{year}-{month}-{data_point}.tif')
@@ -69,6 +87,17 @@ def __write_img_processed(year, month, values, data_point):
     to_tif(values, f'images/{year}-{month}-{data_point}.tif')
 
 def download(start_year=1991, end_year=2020, redownload = False):
+    data_points = ['T2MMIN', 'T2MMAX']
+    missing = [
+        (year, month, data_point)
+        for data_point in data_points
+        for year in range(start_year, end_year + 1)
+        for month in range(1, 13)
+        if not os.path.exists(f'{source_folder}/{year}-{month}-{data_point}.tif')
+    ]
+    if not missing and not redownload:
+        return
+
     if not os.path.exists(credentials_file):
         username = input("NASA Earthdata username: ")
         password = input("NASA Earthdata password: ")
@@ -83,9 +112,7 @@ def download(start_year=1991, end_year=2020, redownload = False):
     os.environ['EARTHDATA_USERNAME'] = username
     os.environ['EARTHDATA_PASSWORD'] = password
     earthaccess.login()
-    
-    data_points = ['T2MMIN', 'T2MMAX']
-    
+
     # TODO: download both T2MMIN and T2MMAX at the same time
     with progress("Downloading MERRA-2 data", (end_year - start_year + 1) * 12 * len(data_points)) as pbar:
         for data_point in data_points:
@@ -103,6 +130,8 @@ def process_temperatures(start_year=1991, end_year=2020):
     Image.MAX_IMAGE_PIXELS = None
     with progress("Loading elevation data", 1) as pbar:
         elevations = load_pixels(elevation_image)
+        height, width = __load_data(start_year, 1, data_points[0]).shape
+        elevations = __get_cell_mean_elevations(elevations, height, width)
         pbar.update(1)
     
     for data_point in data_points:

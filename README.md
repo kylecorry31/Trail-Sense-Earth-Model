@@ -1,7 +1,9 @@
 # Trail-Sense-Earth-Model
 A generator for Trail Sense which generates Earth models such as historic temperatures and geoids.
 
-**generate-temperature-model.py**: The script to generate the global temperature model. This will generate 8 WEBP files in the output directory for the min/max monthly temperatures. Resolution is 576x361.
+**generate-temperature-model.py**: The script to generate the global temperature model. This will generate 18 WEBP files in the output directory (9 for the monthly highs and 9 for the monthly lows). Each quantity is stored as an annual cycle (the mean and 4 harmonics) at sea level, with a polynomial of sin(latitude) removed from the mean, and the elevation of each 0.5 x 0.625 degree cell is the average of the ETOPO elevations in it. The quality of each image is chosen to fit a size budget. Resolution is 576x361.
+
+**generate-temperature-test-data.py**: Generates the test data for the temperature model (the full precision sea level monthly highs and lows at the 100 points of the precipitation test data).
 
 **generate-dewpoint-model.py**: The script to generate the global dewpoint model. This will generate 4 WEBP files in the output directory for the monthly dewpoint. Resolution is 360x180.
 

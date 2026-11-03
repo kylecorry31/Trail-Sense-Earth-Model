@@ -28,14 +28,18 @@ class WebpQualityOptions(ImageOperator):
 
     The images are encoded with cwebp (see encode_gray).
 
+    Each option also has the mean squared error, weighted by weights (an image the size of the reference, like the area
+    of each pixel) if they are given.
+
     reference: the images to compare against, at any resolution
     coefficients: the a and b used to compress each image (see LinearCompression), where value = pixel / a - b
     """
 
-    def __init__(self, qualities, reference, coefficients):
+    def __init__(self, qualities, reference, coefficients, weights=None):
         self.qualities = qualities
         self.reference = reference
         self.coefficients = coefficients
+        self.weights = weights
 
     def __get_option(self, image, quality, reference, reference_roughness, a, b):
         data = encode_gray(image, quality)
@@ -51,6 +55,7 @@ class WebpQualityOptions(ImageOperator):
             "quality": quality,
             "data": data,
             "error": float(error),
+            "squared_error": float(np.average((values - reference) ** 2, weights=self.weights)),
             "detail_loss": float(lost / max(reference_roughness, MIN_DETAIL)),
         }
 
