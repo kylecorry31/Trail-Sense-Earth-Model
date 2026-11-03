@@ -2,9 +2,17 @@ from scripts import eot20, natural_earth, load_pixels
 import numpy as np
 from scripts.operators import process, LinearCompression, Group, Map, Replace, Save
 
+# INPUT
+# The number of cells in the model, which sets its size (about 19 bytes per cell in total)
+cell_budget = 22000
+# Cells start at the base size and are split in half down to the min size where the tide varies more between neighbors
+base_degrees = 1.0
+min_degrees = 0.25
+
+######## Program, don't modify ########
 natural_earth.download()
 eot20.download()
-amplitudes, large_amplitudes = eot20.process_ocean_tides((720, 360))
+amplitudes, large_amplitudes = eot20.process_ocean_tides(cell_budget, base_degrees, min_degrees)
 
 def get_file_index(i, group_size):
     start = i * group_size + 1

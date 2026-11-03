@@ -9,7 +9,9 @@ from .replace_invalid import ReplaceInvalid
 from .replace import Replace
 from .flip_y import FlipY
 from .reshape import Reshape
-from .reshape_phasors import ReshapePhasors
+from .quadtree import Quadtree
+from .polar_to_cartesian import PolarToCartesian
+from .cartesian_to_polar import CartesianToPolar
 from .crop import Crop
 from .resize import Resize
 from .type import Type
@@ -41,7 +43,9 @@ __all__ = [
     "Replace",
     "FlipY",
     "Reshape",
-    "ReshapePhasors",
+    "Quadtree",
+    "PolarToCartesian",
+    "CartesianToPolar",
     "Crop",
     "Resize",
     "Type",
