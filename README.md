@@ -13,6 +13,10 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-geoid-model.py**: The script to generate the geoid model. This will generate 1 WEBP file in the output directory. Resolution is 361x181.
 
+**generate-dem.py**: The script to generate the digital elevation models (DEM) from ETOPO 2022, as 15 degree tiles in 4 sizes: high (16-bit lossless, with a water mask), medium (8-bit, quality 100), low, and mini (the built-in model). Low and mini choose the resolution and WebP quality of each tile to get the lowest error within a size budget. Every tile is saved at a range of resolutions (averaging the source pixels) and qualities, and elevations are rounded to 8 bits. The option for each tile that has the lowest total cost, while fitting in the budget, is chosen. The cost of an option is its mean absolute error against the source plus its loss of detail (the elevation changes between nearby points that make up the gain of a route), weighted by the ground area the tile covers (tiles are also narrower towards the poles to match), how much relief it has (errors matter more in rugged terrain), and its latitude (errors matter less in the arctic). It outputs a zip file for each size to the output directory. Requires `cwebp` (the `webp` package), which is used to encode the tiles without the adaptive quantization that makes smooth terrain blocky.
+
+**generate-dem-test-data.py**: The script to generate the reference data used to test the DEMs in Trail Sense. It will output CSV files with random points in hiking areas (grouped by mountains, hills, and flat terrain) plus a few over the ocean and well known peaks, points along hiking routes (for elevation gain and loss), and pairs of points on either side of a tile boundary (and a control set of the same size away from any boundary). The reference elevations are from the Copernicus DEM (via open-meteo), except for the peaks, which use their official elevation.
+
 **generate-tide-model.py**: The script to generate the tide model. This will generate WEBP files in the output directory for the amplitude (normalized between 0 and 1, 3 constituents per file) and phase (normalized between 0 and 1, source is between -180 and 180) of each tidal constituent (currently 17), plus an index image (1440x720) which maps each pixel to its cell in those files. Cells are 1 degree, split in half down to 0.25 degrees where the tide varies more between neighbors (up to the cell budget, which sets the size of the model), and each cell is the phasor average of the valid 0.125 degree source cells it covers, so coastal cells are kept even when only some of their source cells have data. Cells are ordered along a Hilbert curve, and values are replaced by a neighbor's wherever that changes the tide at the cell by less than 1%, both of which make the model compress better. It will output the max amplitude for each constituent (scale is 0 to max amplitude in cm) and the cells with amplitudes too large to store (as row, column, amplitude in cm, where row and column are the position of the cell in the amplitude files).
 
 
@@ -59,6 +63,11 @@ Zanaga, D., Van De Kerchove, R., Daems, D., et al. (2022). ESA WorldCover 10 m
 2021 v200. https://doi.org/10.5281/zenodo.7254221
 
 https://esa-worldcover.org/en/data-access
+
+## Copernicus DEM (test data only)
+Reference elevations for testing the DEM were generated using Copernicus DEM data via https://open-meteo.com.
+
+ESA - Users, who, in their research, use the Copernicus DEM, are requested to use the following DOI when citing the data source in their publications: https://doi.org/10.5270/ESA-c5d3d65
 
 ## pyTMD
 https://github.com/tsutterley/pyTMD

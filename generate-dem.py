@@ -1,13 +1,15 @@
 from scripts import etopo, natural_earth, progress, load_pixels
-from scripts.operators import process, Split16Bits, LinearCompression, Conditional, Map, Reshape, Save, Type, Mask, RemoveInlandWater, RemoveOceans
+from scripts.size_budget import fit_to_budget
+from scripts.operators import process, Split16Bits, LinearCompression, Conditional, Map, Reshape, WebpQualityOptions, Save, Type, Mask, RemoveInlandWater, RemoveOceans
 from PIL import Image
 import numpy as np
 import os
 import re
 import json
+import math
 import zipfile
 
-version = "0.4.0"
+version = "0.5.0"
 preset_filter = None
 
 presets = [
@@ -33,29 +35,108 @@ presets = [
     },
     {
         "id": "low",
-        "scale": 0.75,
         "compress_images": True,
-        "compression_quality": 90,
-        "above_N60_quality": 60,
-        "above_N60_scale": 0.75,
         "ignore_threshold": 8,
         "ocean_mask": False,
+        "optimize": {
+            "scales": [0.5, 0.65, 0.8, 1.0],
+            "qualities": [60, 75, 90, 95],
+            "size_budget_bytes": 20_000_000,
+            "relief_scale": 1000,
+            "latitude_importance": [(60, 0.3)],
+            "detail_weight": 150,
+        },
     },
     {
         "id": "mini",
-        "scale": 0.25,
         "compress_images": True,
-        "compression_quality": 75,
-        "above_N60_quality": 10,
-        "above_N60_scale": 0.1,
         "ignore_threshold": 20,
         "ocean_mask": False,
+        # Picks the resolution and quality of each tile to minimize the error within the size budget
+        "optimize": {
+            "scales": [0.1, 0.15, 0.2, 0.25, 0.3, 0.4],
+            "qualities": [50, 65, 75, 85, 95],
+            "size_budget_bytes": 2_250_000,
+            # A tile's error counts for more the more relief it has (+1x per this many meters), as its peaks are lost first
+            "relief_scale": 1000,
+            # ...and for less where few people hike: (latitude from, importance)
+            "latitude_importance": [(60, 0.3)],
+            # Losing all of a tile's detail (the elevation changes that make up the gain of a route) counts as this many meters of error
+            "detail_weight": 150,
+        },
     },
 ]
 
 # Increase the maximum image pixel limit to avoid DecompressionBombError
 Image.MAX_IMAGE_PIXELS = None
 resolution = 15
+
+
+def get_tile_options(region, full, latitude, longitude, optimize):
+    """Every resolution and quality a tile could be saved as, with the cost of each for choosing between them."""
+    # Tiles are narrower in the ground distance they cover towards the poles
+    mid_latitude = latitude - resolution / 2
+    width_factor = math.cos(math.radians(mid_latitude))
+
+    # Errors count for more where there is more relief, as peaks are lost first, and for less where few people hike
+    relief = float(full.max() - full.min())
+    importance = (1 + relief / optimize["relief_scale"]) * min(
+        [
+            weight
+            for from_latitude, weight in optimize["latitude_importance"]
+            if abs(mid_latitude) >= from_latitude
+        ],
+        default=1,
+    )
+
+    options = []
+    for option_scale in optimize["scales"]:
+        height = int(full.shape[0] * option_scale)
+        width = int(height * width_factor)
+        images, results = process(
+            [full],
+            Reshape((width, height), Image.BOX),
+            LinearCompression(),
+            Map(lambda image: np.rint(image)),
+            Type(np.uint8),
+        )
+        coefficients = results[1]["coefficients"]
+        _, results = process(
+            images,
+            WebpQualityOptions(optimize["qualities"], [full], coefficients),
+        )
+        for option in results[0]["options"][0]:
+            options.append(
+                {
+                    "filename": f"{region}.webp",
+                    "a": float(coefficients[0]["a"]),
+                    "b": float(coefficients[0]["b"]),
+                    "latitude_start": float(latitude),
+                    "longitude_start": float(longitude),
+                    "latitude_end": float(latitude - resolution),
+                    "longitude_end": float(longitude + resolution),
+                    "width": width,
+                    "height": height,
+                    "data": option["data"],
+                    "error": option["error"],
+                    "detail_loss": option["detail_loss"],
+                    # Errors are weighted by the ground area the tile covers
+                    "weight": width_factor * importance,
+                }
+            )
+    return options
+
+
+def choose_options(tile_options, optimize):
+    """Chooses an option for each tile which fits in the budget with the least total cost."""
+    return fit_to_budget(
+        tile_options,
+        optimize["size_budget_bytes"],
+        size=lambda option: len(option["data"]),
+        cost=lambda option: option["weight"]
+        * (option["error"] + optimize["detail_weight"] * option["detail_loss"]),
+    )
+
 
 etopo.download(surface_resolution=resolution)
 natural_earth.download()
@@ -64,17 +145,19 @@ for preset in presets:
     if preset_filter is not None and preset["id"] != preset_filter:
         continue
 
-    scale = preset["scale"]
+    scale = preset.get("scale")
     compress_images = preset["compress_images"]
-    compression_quality = preset["compression_quality"]
+    compression_quality = preset.get("compression_quality")
     ignore_threshold = preset["ignore_threshold"]
-    above_N60_quality = preset["above_N60_quality"]
-    above_N60_scale = preset["above_N60_scale"]
+    above_N60_quality = preset.get("above_N60_quality")
+    above_N60_scale = preset.get("above_N60_scale")
     use_ocean_mask = preset.get("ocean_mask", False)
+    optimize = preset.get("optimize")
+    tile_options = []
 
     current_version = f'{version}-{preset["id"]}'
 
-    true_resolution = int(resolution / scale)
+    true_resolution = int(resolution / scale) if scale else None
 
     files = etopo.get_file_paths(resolution, "surface")
 
@@ -173,6 +256,15 @@ for preset in presets:
             )
             mask = mask[0]
 
+            if optimize:
+                full, _ = process([file], Mask(mask, invert=True))
+                if not np.all(full[0] < ignore_threshold):
+                    tile_options.append(
+                        get_tile_options(region, full[0], latitude, longitude, optimize)
+                    )
+                pbar.update(1)
+                continue
+
             # Reapply the mask
             image, _ = process([file], Mask(mask, invert=True), Reshape(image_size))
             image = image[0]
@@ -193,6 +285,7 @@ for preset in presets:
                 _, results = process(
                     [image],
                     LinearCompression(),
+                    Map(lambda image: np.rint(image)),
                     Type(np.uint8),
                     Save(
                         [f"output/dem/{region}.webp"],
@@ -250,6 +343,24 @@ for preset in presets:
                     }
                 )
             pbar.update(1)
+
+    if optimize:
+        chosen = choose_options(tile_options, optimize)
+        heights = sorted(option["height"] for option in chosen)
+        true_resolution = int(resolution * 3600 / heights[len(heights) // 2])
+        total_size = sum(len(option["data"]) for option in chosen)
+        print(f'Chose {total_size / 1000:.0f} KB of the {optimize["size_budget_bytes"] / 1000:.0f} KB budget')
+
+        for option in chosen:
+            with open(f'output/dem/{option["filename"]}', "wb") as f:
+                f.write(option["data"])
+            compression_factors.append(
+                {
+                    key: value
+                    for key, value in option.items()
+                    if key not in ("data", "error", "detail_loss", "weight")
+                }
+            )
 
     with open("output/dem/index.json", "w") as f:
         index = json.dumps(

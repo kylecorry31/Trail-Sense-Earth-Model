@@ -33,6 +33,7 @@ from .min import Min
 from .conditional import Conditional
 from .index import Index
 from .linear_compression import LinearCompression
+from .webp_quality_options import WebpQualityOptions
 from .split_16_bits import Split16Bits
 from .remove_oceans import RemoveOceans
 from .remove_inland_water import RemoveInlandWater
@@ -71,6 +72,7 @@ __all__ = [
     "Conditional",
     "Index",
     "LinearCompression",
+    "WebpQualityOptions",
     "Split16Bits",
     "RemoveOceans",
     "RemoveInlandWater",
