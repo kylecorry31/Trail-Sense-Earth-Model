@@ -1,37 +1,25 @@
-from scripts import opencellid, fcc, mls, cell_towers
-from scripts.operators import process, Tile, Save, BitwiseOr, Type, RemoveOceans
-import shutil
+from scripts import opencellid, fcc, mls, cell_towers, cell_tower_index
+from scripts.operators import process, Save
 import numpy as np
 
-
-resolution = 0.01
-
+# INPUT
+# The cells are 1 / cells_per_degree degrees wide (a smaller cell is more accurate and larger)
+cells_per_degree = 192
 
 fcc.download()
 opencellid.download()
 # TODO: MLS will likely only be valid for a few more years
 mls.download()
 
-fcc.process_towers(resolution)
+######## Program, don't modify ########
 towers = cell_towers.get_all_towers(opencellid.csv_path, "OpenCellID")
 towers = cell_towers.get_all_towers(mls.csv_path, "MLS", towers)
-cell_towers.create_tower_image(towers, resolution, "images/cell_towers")
+locations = np.array(cell_towers.get_locations(towers) + fcc.get_towers())
+locations = locations[(np.abs(locations[:, 0]) <= 90) & (np.abs(locations[:, 1]) <= 180)]
 
-max_width = 12000
-max_height = 9000
+rows, columns = cell_tower_index.to_cells(locations[:, 0], locations[:, 1], cells_per_degree)
+data = cell_tower_index.encode(rows, columns, cells_per_degree)
 
-shutil.rmtree("output/towers", ignore_errors=True)
-
-tile_operator_index = 3
-
-_, metadata = process(
-    ["images/fcc/cell_towers.tif", "images/cell_towers/cell_towers.tif"],
-    Type(np.uint8),
-    BitwiseOr(),
-    RemoveOceans(dilation=0, scale=1),
-    Tile((max_height, max_width), max_dimensions=True),
-    Save(lambda x: f"output/towers/cell_towers_{x}.webp", quality=100, lossless=True),
-    show_progress=True
-)
-
-print(metadata[tile_operator_index]['tiles'][0])
+image = cell_tower_index.to_image(data)
+process([image], Save(["output/cell_towers.webp"], quality=100, lossless=True))
+print(f"{len(locations)} towers in {len(rows)} cells, image size (width, height): {image.shape[::-1]}")

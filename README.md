@@ -28,7 +28,9 @@ A generator for Trail Sense which generates Earth models such as historic temper
 
 **generate-timezone-location-map.py**: The script to generate coordinates for each timezone ID.
 
-**generate-cell-tower-model.py**: The script to generate a cell tower model. It will output a SQLLite DB to output/cell_towers.db.
+**generate-cell-tower-model.py**: The script to generate a cell tower model. It will output output/cell_towers.webp, a lossless WebP image whose pixels are the bytes of an index of the cells (1/192 degree wide) that contain a tower. The cells of each 512x512 cell tile are sorted along a Z-order curve and stored as Huffman coded gaps (see scripts/cell_tower_index.py for the format).
+
+**generate-cell-tower-test-data.py**: Generates the test data for the cell tower model (the exact locations of 100 random towers).
 
 **generate-magnetic-field-model.py**: The script to generate the World Magnetic Model coefficients. It will output the WMM coefficients as Java arrays into the console.
 

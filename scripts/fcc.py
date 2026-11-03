@@ -3,12 +3,8 @@ import os
 import zipfile
 from scripts.progress import progress
 import csv
-from .operators import Save
-import numpy as np
-from scripts.operators import process
 
 source_folder = 'source/fcc'
-images_folder = 'images/fcc'
 
 # https://data.fcc.gov/download/pub/uls/complete/r_tower.zip
 
@@ -35,13 +31,9 @@ def download(redownload=False):
 
         pbar.update(1)
 
-def process_towers(resolution = 0.05):
-    if not os.path.exists(images_folder):
-        os.makedirs(images_folder)
-    
-    pixels_per_degree = 1 / resolution
-
-    image = np.zeros((int(180 * pixels_per_degree), int(360 * pixels_per_degree)), dtype=np.uint8)
+def get_towers():
+    """The (latitude, longitude) of every FCC antenna structure"""
+    towers = []
 
     # Get the line count
     with open(f'{source_folder}/CO.dat', 'r') as file:
@@ -62,21 +54,17 @@ def process_towers(resolution = 0.05):
                 lon_seconds = row[13]
                 lon_direction = row[14]
 
+                pbar.update(1)
                 if lat_degrees == '' or lon_degrees == '':
-                    pbar.update(1)
                     continue
 
                 lat = float(lat_degrees) + float(lat_minutes) / 60 + float(lat_seconds) / 3600
                 if lat_direction == 'S':
                     lat = -lat
-                
+
                 lon = float(lon_degrees) + float(lon_minutes) / 60 + float(lon_seconds) / 3600
                 if lon_direction == 'W':
                     lon = -lon
 
-                rounded_lat = round(lat * pixels_per_degree) / pixels_per_degree
-                rounded_lon = round(lon * pixels_per_degree) / pixels_per_degree
-                image[int((90 - rounded_lat) * pixels_per_degree), int((rounded_lon + 180) * pixels_per_degree)] = 127
-                pbar.update(1)
-
-    process([image], Save([f'{images_folder}/cell_towers.tif']))
+                towers.append((lat, lon))
+    return towers

@@ -1,8 +1,5 @@
 import csv
 from scripts.progress import progress
-import os
-from scripts.operators import process, Save
-import numpy as np
 import datetime
 
 def get_all_towers(csv_path, name, towers={}):
@@ -46,23 +43,6 @@ def get_all_towers(csv_path, name, towers={}):
                 pbar.update(1)
     return towers
 
-def create_tower_image(towers, resolution, output_folder):
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    pixels_per_degree = 1 / resolution
-
-    image = np.zeros((int(180 * pixels_per_degree), int(360 * pixels_per_degree)), dtype=np.uint8)
-
-    towers = towers.values()
-
-    with progress("Processing cell tower data", len(towers)) as pbar:
-        for row in towers:
-            lat = float(row['lat'])
-            lon = float(row['lon'])
-            rounded_lat = round(lat * pixels_per_degree) / pixels_per_degree
-            rounded_lon = round(lon * pixels_per_degree) / pixels_per_degree
-            image[int((90 - rounded_lat) * pixels_per_degree), int((rounded_lon + 180) * pixels_per_degree)] = 127
-            pbar.update(1)
-
-    process([image], Save([f'{output_folder}/cell_towers.tif']))
+def get_locations(towers):
+    """The (latitude, longitude) of each tower from get_all_towers"""
+    return [(float(row['lat']), float(row['lon'])) for row in towers.values()]
