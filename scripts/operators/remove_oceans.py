@@ -10,12 +10,14 @@ class RemoveOceans(ImageOperator):
         scale=4,
         bbox=None,
         only_replace_negative_pixels=False,
+        all_touched=False,
     ):
         self.dilation = dilation
         self.replacement = replacement
         self.scale = scale
         self.bbox = bbox
         self.only_replace_negative_pixels = only_replace_negative_pixels
+        self.all_touched = all_touched
 
     def apply(self, images):
         output = []
@@ -28,6 +30,7 @@ class RemoveOceans(ImageOperator):
                     scale=self.scale,
                     bbox=self.bbox,
                     only_replace_negative_pixels=self.only_replace_negative_pixels,
+                    all_touched=self.all_touched,
                 )
             )
         return output, {}

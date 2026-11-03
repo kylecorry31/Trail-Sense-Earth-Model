@@ -60,7 +60,8 @@ def process_ocean_tides(leaf_budget, base_degrees, min_degrees):
                     Crop(top=1, right=1),
                     ShiftX(0.5, True),
                     FlipY(),
-                    RemoveOceans(dilation=5, replacement=invalid_value),
+                    # all_touched keeps the ocean around islands smaller than a pixel
+                    RemoveOceans(dilation=5, replacement=invalid_value, all_touched=True),
                     PolarToCartesian(invalid_value),
                 )
                 phasors.extend(image.astype(np.float32) for image in images)

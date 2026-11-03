@@ -16,6 +16,7 @@ last_mask_x_scale = None
 last_mask_y_scale = None
 last_mask_dilation = None
 last_mask_scale = None
+last_mask_all_touched = None
 
 loaded_shapefiles = {}
 
@@ -64,8 +65,9 @@ def remove_oceans(
     scale=4,
     bbox=None,
     only_replace_negative_pixels=False,
+    all_touched=False,
 ):
-    global last_mask, last_mask_replacement, last_mask_inverted, last_mask_x_scale, last_mask_y_scale, last_mask_dilation, last_mask_scale
+    global last_mask, last_mask_replacement, last_mask_inverted, last_mask_x_scale, last_mask_y_scale, last_mask_dilation, last_mask_scale, last_mask_all_touched
     # Render the shapefiles to an image
     width = image.shape[1]
     height = image.shape[0]
@@ -90,6 +92,7 @@ def remove_oceans(
         and last_mask_y_scale == y_scale
         and last_mask_dilation == dilation
         and last_mask_scale == scale
+        and last_mask_all_touched == all_touched
         and bbox is None
     ):
         mask = last_mask
@@ -116,6 +119,7 @@ def remove_oceans(
                 west, north, x_scale / scale, y_scale / scale
             ),
             dtype=np.float32,
+            all_touched=all_touched,
         )
         mask[mask > 0] = 255
 
@@ -153,6 +157,7 @@ def remove_oceans(
     last_mask_y_scale = y_scale
     last_mask_dilation = dilation
     last_mask_scale = scale
+    last_mask_all_touched = all_touched
 
     if only_replace_negative_pixels:
         image[(mask == 0) & (image < 0)] = replacement
