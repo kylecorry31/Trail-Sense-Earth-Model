@@ -5,7 +5,6 @@ from scripts.operators import (
     Replace,
     Resize,
     Type,
-    Group,
     Save,
 )
 import numpy as np
@@ -22,32 +21,21 @@ natural_earth.download()
 etopo.process_dem()
 era5.process_dew_point(start_year, end_year)
 
-
-def get_file_index(i, group_size):
-    start = i * group_size + 1
-    end = start + group_size - 1
-    return f"{start}-{end}"
-
-
-files = [
-    f"images/{start_year}-{end_year}-{month}-2m_dewpoint_temperature.tif"
-    for month in range(1, 13)
-]
-
-compression_index = 1
-
-_, metadata = process(
-    files,
+_, results = process(
+    [
+        f"images/{start_year}-{end_year}-{month}-2m_dewpoint_temperature.tif"
+        for month in range(1, 13)
+    ],
     Replace(-999, 0),
     LinearCompression(),
     Resize((360, 180)),
     Type(np.uint8),
-    Group(3),
     Save(
-        lambda i: f"output/dewpoint/dewpoint-{get_file_index(i, 3)}.webp",
+        "output/dewpoint/dewpoint-{range}.webp",
+        group=3,
         quality=100,
         lossless=False,
     ),
 )
 
-print("Dewpoint:", metadata[compression_index])
+print("Dewpoint:", results.of(LinearCompression))

@@ -3,6 +3,7 @@ from PIL import Image
 import numpy as np
 import os
 from ..webp import encode_gray
+from .group import Group
 
 
 class Save(ImageOperator):
@@ -10,14 +11,26 @@ class Save(ImageOperator):
     Saves each image to its path. Single channel 8-bit WebP images that are not lossless can turn off adaptive
     quantization, which makes smooth data (like terrain or climate) blocky at lower qualities, by being encoded with
     cwebp instead of PIL.
+
+    The paths can be a list, a function of the image index, or a template with {i} (the 1-based index) and, when
+    grouping, {range} (the 1-based indices of the images in the group, like "1-3").
+    Grouping stacks that many images into the channels of each saved image.
     """
 
-    def __init__(self, paths, mode=None, quality=100, lossless=True, adaptive_quantization=True):
-        self.paths = paths
+    def __init__(self, paths, mode=None, quality=100, lossless=True, adaptive_quantization=True, group=None):
+        self.paths = self.__path_function(paths, group)
+        self.group = group
         self.mode = mode
         self.quality = quality
         self.lossless = lossless
         self.adaptive_quantization = adaptive_quantization
+
+    @staticmethod
+    def __path_function(paths, group):
+        if not isinstance(paths, str):
+            return paths
+        size = group or 1
+        return lambda i: paths.format(i=i + 1, range=f"{i * size + 1}-{(i + 1) * size}")
 
     def __get_format(self, path):
         format_map = {
@@ -54,6 +67,8 @@ class Save(ImageOperator):
         return Image.fromarray(mapped)
 
     def apply(self, images):
+        if self.group:
+            images, _ = Group(self.group).apply(images)
         i = 0
 
         for image in images:

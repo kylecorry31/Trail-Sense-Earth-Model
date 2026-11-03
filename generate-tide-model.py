@@ -1,6 +1,6 @@
-from scripts import eot20, natural_earth, load_pixels
+from scripts import eot20, natural_earth
 import numpy as np
-from scripts.operators import process, LinearCompression, Group, Map, Replace, Save
+from scripts.operators import process, LinearCompression, Map, Replace, Save
 
 # INPUT
 # The number of cells in the model, which sets its size (about 19 bytes per cell in total)
@@ -13,11 +13,6 @@ min_degrees = 0.25
 natural_earth.download()
 eot20.download()
 amplitudes, large_amplitudes = eot20.process_ocean_tides(cell_budget, base_degrees, min_degrees)
-
-def get_file_index(i, group_size):
-    start = i * group_size + 1
-    end = start + group_size - 1
-    return f"{start}-{end}"
 
 constituents = [
     "2N2",
@@ -39,36 +34,28 @@ constituents = [
     "T2",
 ]
 
-scale_map = {}
 
-files = [f"images/eot20/{constituent}-amplitude.tif" for constituent in constituents]
-images = [load_pixels(file) for file in files]
-process(
-    images,
+amplitude_and_phase_steps = [
     Replace(100000),
     LinearCompression(a=255, b=0),
     Map(np.round),
-    Group(3),
-    Save(lambda i: f"output/tides/tide-amplitudes-{get_file_index(i, 3)}.webp", quality=100, lossless=True),
+]
+
+process(
+    [f"images/eot20/{c}-amplitude.tif" for c in constituents],
+    amplitude_and_phase_steps,
+    Save("output/tides/tide-amplitudes-{range}.webp", group=3),
 )
 
-files = [f"images/eot20/{constituent}-phase.tif" for constituent in constituents]
-images = [load_pixels(file) for file in files]
 process(
-    images,
-    Replace(100000),
-    LinearCompression(a=255, b=0),
-    Map(np.round),
-    Group(3),
-    Save(lambda i: f"output/tides/tide-phases-{get_file_index(i, 3)}.webp", quality=100, lossless=True),
+    [f"images/eot20/{c}-phase.tif" for c in constituents],
+    amplitude_and_phase_steps,
+    Save("output/tides/tide-phases-{range}.webp", group=3),
 )
 
-files = ["images/eot20/indices-x.tif", "images/eot20/indices-y.tif"]
-images = [load_pixels(file) for file in files]
 process(
-    images,
-    Group(2),
-    Save(lambda i: f"output/tides/tide-indices-{get_file_index(i, 2)}.webp", quality=100, lossless=True),
+    ["images/eot20/indices-x.tif", "images/eot20/indices-y.tif"],
+    Save("output/tides/tide-indices-{range}.webp", group=2),
 )
 
 print()
@@ -76,11 +63,15 @@ print("A = 255, B = 0")
 print()
 
 # Print the amplitudes as a kotlin map
+def kotlin_name(constituent):
+    return f"_{constituent}" if constituent == "2N2" else constituent
+
+
 print("private val amplitudes = mapOf(")
 
 for constituent, amplitude in amplitudes.items():
     print(
-        f"    TideConstituent.{f'_2N2' if constituent == '2N2' else constituent} to {amplitude},"
+        f"    TideConstituent.{kotlin_name(constituent)} to {amplitude},"
     )
 
 print(")")
@@ -92,7 +83,7 @@ print("private val largeAmplitudes = listOf(")
 
 for amplitude in large_amplitudes:
     print(
-        f"    listOf(TideConstituent.{f'_2N2' if amplitude[0] == '2N2' else amplitude[0]}, {amplitude[1]}, {amplitude[2]}, {amplitude[3]}),"
+        f"    listOf(TideConstituent.{kotlin_name(amplitude[0])}, {amplitude[1]}, {amplitude[2]}, {amplitude[3]}),"
     )
 
 print(")")

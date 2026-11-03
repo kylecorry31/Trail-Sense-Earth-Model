@@ -2,8 +2,8 @@ from scripts import era5
 from scripts.operators import (
     process,
     Reshape,
-    Type,
     Map,
+    Type,
     LinearCompression,
     Save,
 )
@@ -43,7 +43,7 @@ process(
     Map(np.rint),
     Type(np.uint8),
     Save(
-        lambda i: f"output/precipitation/precipitation-{i + 1}.webp",
+        "output/precipitation/precipitation-{i}.webp",
         quality=quality,
         lossless=False,
         adaptive_quantization=False,

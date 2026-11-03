@@ -4,8 +4,8 @@ from scripts.operators import (
     FourierSeries,
     RemoveLatitudeTrend,
     LinearCompression,
-    Map,
     Type,
+    Map,
     WebpQualityOptions,
 )
 from scripts.size_budget import fit_to_budget
@@ -31,8 +31,8 @@ etopo.process_dem()
 merra2.process_temperatures(start_year, end_year)
 
 quantities = {
-    "T2MMAX": [f"images/{start_year}-{end_year}-{month}-T2MMAX.tif" for month in range(1, 13)],
-    "T2MMIN": [f"images/{start_year}-{end_year}-{month}-T2MMIN.tif" for month in range(1, 13)],
+    name: [f"images/{start_year}-{end_year}-{month}-{name}.tif" for month in range(1, 13)]
+    for name in ["T2MMAX", "T2MMIN"]
 }
 
 mean_index = 0
@@ -51,20 +51,20 @@ for name, files in quantities.items():
         RemoveLatitudeTrend(trend_degree, [mean_index]),
         show_progress=True,
     )
-    trends = results[1]["trends"]
+    trends = results.of(RemoveLatitudeTrend)["trends"]
     compressed, results = process(
         images,
         LinearCompression(calculate_per_image=True),
         Map(np.rint),
         Type(np.uint8),
     )
-    coefficients = results[0]["coefficients"]
+    coefficients = results.of(LinearCompression)["coefficients"]
     _, results = process(
         compressed,
         WebpQualityOptions(qualities, images, coefficients, weights),
     )
     constants[name] = (coefficients, trends[mean_index])
-    for i, image_options in enumerate(results[0]["options"]):
+    for i, image_options in enumerate(results.of(WebpQualityOptions)["options"]):
         # The mean counts in every month, while each cosine and sine counts in half of them on average
         importance = 1 if i == mean_index else 0.5
         for option in image_options:

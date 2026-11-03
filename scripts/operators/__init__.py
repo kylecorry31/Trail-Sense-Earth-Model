@@ -1,5 +1,6 @@
 from scripts import progress
 from .. import load_pixels
+from .interfaces import ImageOperator
 import PIL.Image as Image
 
 # Import all operators
@@ -85,8 +86,43 @@ __all__ = [
     "process",
 ]
 
+class Results(list):
+    """The data returned by each operator, which can also be looked up by the type of operator."""
+
+    def __init__(self, operators):
+        super().__init__()
+        self.__operators = operators
+
+    def of(self, operator_type, occurrence=0):
+        matches = [
+            data
+            for operator, data in zip(self.__operators, self)
+            if isinstance(operator, operator_type)
+        ]
+        return matches[occurrence]
+
+
+def _flatten(operators):
+    """
+    Operators can be nested in lists (to build up repeated steps with a comprehension) or skipped with None (for
+    optional steps).
+    """
+    flat = []
+    for operator in operators:
+        if operator is None:
+            continue
+        if isinstance(operator, (list, tuple)):
+            flat.extend(_flatten(operator))
+        elif isinstance(operator, ImageOperator):
+            flat.append(operator)
+        else:
+            raise TypeError(f"Not an operator: {operator!r}")
+    return flat
+
+
 def process(images, *operators, show_progress=False):
     Image.MAX_IMAGE_PIXELS = None
+    operators = _flatten(operators)
     if images and isinstance(images[0], str):
         with progress.progress("Loading", total=len(images), disable=not show_progress) as pbar:
             new_images = []
@@ -94,15 +130,11 @@ def process(images, *operators, show_progress=False):
                 new_images.append(load_pixels(path))
                 pbar.update(1)
         images = new_images
-    
-    results = []
+
+    results = Results(operators)
     with progress.progress("Processing", total=len(operators), disable=not show_progress) as pbar:
         for operator in operators:
-            try:
-                op_name = operator.__class__.__name__
-                pbar.set_description(f"Processing [{op_name}]")
-            except Exception:
-                pass
+            pbar.set_description(f"Processing [{operator.__class__.__name__}]")
             images, data = operator.apply(images)
             results.append(data)
             pbar.update(1)

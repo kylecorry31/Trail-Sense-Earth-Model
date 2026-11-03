@@ -3,7 +3,7 @@ from scripts.operators import process
 from scripts.operators import LinearCompression, Resize, Save
 
 etopo.download()
-_, metadata = process(
+_, results = process(
     [etopo.geoid_path],
     LinearCompression(),
     Resize((360, 180)),
@@ -12,4 +12,4 @@ _, metadata = process(
 )
 
 # Print the coefficients
-print(metadata[0])
+print(results.of(LinearCompression))
