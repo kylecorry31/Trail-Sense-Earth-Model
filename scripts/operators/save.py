@@ -2,14 +2,22 @@ from .interfaces import ImageOperator
 from PIL import Image
 import numpy as np
 import os
+from ..webp import encode_gray
 
 
 class Save(ImageOperator):
-    def __init__(self, paths, mode=None, quality=100, lossless=True):
+    """
+    Saves each image to its path. Single channel 8-bit WebP images that are not lossless can turn off adaptive
+    quantization, which makes smooth data (like terrain or climate) blocky at lower qualities, by being encoded with
+    cwebp instead of PIL.
+    """
+
+    def __init__(self, paths, mode=None, quality=100, lossless=True, adaptive_quantization=True):
         self.paths = paths
         self.mode = mode
         self.quality = quality
         self.lossless = lossless
+        self.adaptive_quantization = adaptive_quantization
 
     def __get_format(self, path):
         format_map = {
@@ -80,7 +88,16 @@ class Save(ImageOperator):
                 else self.__create_image(pil_channels)
             )
 
-            if format != "TIFF":
+            if (
+                format == "WEBP"
+                and not self.lossless
+                and not self.adaptive_quantization
+                and len(channels) == 1
+                and mode == "L"
+            ):
+                with open(path, "wb") as f:
+                    f.write(encode_gray(np.array(img), self.quality))
+            elif format != "TIFF":
                 img.save(
                     path,
                     quality=self.quality,

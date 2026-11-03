@@ -1,9 +1,9 @@
 from .interfaces import ImageOperator
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
+from ..webp import encode_gray
 import numpy as np
 import io
-import subprocess
 
 # Detail is the change in elevation between points this many pixels of the reference apart
 DETAIL_STEP = 2
@@ -26,8 +26,7 @@ class WebpQualityOptions(ImageOperator):
     of the reference's detail (change in elevation between nearby points, which is what makes up the elevation gain
     of a route) that is missing from the decoded result.
 
-    The images are encoded with cwebp (the webp package), since PIL can't turn off the adaptive quantization which makes
-    smooth terrain blocky at lower qualities.
+    The images are encoded with cwebp (see encode_gray).
 
     reference: the images to compare against, at any resolution
     coefficients: the a and b used to compress each image (see LinearCompression), where value = pixel / a - b
@@ -38,19 +37,8 @@ class WebpQualityOptions(ImageOperator):
         self.reference = reference
         self.coefficients = coefficients
 
-    def __encode(self, image, quality):
-        height, width = image.shape
-        pgm = f"P5\n{width} {height}\n255\n".encode() + image.tobytes()
-        result = subprocess.run(
-            ["cwebp", "-quiet", "-q", str(quality), "-m", "6", "-sns", "0", "-segments", "1", "-o", "-", "--", "-"],
-            input=pgm,
-            capture_output=True,
-            check=True,
-        )
-        return result.stdout
-
     def __get_option(self, image, quality, reference, reference_roughness, a, b):
-        data = self.__encode(image, quality)
+        data = encode_gray(image, quality)
         decoded = np.array(Image.open(io.BytesIO(data)).convert("L"), dtype=np.float32)
         values = np.array(
             Image.fromarray(decoded / a - b).resize(
