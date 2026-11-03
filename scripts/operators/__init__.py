@@ -10,6 +10,9 @@ from .replace import Replace
 from .flip_y import FlipY
 from .reshape import Reshape
 from .quadtree import Quadtree
+from .hilbert_order import HilbertOrder
+from .condense_labels import CondenseLabels
+from .label_indices import LabelIndices
 from .polar_to_cartesian import PolarToCartesian
 from .cartesian_to_polar import CartesianToPolar
 from .snap_to_neighbors import SnapToNeighbors
@@ -45,6 +48,9 @@ __all__ = [
     "FlipY",
     "Reshape",
     "Quadtree",
+    "HilbertOrder",
+    "CondenseLabels",
+    "LabelIndices",
     "PolarToCartesian",
     "CartesianToPolar",
     "SnapToNeighbors",

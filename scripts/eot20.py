@@ -5,7 +5,7 @@ from scripts import progress
 import shutil
 import requests
 from .operators import process
-from .operators import FlipY, ReplaceInvalid, PolarToCartesian, CartesianToPolar, Quadtree, SnapToNeighbors, Crop, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing, RemoveOceans
+from .operators import FlipY, ReplaceInvalid, PolarToCartesian, CartesianToPolar, Quadtree, HilbertOrder, CondenseLabels, LabelIndices, SnapToNeighbors, Crop, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing, RemoveOceans
 
 # Load the data
 source_directory = 'source/eot20'
@@ -67,25 +67,31 @@ def process_ocean_tides(leaf_budget, base_degrees, min_degrees):
                 pbar.update(1)
 
     # Cells are base_degrees where the tide varies slowly and are split in half, down to min_degrees, where it varies
-    # more. Phasor values are in cm.
+    # more. Phasor values are in cm. The cells are ordered along a curve so neighboring cells are next to each other,
+    # which helps the model compress.
     degrees_per_pixel = 360 / phasors[0].shape[1]
-    images, results = process(
+    labels, _ = process(
         phasors,
         Quadtree(
             round(base_degrees / degrees_per_pixel),
             round(min_degrees / degrees_per_pixel),
             leaf_budget,
-            final_width,
             invalid_value,
             reference_floor=error_floor,
         ),
+        HilbertOrder(),
+    )
+    images, _ = process(
+        phasors,
+        CondenseLabels(labels[0], final_width, invalid_value),
         CartesianToPolar(invalid_value),
         SnapToNeighbors(snap_tolerance, invalid_value, large_amplitude_threshold),
     )
     del phasors
 
-    process([results[0]['indices_x']], Save([f'{output_directory}/indices-x.tif']))
-    process([results[0]['indices_y']], Save([f'{output_directory}/indices-y.tif']))
+    indices, _ = process(labels, LabelIndices(final_width))
+    process([indices[0]], Save([f'{output_directory}/indices-x.tif']))
+    process([indices[1]], Save([f'{output_directory}/indices-y.tif']))
 
     with progress.progress(f'Processing ocean tides', len(constituents)) as pbar:
         amplitudes = {}
