@@ -12,6 +12,7 @@ from .reshape import Reshape
 from .quadtree import Quadtree
 from .polar_to_cartesian import PolarToCartesian
 from .cartesian_to_polar import CartesianToPolar
+from .snap_to_neighbors import SnapToNeighbors
 from .crop import Crop
 from .resize import Resize
 from .type import Type
@@ -46,6 +47,7 @@ __all__ = [
     "Quadtree",
     "PolarToCartesian",
     "CartesianToPolar",
+    "SnapToNeighbors",
     "Crop",
     "Resize",
     "Type",

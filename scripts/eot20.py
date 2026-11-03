@@ -5,7 +5,7 @@ from scripts import progress
 import shutil
 import requests
 from .operators import process
-from .operators import FlipY, ReplaceInvalid, PolarToCartesian, CartesianToPolar, Quadtree, Crop, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing, RemoveOceans
+from .operators import FlipY, ReplaceInvalid, PolarToCartesian, CartesianToPolar, Quadtree, SnapToNeighbors, Crop, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing, RemoveOceans
 
 # Load the data
 source_directory = 'source/eot20'
@@ -17,6 +17,9 @@ invalid_value = 100000
 large_amplitude_threshold = 500
 # The smallest phasor magnitude (cm) to measure the change in tide between cells against
 error_floor = 10
+# Tide values are replaced by a neighbor's when it changes the tide at that cell by less than this fraction, which makes the
+# model compress better (higher values compress better but are less accurate)
+snap_tolerance = 0.01
 
 shapefile_path = "source/natural-earth/ne_10m_land.shp"
 island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
@@ -77,6 +80,7 @@ def process_ocean_tides(leaf_budget, base_degrees, min_degrees):
             reference_floor=error_floor,
         ),
         CartesianToPolar(invalid_value),
+        SnapToNeighbors(snap_tolerance, invalid_value, large_amplitude_threshold),
     )
     del phasors
 

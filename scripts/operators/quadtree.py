@@ -14,7 +14,8 @@ class Quadtree(ImageOperator):
     cell budget is used or the cells are min_size. The base size must be min_size * 2^n.
 
     The metadata includes indices_x and indices_y images (at min_size pixel resolution) which map each pixel to the
-    position of its cell in the condensed images. The condensed images are final_width wide.
+    position of its cell in the condensed images. The condensed images are final_width wide, with the cells ordered
+    along a Hilbert curve so neighboring cells are next to each other, which makes the images compress better.
     """
 
     def __init__(
@@ -39,6 +40,21 @@ class Quadtree(ImageOperator):
             sizes.append(sizes[-1] // 2)
         assert sizes[-1] == self.min_size, "The base size must be the min size times a power of 2"
         return sizes
+
+    @staticmethod
+    def __hilbert_distance(x, y, order):
+        distance = 0
+        step = 1 << (order - 1)
+        while step > 0:
+            rx = 1 if x & step else 0
+            ry = 1 if y & step else 0
+            distance += step * step * ((3 * rx) ^ ry)
+            if ry == 0:
+                if rx == 1:
+                    x, y = step - 1 - x, step - 1 - y
+                x, y = y, x
+            step //= 2
+        return distance
 
     @staticmethod
     def __block_sum(values, size, dtype):
@@ -121,7 +137,15 @@ class Quadtree(ImageOperator):
                 pending.extend((size // 2, r, c) for r, c in children(size, row, column))
             else:
                 cells.append((row * size, column * size, size))
-        cells.sort()
+        height, width = images[0].shape
+        order = max(1, int(np.ceil(np.log2(max(height, width) // self.min_size))))
+        cells.sort(
+            key=lambda cell: self.__hilbert_distance(
+                (cell[1] + cell[2] // 2) // self.min_size,
+                (cell[0] + cell[2] // 2) // self.min_size,
+                order,
+            )
+        )
 
         rows = -(-len(cells) // self.final_width)
         assert rows < 255, f"Too many cells to index: {len(cells)}"
@@ -138,7 +162,6 @@ class Quadtree(ImageOperator):
             cell_has_data = counts[size][:, block_rows, block_columns] > 0
             output[:, in_size] = np.where(cell_has_data, cell_means, self.invalid_value)
 
-        height, width = images[0].shape
         indices_x = np.zeros((height // self.min_size, width // self.min_size))
         indices_y = np.zeros_like(indices_x)
         for i, (row, column, size) in enumerate(cells):
