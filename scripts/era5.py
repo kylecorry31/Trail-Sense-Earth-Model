@@ -4,7 +4,6 @@ from tqdm import tqdm
 import xarray as xr
 from datetime import datetime
 import PIL
-from scripts import etopo, progress, to_tif, load_pixels
 
 source_folder = "source/era5"
 images_folder = "images"
@@ -183,14 +182,6 @@ def process_humidity(start_year=1991, end_year=2020):
 
 def process_dew_point(start_year=1991, end_year=2020):
     __process_dataset('2m_dewpoint_temperature', 'd2m', start_year, end_year)
-
-    # Convert everything to sea level and celsius
-    with progress.progress("Adjusting for elevation", 12) as pbar:
-        for month in range(1, 13):
-            image = load_pixels(f"{images_folder}/{start_year}-{end_year}-{month}-2m_dewpoint_temperature.tif")
-            data = etopo.adjust_for_elevation(image, lambda x, elevation: (x - 272.15) + 0.001 * elevation)
-            to_tif(data, f"{images_folder}/{start_year}-{end_year}-{month}-2m_dewpoint_temperature.tif")
-            pbar.update(1)
 
 def process_precipitation(start_year=1991, end_year=2020):
     __process_dataset('total_precipitation', 'tp', start_year, end_year)

@@ -17,6 +17,7 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 from scripts import era5, load_pixels, natural_earth
+from scripts.files import monthly_files
 
 # INPUT
 start_year = 1991
@@ -57,10 +58,7 @@ while len(points) < hiking_points + global_points:
         points.append((round(latitude, 3), round(longitude, 3)))
 
 # Meters per day
-months = [
-    load_pixels(f"images/{start_year}-{end_year}-{month}-total_precipitation.tif")
-    for month in range(1, 13)
-]
+months = [load_pixels(path) for path in monthly_files(start_year, end_year, "total_precipitation")]
 height, width = months[0].shape
 
 with open(f"{output_directory}/points.csv", "w", newline="") as f:

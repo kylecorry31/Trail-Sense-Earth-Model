@@ -1,36 +1,113 @@
 # Trail-Sense-Earth-Model
 A generator for Trail Sense which generates Earth models such as historic temperatures and geoids.
 
-**generate-temperature-model.py**: The script to generate the global temperature model. This will generate 18 WEBP files in the output directory (9 for the monthly highs and 9 for the monthly lows). Each quantity is stored as an annual cycle (the mean and 4 harmonics) at sea level, with a polynomial of sin(latitude) removed from the mean, and the elevation of each 0.5 x 0.625 degree cell is the average of the ETOPO elevations in it. The quality of each image is chosen to fit a size budget. Resolution is 576x361.
+## Models
 
-**generate-temperature-test-data.py**: Generates the test data for the temperature model (the full precision sea level monthly highs and lows at the 100 points of the precipitation test data).
+### Temperature
+Generated with generate-temperature-model.py.
 
-**generate-dewpoint-model.py**: The script to generate the global dewpoint model. This will generate 4 WEBP files in the output directory for the monthly dewpoint. Resolution is 360x180.
+The temperature model is generated using the MERRA-2 reanalysis data (the 1991 - 2020 climate normal). It is generated using the following steps, separately for the monthly highs (T2MMAX) and lows (T2MMIN):
+1. Download the T2MMIN and T2MMAX variables from the MERRA-2 reanalysis data.
+2. Calculate the monthly climate averages of each variable, converted to sea level using the ETOPO DEM.
+3. Perform harmonic analysis on the 12 monthly averages to get the annual cycle of every cell: the mean, plus the cosine and sine of each of the first 4 harmonics.
+4. Fit a polynomial of the sine of latitude (degree 4, weighted by the area of each row) to the mean image and subtract it, which narrows the range of the mean. The coefficients of the polynomial are stored in the app.
+5. Stretch each image to 8 bits using a linear stretch (value = pixel / a - b), with the coefficients stored in the app.
+6. Save each image as a lossy WEBP. Each image is encoded at a range of qualities, and the quality of each is chosen to get the lowest area-weighted error within the size budget. The mean counts twice as much as each harmonic image in the error, since it applies to every month. In practice, this leads to the lower harmonics being encoded at lower quality since they contribute less to the overall error.
 
-**generate-precipitation-model.py**: The script to generate the global precipitation model. This will generate 12 WEBP files in the output directory for the monthly precipitation (monthly total in mm, as 8-bit values where mm = (pixel / 4.4)^2). Resolution is 1440x720. The square root keeps the error proportional to the amount of precipitation, and the lossy WebP quality (encoded with `cwebp`) sets the size of the model.
+To get the temperature in a month, the app reads the 9 values at the location, reverses the stretch, adds the latitude polynomial back to the mean, sums the harmonics for the month, and adjusts the sea level temperature to the elevation at the location.
 
-**generate-vegetation-model.py**: The script to generate the global vegetation model. This will generate 1 WEBP file in the output directory for the vegetation types from ERA5. Resolution is 576x361.
+The test data for the model can be generated with generate-temperature-test-data.py.
 
-**generate-worldcover-map.py**: The script to generate the global worldcover map. This will generate 1 WEBP file in the output directory for worldcover. Resolution is 3800x1900.
+### Precipitation
+Generated with generate-precipitation-model.py.
 
-**generate-geoid-model.py**: The script to generate the geoid model. This will generate 1 WEBP file in the output directory. Resolution is 361x181.
+The precipitation model is generated using the ERA5 monthly averaged reanalysis data (the 1991 - 2020 climate normal). It is generated using the following steps:
+1. Download the total precipitation variable from ERA5 for every year of the normal.
+2. Calculate the climate average of each month and convert it to the monthly total in mm.
+3. Average the source pixels down to the model resolution.
+4. Take the square root of each monthly total. This keeps the error proportional to the amount of precipitation, so dry places keep their detail and wet places don't waste bits.
+5. Stretch the square root linearly to 8 bits.
+6. Save each month as a lossy WEBP.
 
-**generate-dem.py**: The script to generate the digital elevation models (DEM) from ETOPO 2022, as 15 degree tiles in 4 sizes: high (16-bit lossless, with a water mask), medium (8-bit, quality 100), low, and mini (the built-in model). Low and mini choose the resolution and WebP quality of each tile to get the lowest error within a size budget. Every tile is saved at a range of resolutions (averaging the source pixels) and qualities, and elevations are rounded to 8 bits. The option for each tile that has the lowest total cost, while fitting in the budget, is chosen. The cost of an option is its mean absolute error against the source plus its loss of detail (the elevation changes between nearby points that make up the gain of a route), weighted by the ground area the tile covers (tiles are also narrower towards the poles to match), how much relief it has (errors matter more in rugged terrain), and its latitude (errors matter less in the arctic). It outputs a zip file for each size to the output directory. Requires `cwebp` (the `webp` package), which is used to encode the tiles without the adaptive quantization that makes smooth terrain blocky.
+To get the precipitation in a month, the app reads the pixel of that month at the location and reverses the stretch (mm = (pixel / a - b)^2).
 
-**generate-dem-test-data.py**: The script to generate the reference data used to test the DEMs in Trail Sense. It will output CSV files with random points in hiking areas (grouped by mountains, hills, and flat terrain) plus a few over the ocean and well known peaks, points along hiking routes (for elevation gain and loss), and pairs of points on either side of a tile boundary (and a control set of the same size away from any boundary). The reference elevations are from the Copernicus DEM (via open-meteo), except for the peaks, which use their official elevation.
+The test data for the model can be generated with generate-precipitation-test-data.py.
 
-**generate-precipitation-test-data.py**: The script to generate the reference data used to test the precipitation model in Trail Sense. It will output a CSV file with the full resolution ERA5 monthly precipitation (mm) at 100 points: 60 random hiking area points from the DEM test data (run generate-dem-test-data.py first) and 40 random points over the land of the world.
+### Tides
+Generated with generate-tide-model.py.
 
-**generate-tide-model.py**: The script to generate the tide model. This will generate WEBP files in the output directory for the amplitude (normalized between 0 and 1, 3 constituents per file) and phase (normalized between 0 and 1, source is between -180 and 180) of each tidal constituent (currently 17), plus an index image (1440x720) which maps each pixel to its cell in those files. Cells are 1 degree, split in half down to 0.25 degrees where the tide varies more between neighbors (up to the cell budget, which sets the size of the model), and each cell is the phasor average of the valid 0.125 degree source cells it covers, so coastal cells are kept even when only some of their source cells have data. Cells are ordered along a Hilbert curve, and values are replaced by a neighbor's wherever that changes the tide at the cell by less than 1%, both of which make the model compress better. It will output the max amplitude for each constituent (scale is 0 to max amplitude in cm) and the cells with amplitudes too large to store (as row, column, amplitude in cm, where row and column are the position of the cell in the amplitude files).
+The tide model is generated using the EOT20 ocean tide model, which gives the amplitude and phase of each tidal constituent. It is generated using the following steps:
+1. Download EOT20 and the Natural Earth land data.
+2. Load the amplitude and phase of each constituent as a phasor (x, y), so cells can be averaged. Invalid cells (land) are masked using Natural Earth, keeping the ocean around islands smaller than a pixel.
+3. Split the globe into cells using a quadtree. Cells start at 1 degree and are split in half, down to 0.25 degrees, wherever the tide varies more between neighbors. The split with the most to gain is made first until the cell budget is used (the budget sets the size of the model).
+4. Set each cell to the phasor average of the valid source cells it covers, so coastal cells are kept even when only some of their source cells have data.
+5. Order the cells along a Hilbert curve so neighboring cells are next to each other, and replace the values of a cell with a neighbor's wherever that changes the tide at the cell by less than 1%. Both make the model compress better.
+6. Convert back to an amplitude and phase. Amplitudes too large to store are removed from the images and listed separately (as constituent, row, column, and amplitude in cm). The rest are normalized to 0 to 1 by the max amplitude of each constituent.
+7. Stretch the amplitudes and phases to 8 bits and save them as lossless WEBPs with 3 constituents per file. Also save an index image which maps each pixel to its cell in those files.
 
+To get the tide at a location, the app looks up the cell of the location in the index image, reads the amplitude and phase of each constituent for that cell (reversing the normalization), and sums the constituents at the time of interest.
 
-**generate-star-model.py**: The script to generate the star model. It will output the Kotlin enums for the specified list of stars.
+The generate-tide-prediction-constants.py script fetches the lunitidal interval and harmonic constituents of a NOAA station, for testing the model.
 
-**generate-timezone-location-map.py**: The script to generate coordinates for each timezone ID.
+### Elevation
+Generated with generate-dem.py.
 
-**generate-cell-tower-model.py**: The script to generate a cell tower model. It will output a SQLLite DB to output/cell_towers.db.
+The elevation model is generated using ETOPO 2022. It is generated using the following steps:
+1. Download the ETOPO 2022 tiles (15 x 15 degrees) and the source identifier tiles.
+2. Remove the ocean and bathymetry by masking the pixels that the source identifier image does not mark as land or lake. Inland water is masked separately, so it can be kept apart from the ocean.
+3. Skip tiles which are all ocean.
+4. Resize each tile (averaging the source pixels) and save it according to the size:
+   - **High**: 16-bit lossless (split across two channels) with a water mask channel (ocean, inland water, or land).
+   - **Medium**: stretched to 8 bits, at the source resolution.
+   - **Low** and **Mini**: stretched to 8 bits, lossy. The resolution and WebP quality of each tile is chosen to get the lowest error within a size budget. Every tile is saved at a range of resolutions and qualities, and the option for each tile that has the lowest total cost, while fitting in the budget, is chosen. The cost of an option is its mean absolute error plus its loss of detail (the elevation changes between nearby points that make up the gain of a route), weighted by the ground area of the tile, its relief, and its latitude.
+5. Write an index (index.json) with the stretch coefficients, bounds, and size of each tile, and zip the result.
 
-**generate-magnetic-field-model.py**: The script to generate the World Magnetic Model coefficients. It will output the WMM coefficients as Java arrays into the console.
+To get the elevation at a location, the app reads the tile that contains it, interpolates the pixels around the location, and reverses the stretch.
+
+The test data for the model can be generated with generate-dem-test-data.py.
+
+### Stars
+Generated with generate-star-model.py.
+
+The star model is generated using the SIMBAD astronomical database and the IAU star names and constellation lines. It is generated using the following steps:
+1. Query SIMBAD for all stars brighter than a magnitude cutoff, plus the stars needed for the constellation lines and a few additional stars.
+2. Remove components of a star that has a parent object (ex. Alpha Crucis A when Alpha Crucis exists), and a few ignored stars.
+3. Get the details of each star: Hipparcos ID, the IAU proper name (or the Bayer designation if it has none), coordinates, magnitude, proper motion, and color index.
+4. Map the constellation lines to the Hipparcos IDs of the stars.
+5. Output the stars and constellations as Kotlin code (output/stars.kt and output/constellations.kt).
+
+To get the position of a star, the app applies the proper motion to the coordinates and converts them to the horizon at the location and time.
+
+### Timezones
+Generated with generate-timezone-location-map.py.
+
+The timezone model is a coordinate for each timezone ID, which the app uses to find the closest timezone to a location. It is generated using the following steps:
+1. Get the boundary geometry of each timezone from timezonefinder.
+2. Skip the timezones that are not in a region (ex. Etc/GMT+1).
+3. Find the extent of the boundary (accounting for boundaries that cross the antimeridian) and use its center as the coordinate of the timezone.
+4. Output the timezone IDs and coordinates (rounded to whole degrees) as a Kotlin array.
+
+### Cell Towers
+Generated with generate-cell-tower-model.py.
+
+The cell tower model is a map of where cell service is likely to be available. It is generated using the following steps:
+1. Download the FCC antenna registrations, OpenCelliD, and Mozilla Location Service (MLS) data.
+2. Remove towers which are likely outdated or inaccurate: those not updated in the past 5 years, and those with fewer than 3 samples (unless they are not changeable). Towers are deduplicated by network, country, and area, preferring the unchangeable entry and then the one with the most samples.
+3. Rasterize the towers (one image for FCC and one for OpenCelliD and MLS), with a pixel set if it contains a tower.
+4. Combine the images (bitwise or) and remove the pixels over the ocean.
+5. Split the image into tiles and save them as lossless WEBP.
+
+To check for service at a location, the app reads the pixel at the location (or those near it) to see if there is a tower in range.
+
+### Magnetic Field
+Generated with generate-magnetic-field-model.py.
+
+The magnetic field model is the World Magnetic Model (WMM) from NOAA. It is generated using the following steps:
+1. Download the WMM coefficients file (WMM.COF).
+2. Parse the Gauss coefficients (g and h) and their yearly rates of change (delta g and delta h) for each degree and order.
+3. Output them as Java arrays.
+
+To get the magnetic declination at a location, the app calculates the field from the spherical harmonic expansion of the coefficients, advanced to the date of interest using the yearly rates.
 
 # Credits
 ## CRU

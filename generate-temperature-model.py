@@ -1,20 +1,26 @@
 from scripts import etopo, merra2
+from scripts.files import monthly_files
+from scripts.grid import area_weights
+from scripts.report import print_stretch
 from scripts.operators import (
     process,
-    FourierSeries,
+    Replace,
+    GridCellMean,
+    AdjustForElevation,
+    ClimateNormal,
+    ClimateHarmonics,
     RemoveLatitudeTrend,
-    LinearCompression,
-    Type,
-    Map,
     WebpQualityOptions,
+    Stretch,
+    FitToBudget,
+    Save,
 )
-from scripts.size_budget import fit_to_budget
-import numpy as np
-import os
 
 # INPUT
 start_year = 1991
 end_year = 2020
+# Set to False to reuse the climate normals saved by a previous run
+recalculate_normals = True
 # The number of annual cycles (harmonics) kept for each month's temperatures, more are more accurate and larger
 harmonics = 4
 # The degree of the polynomial of the sine of the latitude that is removed from each mean (it narrows the range)
@@ -27,73 +33,87 @@ qualities = [20, 30, 40, 50, 60, 70, 80, 85, 90, 93, 96, 99]
 merra2.download(start_year, end_year)
 etopo.download()
 
-etopo.process_dem()
-merra2.process_temperatures(start_year, end_year)
+rows, columns = 361, 576
+elevation_invalid_value = -99999
+# The temperature drops 6.5 degrees per km of elevation
+lapse_rate = 0.0065
 
-quantities = {
-    name: [f"images/{start_year}-{end_year}-{month}-{name}.tif" for month in range(1, 13)]
-    for name in ["T2MMAX", "T2MMIN"]
-}
+names = ["T2MMAX", "T2MMIN"]
+quantities = {name: monthly_files(start_year, end_year, name) for name in names}
 
-mean_index = 0
+
+def calculate_climate_normals():
+    """Saves the climate normals at sea level at full precision (they are also the reference for the test data)."""
+    etopo.process_dem()
+
+    # Each MERRA-2 temperature is the mean of its whole cell, so it is brought to sea level with the mean elevation of
+    # the cell
+    elevations, _ = process(
+        [etopo.dem_land_path],
+        Replace(elevation_invalid_value),
+        GridCellMean((rows, columns)),
+        show_progress=True,
+    )
+    for name in names:
+        process(
+            [
+                f"source/merra2/{year}-{month}-{name}.tif"
+                for year in range(start_year, end_year + 1)
+                for month in range(1, 13)
+            ],
+            AdjustForElevation(elevations[0], lapse_rate),
+            ClimateNormal(),
+            Save(f"images/{start_year}-{end_year}-{{i}}-{name}.tif"),
+            show_progress=True,
+        )
+
+
+if recalculate_normals:
+    calculate_climate_normals()
+
+mean_index = ClimateHarmonics.MEAN_INDEX
 images_per_quantity = 1 + 2 * harmonics
-rows = 361
-latitudes = 90 - 180 * np.arange(rows) / (rows - 1)
-# Errors are weighted by the ground area of each row
-weights = np.maximum(np.cos(np.radians(latitudes)), 0.01)[:, None] * np.ones((1, 576))
+# Errors are weighted by the ground area of each pixel
+weights = area_weights(rows, columns)
 
-options = []
-constants = {}
+# The mean counts in every month, while each cosine and sine counts in half of them on average
+importance_per_quantity = [1 if i == mean_index else 0.5 for i in range(images_per_quantity)]
+
+harmonic_images = []
+trends = {}
 for name, files in quantities.items():
     images, results = process(
         files,
-        FourierSeries(harmonics),
-        RemoveLatitudeTrend(trend_degree, [mean_index]),
+        ClimateHarmonics(harmonics, trend_degree),
         show_progress=True,
     )
-    trends = results.of(RemoveLatitudeTrend)["trends"]
-    compressed, results = process(
-        images,
-        LinearCompression(calculate_per_image=True),
-        Map(np.rint),
-        Type(np.uint8),
-    )
-    coefficients = results.of(LinearCompression)["coefficients"]
-    _, results = process(
-        compressed,
-        WebpQualityOptions(qualities, images, coefficients, weights),
-    )
-    constants[name] = (coefficients, trends[mean_index])
-    for i, image_options in enumerate(results.of(WebpQualityOptions)["options"]):
-        # The mean counts in every month, while each cosine and sine counts in half of them on average
-        importance = 1 if i == mean_index else 0.5
-        for option in image_options:
-            options.append((name, i, option, importance))
+    harmonic_images += images
+    trends[name] = results.of(RemoveLatitudeTrend)["trends"][mean_index]
 
-groups = []
-for name in quantities:
-    for i in range(images_per_quantity):
-        groups.append([o for o in options if o[0] == name and o[1] == i])
-chosen = fit_to_budget(
-    groups,
-    size_budget_bytes,
-    size=lambda o: len(o[2]["data"]),
-    cost=lambda o: o[3] * o[2]["squared_error"],
+# The images of both quantities share the size budget
+_, results = process(
+    harmonic_images,
+    FitToBudget(
+        WebpQualityOptions(qualities, Stretch(calculate_per_image=True), weights=weights),
+        size_budget_bytes,
+        importance=importance_per_quantity * len(quantities),
+    ),
+    Save(lambda i: f"output/temperatures/{names[i // images_per_quantity]}-{i % images_per_quantity}.webp"),
 )
+chosen = results.of(FitToBudget)["chosen"]
 
-os.makedirs("output/temperatures", exist_ok=True)
-for name, i, option, _ in chosen:
-    with open(f"output/temperatures/{name}-{i}.webp", "wb") as f:
-        f.write(option["data"])
-
-total_size = sum(len(o[2]["data"]) for o in chosen)
+total_size = sum(len(option["data"]) for option in chosen)
 print(f"Saved {total_size / 1000:.0f} KB of the {size_budget_bytes / 1000:.0f} KB budget")
-print("Qualities:", [o[2]["quality"] for o in chosen])
+print("Qualities:", [option["quality"] for option in chosen])
 print()
 
 # Each image is value = pixel / a - b
-for name, (coefficients, trend) in constants.items():
-    print(f"{name} (images 0 to {images_per_quantity - 1}: the mean, then the cosine and sine of each harmonic)")
-    print("    a:", [c["a"] for c in coefficients])
-    print("    b:", [c["b"] for c in coefficients])
-    print("    mean latitude trend (lowest power of sin(latitude) first):", trend)
+coefficients = results.of(FitToBudget)["coefficients"]
+for index, name in enumerate(names):
+    name_coefficients = coefficients[index * images_per_quantity:(index + 1) * images_per_quantity]
+    print_stretch(
+        name,
+        name_coefficients,
+        f"images 0 to {images_per_quantity - 1}: the mean, then the cosine and sine of each harmonic. value = pixel / a - b",
+    )
+    print("    mean latitude trend (lowest power of sin(latitude) first):", trends[name])

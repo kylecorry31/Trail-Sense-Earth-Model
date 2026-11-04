@@ -1,14 +1,17 @@
 from scripts import era5
+from scripts.files import monthly_files
+from scripts.report import print_stretch
 from scripts.operators import (
     process,
     Reshape,
-    Map,
-    Type,
+    Clip,
+    Scale,
+    Sqrt,
     LinearCompression,
+    Stretch,
     Save,
 )
 from PIL import Image
-import numpy as np
 
 # Follow these instructions to sign in: https://cds.climate.copernicus.eu/how-to-api#install-the-cds-api-client
 
@@ -24,24 +27,17 @@ quality = 70
 era5.download(start_year, end_year)
 era5.process_precipitation(start_year, end_year)
 
-files = [
-    f"images/{start_year}-{end_year}-{month}-total_precipitation.tif"
-    for month in range(1, 13)
-]
-
 # The source is in meters per day. Precipitation is stored as its square root so that the error is
-# proportional to the amount (dry places keep their detail, wet places don't waste bits). The largest
-# monthly total is about 3,350 mm, which is 57.9 when square rooted.
+# proportional to the amount (dry places keep their detail, wet places don't waste bits).
 mm_per_month = 1000 * 30
-compression = 4.4
 
-process(
-    files,
+_, results = process(
+    monthly_files(start_year, end_year, "total_precipitation"),
     Reshape((width, height), Image.BOX),
-    Map(lambda image: np.sqrt(np.maximum(image, 0) * mm_per_month)),
-    LinearCompression(compression, 0),
-    Map(np.rint),
-    Type(np.uint8),
+    Clip(min=0),
+    Scale(mm_per_month),
+    Sqrt(),
+    Stretch(),
     Save(
         "output/precipitation/precipitation-{i}.webp",
         quality=quality,
@@ -51,4 +47,9 @@ process(
     show_progress=True,
 )
 
-print(f"precipitation (mm per month) = (pixel / {compression}) ^ 2")
+print_stretch(
+    "precipitation",
+    # Every month is stretched the same
+    results.of(LinearCompression)["coefficients"][:1],
+    "mm per month = (pixel / a - b) ^ 2",
+)

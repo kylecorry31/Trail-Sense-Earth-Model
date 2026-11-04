@@ -14,6 +14,7 @@ import numpy as np
 from scipy.ndimage import map_coordinates
 
 from scripts import load_pixels
+from scripts.files import monthly_files
 
 # INPUT
 start_year = 1991
@@ -27,10 +28,7 @@ with open("output/precipitation-tests/points.csv") as f:
     points = [(float(row["latitude"]), float(row["longitude"])) for row in csv.DictReader(f)]
 
 months = {
-    quantity: [
-        load_pixels(f"images/{start_year}-{end_year}-{month}-{quantity}.tif")
-        for month in range(1, 13)
-    ]
+    quantity: [load_pixels(path) for path in monthly_files(start_year, end_year, quantity)]
     for quantity in ("T2MMAX", "T2MMIN")
 }
 height, width = months["T2MMAX"][0].shape

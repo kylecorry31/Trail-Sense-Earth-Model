@@ -3,10 +3,14 @@ from scripts.operators import process, Tile, Save, BitwiseOr, Type, RemoveOceans
 import shutil
 import numpy as np
 
-
+# INPUT
+# The size of a pixel (degrees)
 resolution = 0.01
+# The size of the tiles (pixels)
+max_width = 12000
+max_height = 9000
 
-
+######## Program, don't modify ########
 fcc.download()
 opencellid.download()
 # TODO: MLS will likely only be valid for a few more years
@@ -17,14 +21,9 @@ towers = cell_towers.get_all_towers(opencellid.csv_path, "OpenCellID")
 towers = cell_towers.get_all_towers(mls.csv_path, "MLS", towers)
 cell_towers.create_tower_image(towers, resolution, "images/cell_towers")
 
-max_width = 12000
-max_height = 9000
-
 shutil.rmtree("output/towers", ignore_errors=True)
 
-tile_operator_index = 3
-
-_, metadata = process(
+_, results = process(
     ["images/fcc/cell_towers.tif", "images/cell_towers/cell_towers.tif"],
     Type(np.uint8),
     BitwiseOr(),
@@ -34,4 +33,4 @@ _, metadata = process(
     show_progress=True
 )
 
-print(metadata[tile_operator_index]['tiles'][0])
+print(results.of(Tile)['tiles'][0])

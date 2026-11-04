@@ -3,9 +3,11 @@ from scripts.operators import process, Resize, Save, Replace
 
 # Follow these instructions to sign in: https://cds.climate.copernicus.eu/how-to-api#install-the-cds-api-client
 
+# INPUT
 start_year = 1991
 end_year = 2020
 
+######## Program, don't modify ########
 era5.download(start_year, end_year)
 era5.process_vegetation(end_year)
 

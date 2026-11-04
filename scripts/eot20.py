@@ -1,28 +1,12 @@
 import netCDF4
-import numpy as np
 import os
 from scripts import progress
 import shutil
 import requests
-from .operators import process
-from .operators import FlipY, ReplaceInvalid, PolarToCartesian, CartesianToPolar, Quadtree, HilbertOrder, CondenseLabels, LabelIndices, SnapToNeighbors, Crop, ShiftX, Normalize, ReplaceLargeValues, Save, SplitProcessing, RemoveOceans
 
 # Load the data
 source_directory = 'source/eot20'
-output_directory = 'images/eot20'
 
-# This needs to be less than 255
-final_width = 128
-invalid_value = 100000
-large_amplitude_threshold = 500
-# The smallest phasor magnitude (cm) to measure the change in tide between cells against
-error_floor = 10
-# Tide values are replaced by a neighbor's when it changes the tide at that cell by less than this fraction, which makes the
-# model compress better (higher values compress better but are less accurate)
-snap_tolerance = 0.01
-
-shapefile_path = "source/natural-earth/ne_10m_land.shp"
-island_shapefile_path = "source/natural-earth/ne_10m_minor_islands.shp"
 
 def download():
     os.makedirs(source_directory, exist_ok=True)
@@ -40,89 +24,7 @@ def download():
             shutil.rmtree(f'{source_directory}/__MACOSX')
         pbar.update(1)
 
-def process_ocean_tides(leaf_budget, base_degrees, min_degrees):
-    os.makedirs(output_directory, exist_ok=True)
-    os.makedirs(source_directory, exist_ok=True)
-
-    constituents = ['2N2', 'J1', 'K1', 'K2', 'M2', 'M4', 'MF', 'MM', 'N2', 'O1', 'P1', 'Q1', 'S1', 'S2', 'SA', 'SSA', 'T2']
-
-    # Load the source data (as x, y phasors so they can be averaged), which is needed for all of the constituents at
-    # once to decide where the model needs more detail
-    phasors = []
-    with progress.progress(f'Loading ocean tides', len(constituents)) as pbar:
-        for constituent in constituents:
-            file_path = f'{source_directory}/ocean_tides/{constituent}_ocean_eot20.nc'
-            with netCDF4.Dataset(file_path, 'r') as file:
-                # The source grid includes the -90 degree row and a duplicate 360 degree column
-                images, _ = process(
-                    [file.variables['amplitude'][:], file.variables['phase'][:]],
-                    ReplaceInvalid(invalid_value),
-                    Crop(top=1, right=1),
-                    ShiftX(0.5, True),
-                    FlipY(),
-                    # all_touched keeps the ocean around islands smaller than a pixel
-                    RemoveOceans(dilation=5, replacement=invalid_value, all_touched=True),
-                    PolarToCartesian(invalid_value),
-                )
-                phasors.extend(image.astype(np.float32) for image in images)
-                pbar.update(1)
-
-    # Cells are base_degrees where the tide varies slowly and are split in half, down to min_degrees, where it varies
-    # more. Phasor values are in cm. The cells are ordered along a curve so neighboring cells are next to each other,
-    # which helps the model compress.
-    degrees_per_pixel = 360 / phasors[0].shape[1]
-    labels, _ = process(
-        phasors,
-        Quadtree(
-            round(base_degrees / degrees_per_pixel),
-            round(min_degrees / degrees_per_pixel),
-            leaf_budget,
-            invalid_value,
-            reference_floor=error_floor,
-        ),
-        HilbertOrder(),
-    )
-    images, _ = process(
-        phasors,
-        CondenseLabels(labels[0], final_width, invalid_value),
-        CartesianToPolar(invalid_value),
-        SnapToNeighbors(snap_tolerance, invalid_value, large_amplitude_threshold),
-    )
-    del phasors
-
-    indices, _ = process(labels, LabelIndices(final_width))
-    process([indices[0]], Save([f'{output_directory}/indices-x.tif']))
-    process([indices[1]], Save([f'{output_directory}/indices-y.tif']))
-
-    with progress.progress(f'Processing ocean tides', len(constituents)) as pbar:
-        amplitudes = {}
-        large_amplitudes = []
-        for i, constituent in enumerate(constituents):
-            # AMPLITUDE
-            _, amplitude_results = process(
-                [images[2 * i]],
-                ReplaceLargeValues(large_amplitude_threshold, invalid_value=invalid_value),
-                SplitProcessing(Normalize(0.0, invalid_value=invalid_value)),
-                Save([f'{output_directory}/{constituent}-amplitude.tif'])
-            )
-
-            replace_large_values_idx = 0
-            normalize_index = 1
-
-            # Extract results
-            for value in amplitude_results[replace_large_values_idx]['large_values'][0]:
-                # Values are (row, column), but the app looks them up by (x, y)
-                large_amplitudes.append((constituent, value[1], value[0], int(value[2])))
-
-            amplitudes[constituent] = float(amplitude_results[normalize_index]['data'][0][0]['maximum'])
-
-            # PHASE
-            process(
-                [images[2 * i + 1]],
-                Normalize(-180.0, 180.0, invalid_value),
-                Save([f'{output_directory}/{constituent}-phase.tif'])
-            )
-
-            pbar.update(1)
-
-    return amplitudes, large_amplitudes
+def load(constituent):
+    """The amplitude (cm) and phase (degrees) grids of a tidal constituent, with invalid cells masked."""
+    with netCDF4.Dataset(f'{source_directory}/ocean_tides/{constituent}_ocean_eot20.nc', 'r') as file:
+        return [file.variables['amplitude'][:], file.variables['phase'][:]]

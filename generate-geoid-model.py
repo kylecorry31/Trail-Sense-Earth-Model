@@ -1,15 +1,15 @@
+from PIL import Image
 from scripts import etopo
-from scripts.operators import process
-from scripts.operators import LinearCompression, Resize, Save
+from scripts.report import print_stretch
+from scripts.operators import process, Stretch, LinearCompression, Resize, Save
 
 etopo.download()
 _, results = process(
     [etopo.geoid_path],
-    LinearCompression(),
-    Resize((360, 180)),
-    Save(["output/geoids.webp"], quality=100, lossless=False),
+    Resize((540, 270), resample=Image.BOX, exact=True),
+    Stretch(),
+    Save(["output/geoids.webp"], quality=95, lossless=False, adaptive_quantization=False),
     show_progress=True,
 )
 
-# Print the coefficients
-print(results.of(LinearCompression))
+print_stretch("geoid", results.of(LinearCompression)["coefficients"])

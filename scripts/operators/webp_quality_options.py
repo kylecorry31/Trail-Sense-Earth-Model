@@ -19,8 +19,8 @@ def roughness(values):
 
 class WebpQualityOptions(ImageOperator):
     """
-    Encodes 8-bit images as lossy WebP at each quality and measures how well the decoded result matches the reference
-    (it is resized to the reference's size). The images are not changed.
+    Encodes each image as lossy WebP at each quality and measures how well the decoded result matches the reference (it
+    is resized to the reference's size). The images are not changed.
 
     Each option has the mean absolute error (in the units of the reference), and the detail loss, which is the fraction
     of the reference's detail (change in elevation between nearby points, which is what makes up the elevation gain
@@ -31,21 +31,24 @@ class WebpQualityOptions(ImageOperator):
     Each option also has the mean squared error, weighted by weights (an image the size of the reference, like the area
     of each pixel) if they are given.
 
-    reference: the images to compare against, at any resolution
-    coefficients: the a and b used to compress each image (see LinearCompression), where value = pixel / a - b
+    to_pixels: the operator which converts the images to the 8-bit pixels to encode (like Stretch). Its metadata has a
+        decoder for each image, a function that converts decoded pixels back to values (in the units of the reference)
+    reference: the images to compare against, at any resolution (by default, the images)
+
+    The metadata has the options of each image, and the metadata of to_pixels.
     """
 
-    def __init__(self, qualities, reference, coefficients, weights=None):
+    def __init__(self, qualities, to_pixels, reference=None, weights=None):
         self.qualities = qualities
+        self.to_pixels = to_pixels
         self.reference = reference
-        self.coefficients = coefficients
         self.weights = weights
 
-    def __get_option(self, image, quality, reference, reference_roughness, a, b):
-        data = encode_gray(image, quality)
+    def __get_option(self, pixels, to_values, quality, reference, reference_roughness):
+        data = encode_gray(pixels, quality)
         decoded = np.array(Image.open(io.BytesIO(data)).convert("L"), dtype=np.float32)
         values = np.array(
-            Image.fromarray(decoded / a - b).resize(
+            Image.fromarray(to_values(decoded)).resize(
                 (reference.shape[1], reference.shape[0]), Image.BILINEAR
             )
         )
@@ -60,21 +63,22 @@ class WebpQualityOptions(ImageOperator):
         }
 
     def apply(self, images):
+        pixels, pixels_metadata = self.to_pixels.apply(images)
+        references = self.reference if self.reference is not None else images
         options = []
         with ThreadPoolExecutor() as executor:
-            for image, reference, coefficient in zip(
-                images, self.reference, self.coefficients
+            for image_pixels, to_values, reference in zip(
+                pixels, pixels_metadata["decoders"], references
             ):
-                a, b = coefficient["a"], coefficient["b"]
                 reference_roughness = roughness(reference)
                 options.append(
                     list(
                         executor.map(
                             lambda quality: self.__get_option(
-                                image, quality, reference, reference_roughness, a, b
+                                image_pixels, to_values, quality, reference, reference_roughness
                             ),
                             self.qualities,
                         )
                     )
                 )
-        return images, {"options": options}
+        return images, {**pixels_metadata, "options": options}

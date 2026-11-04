@@ -3,6 +3,11 @@ import numpy as np
 
 
 class LinearCompression(ImageOperator):
+    """
+    Linearly stretches the images (pixel = (value + b) * a). The metadata has the coefficients of each image and a
+    decoder, a function that converts its pixels back to values (value = pixel / a - b).
+    """
+
     def __init__(self, a=None, b=None, calculate_per_image=False, target_max=255):
         self.a = a
         self.b = b
@@ -13,6 +18,7 @@ class LinearCompression(ImageOperator):
         a = self.a
         b = self.b
         coefficients = []
+        decoders = []
 
         if not self.calculate_per_image and (a is None or b is None):
             min_value = np.inf
@@ -44,10 +50,11 @@ class LinearCompression(ImageOperator):
                 denom = local_max + current_b
                 current_a = self.target_max / denom if denom != 0 else 1
             coefficients.append({"a": float(current_a), "b": float(current_b)})
+            decoders.append(lambda pixels, a=current_a, b=current_b: pixels / a - b)
 
             compressed = (image + current_b) * current_a
             output.append(compressed)
 
-        metadata = {"coefficients": coefficients}
+        metadata = {"coefficients": coefficients, "decoders": decoders}
 
         return output, metadata

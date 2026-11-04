@@ -37,11 +37,34 @@ from .conditional import Conditional
 from .index import Index
 from .linear_compression import LinearCompression
 from .webp_quality_options import WebpQualityOptions
+from .fit_to_budget import FitToBudget
+from .classify_colors import ClassifyColors
+from .polar_regions import FillPolarRegions, ReplaceColorInPolarRegions
 from .split_16_bits import Split16Bits
 from .remove_oceans import RemoveOceans
 from .remove_inland_water import RemoveInlandWater
 from .remove_land import RemoveLand
 from .mask import Mask
+from .quantize import Quantize
+from .clip import Clip
+from .scale import Scale
+from .sqrt import Sqrt
+from .append_channel import AppendChannel
+from .compound import CompoundOperator
+from .remove_water import RemoveWater
+from .to_mask import ToMask
+from .remove_empty import RemoveEmpty
+from .remove_bathymetry import RemoveBathymetry
+from .append_water_channel import AppendWaterChannel
+from .smooth_colors import SmoothColors
+from .remove_small_regions_of_colors import RemoveSmallRegionsOfColors
+from .grow_colors import GrowColors
+from .climate_harmonics import ClimateHarmonics
+from .offset import Offset
+from .climate_normal import ClimateNormal
+from .adjust_for_elevation import AdjustForElevation
+from .grid_cell_mean import GridCellMean
+from .stretch import Stretch
 
 # Export all operators
 __all__ = [
@@ -78,11 +101,35 @@ __all__ = [
     "Index",
     "LinearCompression",
     "WebpQualityOptions",
+    "FitToBudget",
+    "ClassifyColors",
+    "FillPolarRegions",
+    "ReplaceColorInPolarRegions",
     "Split16Bits",
     "RemoveOceans",
     "RemoveInlandWater",
     "RemoveLand",
     "Mask",
+    "Quantize",
+    "Clip",
+    "Scale",
+    "Sqrt",
+    "AppendChannel",
+    "CompoundOperator",
+    "RemoveWater",
+    "ToMask",
+    "RemoveEmpty",
+    "RemoveBathymetry",
+    "AppendWaterChannel",
+    "SmoothColors",
+    "RemoveSmallRegionsOfColors",
+    "GrowColors",
+    "ClimateHarmonics",
+    "Offset",
+    "ClimateNormal",
+    "AdjustForElevation",
+    "GridCellMean",
+    "Stretch",
     "process",
 ]
 
@@ -113,6 +160,8 @@ def _flatten(operators):
             continue
         if isinstance(operator, (list, tuple)):
             flat.extend(_flatten(operator))
+        elif isinstance(operator, CompoundOperator):
+            flat.extend(_flatten(operator.operators()))
         elif isinstance(operator, ImageOperator):
             flat.append(operator)
         else:

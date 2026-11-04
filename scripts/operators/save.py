@@ -15,6 +15,7 @@ class Save(ImageOperator):
     The paths can be a list, a function of the image index, or a template with {i} (the 1-based index) and, when
     grouping, {range} (the 1-based indices of the images in the group, like "1-3").
     Grouping stacks that many images into the channels of each saved image.
+    Images that are already encoded (bytes, see FitToBudget) are saved as they are.
     """
 
     def __init__(self, paths, mode=None, quality=100, lossless=True, adaptive_quantization=True, group=None):
@@ -76,6 +77,12 @@ class Save(ImageOperator):
 
             if not os.path.exists(path.rsplit("/", 1)[0]):
                 os.makedirs(path.rsplit("/", 1)[0])
+
+            if isinstance(image, bytes):
+                with open(path, "wb") as f:
+                    f.write(image)
+                i += 1
+                continue
 
             if isinstance(image, np.ndarray) and image.ndim == 3:
                 channels = [image[:, :, k] for k in range(image.shape[2])]
