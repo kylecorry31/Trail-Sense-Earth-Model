@@ -111,7 +111,8 @@ def process_ocean_tides(leaf_budget, base_degrees, min_degrees):
 
             # Extract results
             for value in amplitude_results[replace_large_values_idx]['large_values'][0]:
-                large_amplitudes.append((constituent, value[0], value[1], int(value[2])))
+                # Values are (row, column), but the app looks them up by (x, y)
+                large_amplitudes.append((constituent, value[1], value[0], int(value[2])))
 
             amplitudes[constituent] = float(amplitude_results[normalize_index]['data'][0][0]['maximum'])
 
