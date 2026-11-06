@@ -1,6 +1,7 @@
 from scripts import etopo, natural_earth, progress, load_pixels
 from scripts.webp import encode_gray
 from scripts.size_budget import fit_to_budget
+from scripts import geo_points, peaks
 from scripts.operators import (
     process,
     Reshape,
@@ -33,7 +34,7 @@ from concurrent.futures import ProcessPoolExecutor
 from itertools import repeat
 
 # INPUT
-version = "0.5.0"
+version = "0.6.0"
 # Set to the id of a preset (ex. "mini") to only generate that one
 preset_filter = None
 
@@ -45,6 +46,7 @@ low = {
     "relief_scale": 1000,
     "latitude_importance": [(60, 0.3)],
     "detail_weight": 150,
+    "peak_budget_bytes": 212_000,
 }
 mini = {
     "scales": [0.1, 0.15, 0.2, 0.25, 0.3, 0.4],
@@ -56,6 +58,8 @@ mini = {
     "latitude_importance": [(60, 0.3)],
     # Losing all of a tile's detail (the elevation changes that make up the gain of a route) counts as this many meters of error
     "detail_weight": 150,
+    # Summits which the model is well under are stored in peaks.webp (see scripts/peaks.py), up to this size
+    "peak_budget_bytes": 212_000,
 }
 
 ######## Program, don't modify ########
@@ -141,6 +145,26 @@ def choose_options(tile_options, settings):
         cost=lambda option: get_weight(option, settings)
         * (option["error"] + settings["detail_weight"] * option["detail_loss"]),
     )
+
+
+def write_peaks(chosen, budget_bytes):
+    """Saves the summits that the chosen tiles are well under (the biggest that fit in the budget) to peaks.webp."""
+    summits = []
+    for option in chosen:
+        region = option["filename"].removesuffix(".webp")
+        model = peaks.decode_tile(option["data"], option["a"], option["b"])
+        source = np.load(f"{cache_directory}/land/{region}.npy")
+        degrees = option["latitude_start"] - option["latitude_end"]
+        summits.append(peaks.find_summits(source, model, option["latitude_start"], option["longitude_start"], degrees))
+
+    summits = np.concatenate(summits)
+    summits = summits[np.argsort(-summits[:, 2])][: peaks.FILE_FORMAT.max_points(budget_bytes)]
+    points = np.stack([summits[:, 0], summits[:, 1], peaks.pack_value(summits[:, 3], summits[:, 4])], axis=1)
+    data = peaks.FILE_FORMAT.pack(points)
+    webp = geo_points.to_webp(data)
+    with open(f"output/dem/{peaks.FILENAME}", "wb") as f:
+        f.write(webp)
+    print(f"Saved {len(summits)} summits ({len(webp) / 1000:.0f} KB, {len(data) / 1000:.0f} KB uncompressed)")
 
 
 def index_entry(region, latitude, longitude, width, height, a, b):
@@ -359,6 +383,8 @@ for preset in presets:
         for option in chosen:
             with open(f'output/dem/{option["filename"]}', "wb") as f:
                 f.write(option["data"])
+        if "peak_budget_bytes" in budget:
+            write_peaks(chosen, budget["peak_budget_bytes"])
         tiles = [
             {
                 key: value
