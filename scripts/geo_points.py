@@ -40,9 +40,6 @@ class GeoPointFormat:
     cell_degrees: int = 5
     # Positions are stored to this many decimal places of a degree
     decimals: int = 4
-    # Positions are snapped to a grid of this many steps (ex. 10 is 0.01 degrees at 3 decimals), which must divide the
-    # steps of a cell. Points of a grid are stored more compactly, so it should match how the points were merged.
-    grid: int = 1
     fields: tuple = ()
     # Cells are packed into compressed blocks of about this many points (a block is the smallest piece that is read)
     block_points: int = 2048
@@ -54,8 +51,6 @@ class GeoPointFormat:
             raise ValueError("The cell size must divide 180 and 360")
         if not 0 <= self.decimals <= MAX_DECIMALS:
             raise ValueError(f"The decimals must be between 0 and {MAX_DECIMALS}")
-        if self.grid < 1 or self.steps % self.grid != 0:
-            raise ValueError("The grid must divide the steps of a cell")
         if any(not 1 <= f.bytes <= 4 for f in self.fields):
             raise ValueError("Fields must be 1 to 4 bytes")
 
@@ -87,11 +82,7 @@ class GeoPointFormat:
         rows, y = np.divmod(latitude_steps, self.steps)
         columns, x = np.divmod(longitude_steps, self.steps)
         cells = rows * self.columns + columns
-        # Grid positions within the cell, snapped to the nearest grid position (and kept within the cell)
-        last = self.steps // self.grid - 1
-        grid_y = np.minimum(np.round(y / self.grid), last)
-        grid_x = np.minimum(np.round(x / self.grid), last)
-        codes = _interleave(grid_y, grid_x, self.bits)
+        codes = _interleave(y, x, self.bits)
         stored = [f.encode(values[f.name]) for f in self.fields]
 
         order = np.lexsort((codes, cells))
@@ -124,7 +115,6 @@ class GeoPointFormat:
             {
                 "cell_degrees": self.cell_degrees,
                 "decimals": self.decimals,
-                "grid": self.grid,
                 "count": len(latitudes),
                 "fields": [{"name": f.name, "bytes": f.bytes, "step": f.step, "offset": f.offset} for f in self.fields],
                 "properties": self.properties,
@@ -145,22 +135,15 @@ class GeoPointFormat:
 
     @property
     def bits(self):
-        """The bits per axis of a grid position within a cell."""
-        return grid_bits(self.steps, self.grid)
+        """The bits per axis of a position within a cell."""
+        return int(self.steps - 1).bit_length()
 
     def _pack_block(self, cell_ids, counts, firsts, codes, stored):
         starts_cell = np.zeros(len(codes), dtype=bool)
         starts_cell[firsts] = True
         code_deltas = np.where(starts_cell, codes, codes - np.r_[0, codes[:-1]])
         cell_gaps = np.diff(np.r_[cell_ids[0] - 1, cell_ids]) - 1
-        order = _best_exp_golomb_order(code_deltas)
-        parts = [
-            _varints([len(cell_ids)]),
-            _varints(cell_gaps),
-            _varints(counts),
-            _varints([order]),
-            _bits_to_bytes(_exp_golomb_bits(code_deltas, order)),
-        ]
+        parts = [_varints([len(cell_ids)]), _varints(cell_gaps), _varints(counts), _varints(code_deltas)]
         for f, s in zip(self.fields, stored):
             # By byte (the first byte of every point, then the second, ...), since each compresses better on its own
             parts.append(s.astype("<u8").view(np.uint8).reshape(-1, 8)[:, : f.bytes].T.tobytes())
@@ -199,10 +182,9 @@ def read(data):
     metadata = json.loads(data[HEADER_BYTES : HEADER_BYTES + metadata_length])
     fields = [Field(**f) for f in metadata["fields"]]
     decimals = metadata["decimals"]
-    grid = metadata.get("grid", 1)
     columns = 360 // metadata["cell_degrees"]
     steps = metadata["cell_degrees"] * 10**decimals
-    bits = grid_bits(steps, grid)
+    bits = int(steps - 1).bit_length()
     directory_start = HEADER_BYTES + metadata_length
     directory = [
         struct.unpack_from("<III", data, directory_start + i * DIRECTORY_ENTRY_BYTES) for i in range(block_count + 1)
@@ -219,30 +201,22 @@ def read(data):
             cell += reader.next() + 1
             cell_ids.append(cell)
         counts = [reader.next() for _ in range(cell_count)]
-        order = reader.next()
-        bit_reader = _BitReader(block, reader.offset)
         for cell, count in zip(cell_ids, counts):
             row, column = divmod(cell, columns)
             code = 0
             for _ in range(count):
-                code += bit_reader.exp_golomb(order)
+                code += reader.next()
                 y, x = _deinterleave(code, bits)
-                y, x = y * grid, x * grid
                 latitudes.append((row * steps + y - 90 * 10**decimals) / 10**decimals)
                 longitudes.append((column * steps + x - 180 * 10**decimals) / 10**decimals)
         total = sum(counts)
-        offset = bit_reader.byte_offset
+        offset = reader.offset
         for f in fields:
             planes = np.frombuffer(block, np.uint8, f.bytes * total, offset).reshape(f.bytes, total)
             offset += f.bytes * total
             stored = sum(planes[i].astype(np.uint64) << np.uint64(8 * i) for i in range(f.bytes))
             values[f.name].extend(f.decode(np.asarray(stored, dtype=np.float64)).tolist())
     return metadata, np.array(latitudes), np.array(longitudes), {k: np.array(v) for k, v in values.items()}
-
-
-def grid_bits(steps, grid):
-    """The bits per axis of a grid position within a cell of steps positions."""
-    return int(steps // grid - 1).bit_length()
 
 
 def _interleave(y, x, bits):
@@ -281,72 +255,6 @@ def _varints(values):
         more = (lengths[has] > k + 1).astype(np.uint64) << np.uint64(7)
         output[starts[has] + k] = (group | more).astype(np.uint8)
     return output.tobytes()
-
-
-MAX_EXP_GOLOMB_ORDER = 40
-
-
-def _best_exp_golomb_order(values):
-    """The order whose Exp-Golomb codes of the values take the fewest bits."""
-    if len(values) == 0:
-        return 0
-    return min(range(MAX_EXP_GOLOMB_ORDER), key=lambda order: _exp_golomb_length(values, order))
-
-
-def _exp_golomb_length(values, order):
-    shifted = np.asarray(values, dtype=np.float64) + float(2**order)
-    exponents = np.frexp(shifted)[1] - 1
-    return int((2 * exponents - order + 1).sum())
-
-
-def _exp_golomb_bits(values, order):
-    """
-    The Exp-Golomb codes of the values, as a string of bits. A value v is written as v + 2^order, with zeros for each
-    binary digit after its first, then all its binary digits (starting with the 1).
-    """
-    chunks = []
-    for value in np.asarray(values, dtype=np.int64).tolist():
-        shifted = value + (1 << order)
-        chunks.append("0" * (shifted.bit_length() - 1 - order))
-        chunks.append(format(shifted, "b"))
-    return "".join(chunks)
-
-
-def _bits_to_bytes(bits):
-    """The bits packed most significant first, padded with zeros to a whole byte."""
-    if not bits:
-        return b""
-    padded = bits + "0" * (-len(bits) % 8)
-    return int(padded, 2).to_bytes(len(padded) // 8, "big")
-
-
-class _BitReader:
-    def __init__(self, data, offset):
-        self.data = data
-        self.position = offset * 8
-
-    @property
-    def byte_offset(self):
-        """The byte after the last bit read."""
-        return (self.position + 7) // 8
-
-    def bit(self):
-        byte = self.data[self.position >> 3]
-        bit = (byte >> (7 - (self.position & 7))) & 1
-        self.position += 1
-        return bit
-
-    def bits(self, count):
-        value = 0
-        for _ in range(count):
-            value = (value << 1) | self.bit()
-        return value
-
-    def exp_golomb(self, order):
-        zeros = 0
-        while self.bit() == 0:
-            zeros += 1
-        return ((1 << (zeros + order)) | self.bits(zeros + order)) - (1 << order)
 
 
 class _VarintReader:

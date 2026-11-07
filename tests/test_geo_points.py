@@ -46,22 +46,7 @@ def test_keeps_exact_decimals_and_wraps_the_edges():
     ]
 
 
-def test_snaps_positions_to_the_grid():
-    file_format = GeoPointFormat(decimals=3, grid=10)
-    metadata, latitudes, longitudes, _ = geo_points.read(
-        file_format.pack([44.2706, 44.2744, 89.999, -90], [-71.3033, -71.3061, 179.999, -180])
-    )
-
-    assert metadata["grid"] == 10
-    assert sorted(zip(latitudes.round(3), longitudes.round(3))) == [
-        (-90.0, -180.0),
-        (44.27, -71.31),
-        (44.27, -71.3),
-        (89.99, 179.99),
-    ]
-
-
-def test_codes_of_every_order_round_trip():
+def test_round_trips_clustered_and_sparse_points():
     rng = np.random.default_rng(2)
     # Clustered points give small differences, and sparse points give large ones
     for spread in (0.001, 5):
@@ -98,7 +83,7 @@ def test_an_empty_file_has_no_blocks():
 
 
 def test_rejects_unsupported_shapes():
-    for arguments in ({"cell_degrees": 7}, {"decimals": 8}, {"decimals": 3, "grid": 3}, {"fields": (Field("value", bytes=5),)}):
+    for arguments in ({"cell_degrees": 7}, {"decimals": 8}, {"fields": (Field("value", bytes=5),)}):
         try:
             GeoPointFormat(**arguments)
         except ValueError:

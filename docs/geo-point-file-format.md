@@ -41,7 +41,6 @@ A UTF-8 JSON object:
 | --- | --- | --- |
 | `cell_degrees` | int | The size of a cell in degrees. Must divide both 180 and 360 (ex. 1, 5, 10, 15). |
 | `decimals` | int | Positions are stored to this many decimal places of a degree, 0 to 7, the same for every point |
-| `grid` | int | Positions are snapped to a grid of this many steps (ex. 10 is 0.01 degrees at 3 decimals). Must divide the steps of a cell. Optional, default 1 (no snapping). |
 | `count` | int | The number of points |
 | `fields` | array | The fields every point has, in the order they are stored (see below). Can be empty. |
 | `properties` | object | Anything the reader of this kind of file needs, such as what it is and what its fields mean. The format does not interpret it. |
@@ -81,18 +80,14 @@ column, x = divmod(longitude_position, steps)
 
 So 180 east is stored as -180, and the north pole as one position south of it (`90 - 10^-decimals`).
 
-With a `grid` (see metadata), the writer snaps the position within the cell to the nearest grid position, kept within the
-cell (`gy = min(round(y / grid), steps / grid - 1)`, and the same for x). The stored position is then `gy * grid` and
-`gx * grid`. Without a grid, the grid is 1 and the position is exact.
-
-The grid position within a cell is stored as a Morton code, with `bits = bit_length(steps / grid - 1)` bits per axis:
-bit `i` of x is bit `2i` of the code, and bit `i` of y is bit `2i + 1`. Points that are close together have codes that
-are close together.
+The position within a cell is stored as a Morton code, with `bits = bit_length(steps - 1)` bits per axis: bit `i` of x
+is bit `2i` of the code, and bit `i` of y is bit `2i + 1`. Points that are close together have codes that are close
+together.
 
 A reader turns it back with:
 
 ```
-y, x      = the grid positions from the Morton code, times grid
+y, x      = the positions from the Morton code
 latitude  = (row * steps + y - 90 * scale) / scale
 longitude = (column * steps + x - 180 * scale) / scale
 ```
@@ -125,22 +120,15 @@ Each block is compressed with raw deflate (RFC 1951, no zlib or gzip header). De
 2. `cell_count` varints: the gap before each cell, `cell - previous_cell - 1`, where the previous cell of the first one
    is `first_cell - 1` (so the first gap is always 0)
 3. `cell_count` varints: the number of points in each cell
-4. `order` (varint): the order `k` of the Exp-Golomb codes below (the writer picks the one that gives the fewest bits)
-5. For every point, cell by cell: the Morton code of its grid position within the cell (see above), as an Exp-Golomb
-   code of order `k`. The points of a cell are sorted by their codes, and each is stored as the difference from the one
-   before it in the cell. The first point of a cell is stored as is. Readers sort the points of a cell by position (so
-   by latitude, then longitude) after decoding them. The bits are written most significant first, and the last byte
-   is padded with zero bits.
-6. For each field, in order: byte 0 of the field for every point in the block, then byte 1 for every point, and so
+4. For every point, cell by cell: the Morton code of its position within the cell (see above) as a varint. The points
+   of a cell are sorted by their codes, and each is stored as the difference from the one before it in the cell. The
+   first point of a cell is stored as is. Readers sort the points of a cell by position (so by latitude, then
+   longitude) after decoding them.
+5. For each field, in order: byte 0 of the field for every point in the block, then byte 1 for every point, and so
    on (`bytes * points in the block` bytes), with the points in the same order as the codes
 
 Varints are unsigned LEB128: 7 bits per byte, least significant group first, with the high bit set on every byte but
 the last.
-
-An Exp-Golomb code of order `k` for a value `v` (`v >= 0`) is: let `s = v + 2^k` and `n = bit_length(s) - 1`; write
-`n - k` zero bits, then `s` in binary (`n + 1` bits). To read one, count the zero bits `z` before the first 1, read the
-`z + k` bits after it, and the value is `((1 << (z + k)) | those bits) - 2^k`. Small differences take few bits, which
-makes it smaller than a varint, whose size is always a whole number of bytes.
 
 Storing each byte of a field separately (byte planes) keeps similar numbers together, which compresses much better than
 storing each point's bytes together. Delta coding the Morton codes turns them into small numbers, since nearby points
