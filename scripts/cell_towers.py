@@ -1,9 +1,26 @@
 import csv
+from collections import namedtuple
 from scripts.progress import progress
-import os
-from scripts.operators import process, Save
 import numpy as np
 import datetime
+from .geo_points import GeoPointFormat
+
+# Only what is needed is kept per tower, since the full rows of the MLS export do not fit in memory
+Tower = namedtuple("Tower", ["latitude", "longitude", "changeable", "samples"])
+
+FILENAME = "cell_towers.tsgeo"
+# The type tells the app how to use the file, so a change in what the points mean needs a new type
+FILE_FORMAT = GeoPointFormat(cell_degrees=5, decimals=2, properties={"type": "cell_towers"})
+# Towers within the same 0.01 degree (about 1 km) square are merged into one point
+MERGE_DECIMALS = 2
+
+def create_tower_points(latitudes, longitudes):
+    """The geo point file of the towers, with towers in the same merge square stored once."""
+    positions = np.unique(
+        np.column_stack([np.round(latitudes, MERGE_DECIMALS), np.round(longitudes, MERGE_DECIMALS)]),
+        axis=0,
+    )
+    return FILE_FORMAT.pack(positions[:, 0], positions[:, 1])
 
 def get_all_towers(csv_path, name, towers={}):
     """Get all towers, deduplicated with either the changeable=0 row or the row with the highest samples taken. Only towers updated in the past 5 years are taken (to avoid outdated towers)"""
@@ -33,36 +50,16 @@ def get_all_towers(csv_path, name, towers={}):
                 mcc = row['mcc']
                 lac = row['area']
                 id = mnc + '/' + mcc + '/' + lac
+                tower = Tower(float(row['lat']), float(row['lon']), row['changeable'], samples)
                 if id in towers:
                     existing = towers[id]
-                    if existing['changeable'] == '0':
+                    if existing.changeable == '0':
                         pbar.update(1)
                         continue
                     # TODO: Potentially average out the location
-                    if row['changeable'] == '0' or samples > int(existing['samples']):
-                        towers[id] = row
+                    if tower.changeable == '0' or samples > existing.samples:
+                        towers[id] = tower
                 else:
-                    towers[id] = row
+                    towers[id] = tower
                 pbar.update(1)
     return towers
-
-def create_tower_image(towers, resolution, output_folder):
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    pixels_per_degree = 1 / resolution
-
-    image = np.zeros((int(180 * pixels_per_degree), int(360 * pixels_per_degree)), dtype=np.uint8)
-
-    towers = towers.values()
-
-    with progress("Processing cell tower data", len(towers)) as pbar:
-        for row in towers:
-            lat = float(row['lat'])
-            lon = float(row['lon'])
-            rounded_lat = round(lat * pixels_per_degree) / pixels_per_degree
-            rounded_lon = round(lon * pixels_per_degree) / pixels_per_degree
-            image[int((90 - rounded_lat) * pixels_per_degree), int((rounded_lon + 180) * pixels_per_degree)] = 127
-            pbar.update(1)
-
-    process([image], Save([f'{output_folder}/cell_towers.tif']))
