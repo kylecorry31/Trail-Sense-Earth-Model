@@ -46,7 +46,7 @@ def get_dead_towers():
     return {identifier for identifier, (_, status) in latest.items() if status in DEAD_STATUSES}
 
 def get_tower_locations():
-    """The (latitude, longitude) in degrees of each tower with a position that has not been cancelled, terminated, or dismantled."""
+    """The (latitude, longitude) in degrees of each tower with a position that is not cancelled, terminated or dismantled."""
     dead = get_dead_towers()
 
     # Get the line count

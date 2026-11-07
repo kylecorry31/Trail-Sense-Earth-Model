@@ -10,8 +10,8 @@ from .geo_points import GeoPointFormat
 FILENAME = "cell_towers.tsgeo"
 # The type tells the app how to use the file, so a change in what the points mean needs a new type
 FILE_FORMAT = GeoPointFormat(cell_degrees=5, decimals=2, properties={"type": "cell_towers"})
-# Towers within the same 0.01 degree (about 1 km) square are merged into one point
-MERGE_DECIMALS = 2
+# Towers within the same square of this size (degrees) are merged into one point, at the square's center
+MERGE_DEGREES = 0.01
 
 # Areas are below this, so a network, country, and area fit in one integer
 AREA_LIMIT = 2 ** 32
@@ -37,7 +37,10 @@ class TowerRecords:
 
 
 def get_all_towers(csv_path, name, records=None):
-    """Adds the towers of a dataset to the records (which can come from an earlier dataset). Only towers updated in the past 5 years are taken (to avoid outdated towers)"""
+    """
+    Adds the towers of a dataset to the records (which can come from an earlier dataset). Only towers updated in the
+    past 5 years are taken (to avoid outdated towers).
+    """
     if records is None:
         records = TowerRecords()
     now = datetime.datetime.now()
@@ -107,7 +110,10 @@ def select_towers(records):
 def create_tower_points(latitudes, longitudes):
     """The geo point file of the towers, with towers in the same merge square stored once."""
     positions = np.unique(
-        np.column_stack([np.round(latitudes, MERGE_DECIMALS), np.round(longitudes, MERGE_DECIMALS)]),
+        np.column_stack([
+            np.round(np.asarray(latitudes) / MERGE_DEGREES) * MERGE_DEGREES,
+            np.round(np.asarray(longitudes) / MERGE_DEGREES) * MERGE_DEGREES,
+        ]).round(FILE_FORMAT.decimals),
         axis=0,
     )
     return FILE_FORMAT.pack(positions[:, 0], positions[:, 1])

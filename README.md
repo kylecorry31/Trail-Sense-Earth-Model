@@ -105,8 +105,8 @@ Generated with generate-cell-tower-model.py.
 
 The cell tower model is a map of where cell service is likely to be available. It is generated using the following steps:
 1. Download the FCC antenna registrations, OpenCelliD, and Mozilla Location Service (MLS) data.
-2. Remove towers which are likely outdated or inaccurate: those not updated in the past 5 years, and those with fewer than 3 samples (unless they are not changeable). Towers are deduplicated by network, country, and area, preferring the unchangeable entry and then the one with the most samples.
-3. Merge the towers into a grid of 0.01 degrees (about 1 km): each square that has a tower is stored once, at its position rounded to 2 decimal places (about 1 km).
+2. Remove towers which are likely outdated or inaccurate: those not updated in the past 5 years, those with fewer than 3 samples (unless they are not changeable), those with a range over 20 km, and FCC towers that have been cancelled, terminated, or dismantled. Towers are deduplicated by network, country, and area, preferring the unchangeable entry and then the one with the most samples.
+3. Merge the towers into a grid of 0.01 degrees (about 1 km): each square that has a tower is stored once, at its center, rounded to 2 decimal places (about 1 km).
 
 **cell_towers.tsgeo** is a [geo point file](docs/geo-point-file-format.md):
 
