@@ -3,6 +3,7 @@ import os
 import zipfile
 from scripts.progress import progress
 import csv
+import datetime
 
 source_folder = 'source/fcc'
 
@@ -24,15 +25,30 @@ def download(redownload=False):
         with zipfile.ZipFile(f'{source_folder}/r_towers.zip', 'r') as zip_ref:
             zip_ref.extractall(source_folder)
 
-        # Remove everything except for CO.dat
+        # Remove everything except for CO.dat (the towers) and HS.dat (their status history)
         for filename in os.listdir(source_folder):
-            if filename != 'CO.dat':
+            if filename not in ('CO.dat', 'HS.dat'):
                 os.remove(os.path.join(source_folder, filename))
 
         pbar.update(1)
 
+# The statuses that mean a tower has been cancelled, terminated, or dismantled
+DEAD_STATUSES = {"Registration Canceled", "Registration Terminated", "Registration set to Dismantled"}
+
+def get_dead_towers():
+    """The unique system identifiers of the towers whose latest status in the history is one of DEAD_STATUSES."""
+    latest = {}
+    with open(f'{source_folder}/HS.dat', 'r', encoding='latin-1') as file:
+        for row in csv.reader(file, delimiter='|'):
+            date = datetime.datetime.strptime(row[5], '%m/%d/%Y')
+            if row[3] not in latest or date >= latest[row[3]][0]:
+                latest[row[3]] = (date, row[6])
+    return {identifier for identifier, (_, status) in latest.items() if status in DEAD_STATUSES}
+
 def get_tower_locations():
-    """The (latitude, longitude) in degrees of each tower with a position."""
+    """The (latitude, longitude) in degrees of each tower with a position that has not been cancelled, terminated, or dismantled."""
+    dead = get_dead_towers()
+
     # Get the line count
     with open(f'{source_folder}/CO.dat', 'r') as file:
         line_count = sum(1 for _ in file)
@@ -53,7 +69,7 @@ def get_tower_locations():
                 lon_seconds = row[13]
                 lon_direction = row[14]
 
-                if lat_degrees == '' or lon_degrees == '':
+                if lat_degrees == '' or lon_degrees == '' or row[3] in dead:
                     pbar.update(1)
                     continue
 

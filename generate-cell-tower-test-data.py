@@ -25,9 +25,10 @@ opencellid.download()
 mls.download()
 
 locations = fcc.get_tower_locations()
-towers = cell_towers.get_all_towers(opencellid.csv_path, "OpenCellID")
-towers = cell_towers.get_all_towers(mls.csv_path, "MLS", towers)
-locations += [(row.latitude, row.longitude) for row in towers.values()]
+records = cell_towers.get_all_towers(opencellid.csv_path, "OpenCellID")
+records = cell_towers.get_all_towers(mls.csv_path, "MLS", records)
+latitudes, longitudes = cell_towers.select_towers(records)
+locations += list(zip(latitudes.tolist(), longitudes.tolist()))
 
 with open(f"{output_directory}/points.csv", "w", newline="") as f:
     writer = csv.writer(f)
