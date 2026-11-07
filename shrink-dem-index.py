@@ -2,6 +2,8 @@ import json
 import argparse
 import re
 import os
+import shutil
+from scripts import peaks
 
 parser = argparse.ArgumentParser()
 parser.add_argument('filepath', help='Path to JSON file')
@@ -66,7 +68,7 @@ os.makedirs('dem-shrunk', exist_ok=True)
 
 images = os.listdir(args.filepath)
 for image in images:
-    if image.endswith('.webp'):
+    if image in filename_to_number:
         old_index = filename_to_number[image]
         new_index = None
         for file in new_data['f']:
@@ -78,6 +80,10 @@ for image in images:
                 data = f_in.read()
             with open(os.path.join('dem-shrunk', f'{new_index}.webp'), 'wb') as f_out:
                 f_out.write(data)
+
+# Not part of the index, but older versions of the app ignore it
+if os.path.exists(os.path.join(args.filepath, peaks.FILENAME)):
+    shutil.copy(os.path.join(args.filepath, peaks.FILENAME), os.path.join('dem-shrunk', peaks.FILENAME))
 
 with open('dem-shrunk/index.json', 'w') as f:
     index = json.dumps(new_data)

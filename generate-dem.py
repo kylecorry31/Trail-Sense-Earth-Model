@@ -1,6 +1,7 @@
 from scripts import etopo, natural_earth, progress, load_pixels
 from scripts.webp import encode_gray
 from scripts.size_budget import fit_to_budget
+from scripts import peaks
 from scripts.operators import (
     process,
     Reshape,
@@ -33,7 +34,7 @@ from concurrent.futures import ProcessPoolExecutor
 from itertools import repeat
 
 # INPUT
-version = "0.5.0"
+version = "0.6.0"
 # Set to the id of a preset (ex. "mini") to only generate that one
 preset_filter = None
 
@@ -45,6 +46,7 @@ low = {
     "relief_scale": 1000,
     "latitude_importance": [(60, 0.3)],
     "detail_weight": 150,
+    "peak_budget_bytes": 512_000,
 }
 mini = {
     "scales": [0.1, 0.15, 0.2, 0.25, 0.3, 0.4],
@@ -56,6 +58,8 @@ mini = {
     "latitude_importance": [(60, 0.3)],
     # Losing all of a tile's detail (the elevation changes that make up the gain of a route) counts as this many meters of error
     "detail_weight": 150,
+    # Summits which the model is well under are stored in peaks.tsgeo (see scripts/peaks.py), up to this size
+    "peak_budget_bytes": 256_000,
 }
 
 ######## Program, don't modify ########
@@ -141,6 +145,32 @@ def choose_options(tile_options, settings):
         cost=lambda option: get_weight(option, settings)
         * (option["error"] + settings["detail_weight"] * option["detail_loss"]),
     )
+
+
+def find_tile_summits(option):
+    """The summits of a chosen tile that it is well under (see peaks.find_summits)."""
+    region = option["filename"].removesuffix(".webp")
+    model = peaks.decode_tile(option["data"], option["a"], option["b"])
+    source = np.load(f"{cache_directory}/land/{region}.npy")
+    degrees = option["latitude_start"] - option["latitude_end"]
+    return peaks.find_summits(source, model, option["latitude_start"], option["longitude_start"], degrees)
+
+
+def write_peaks(chosen, budget_bytes):
+    """Saves the summits that the chosen tiles are furthest under (as many as fit in the budget) to the peaks file."""
+    with ProcessPoolExecutor(max_workers=max_workers, initializer=os.nice, initargs=(19,)) as executor:
+        tiles = list(executor.map(find_tile_summits, chosen))
+    summits = peaks.empty_summits()
+    if tiles:
+        summits = {key: np.concatenate([tile[key] for tile in tiles]) for key in summits}
+    order = np.argsort(-summits["shortfall"], kind="stable")
+    summits = {key: values[order] for key, values in summits.items()}
+    data, count = peaks.FILE_FORMAT.fit(
+        summits["latitude"], summits["longitude"], {"scale": summits["scale"], "base": summits["base"]}, budget_bytes
+    )
+    with open(f"output/dem/{peaks.FILENAME}", "wb") as f:
+        f.write(data)
+    print(f"Saved {count} of {len(order)} summits ({len(data) / 1000:.0f} KB)")
 
 
 def index_entry(region, latitude, longitude, width, height, a, b):
@@ -359,6 +389,8 @@ for preset in presets:
         for option in chosen:
             with open(f'output/dem/{option["filename"]}', "wb") as f:
                 f.write(option["data"])
+        if "peak_budget_bytes" in budget:
+            write_peaks(chosen, budget["peak_budget_bytes"])
         tiles = [
             {
                 key: value

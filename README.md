@@ -60,9 +60,22 @@ The elevation model is generated using ETOPO 2022. It is generated using the fol
    - **High**: 16-bit lossless (split across two channels) with a water mask channel (ocean, inland water, or land).
    - **Medium**: stretched to 8 bits, at the source resolution.
    - **Low** and **Mini**: stretched to 8 bits, lossy. The resolution and WebP quality of each tile is chosen to get the lowest error within a size budget. Every tile is saved at a range of resolutions and qualities, and the option for each tile that has the lowest total cost, while fitting in the budget, is chosen. The cost of an option is its mean absolute error plus its loss of detail (the elevation changes between nearby points that make up the gain of a route), weighted by the ground area of the tile, its relief, and its latitude.
-5. Write an index (index.json) with the stretch coefficients, bounds, and size of each tile, and zip the result.
+5. **Mini** and **low** also save the summits the model flattens the most to peaks.tsgeo (see below), up to a size budget (256 KB for mini and 512 KB for low). A summit is the highest pixel within about 5 km that is at least 300 m above its surroundings. It is kept if the model is at least 110 m below it and already rises toward it by at least half that amount.
+6. Write an index (index.json) with the stretch coefficients, bounds, and size of each tile, and zip the result.
 
-To get the elevation at a location, the app reads the tile that contains it, interpolates the pixels around the location, and reverses the stretch.
+To get the elevation at a location, the app reads the tile that contains it, interpolates the pixels around the location, and reverses the stretch. If the model has a peaks.tsgeo, the app also raises the model around nearby summits.
+
+**peaks.tsgeo** is a [geo point file](docs/geo-point-file-format.md):
+
+| Setting | Value |
+| --- | --- |
+| `cell_degrees` | 5 |
+| `decimals` | 3 |
+| `scale` field | 1 byte, step 1/64 |
+| `base` field | 2 bytes, step 16 m |
+| `properties` | `{"type": "peaks", "radius_meters": 4000}` |
+
+The base is the average elevation of the model `radius_meters` (R) from the summit, and the scale makes the model reach the summit. At a distance d from a summit, where the model is at an elevation e, the app adds `scale * max(e - base, 0) * (1 - (d / R)^2)^2`, summed over the nearby summits. A point of a grid is raised by at least as much as the highest summit within the area it covers (with d measured from the nearest edge of that area), so summits keep their height on coarse grids.
 
 The test data for the model can be generated with generate-dem-test-data.py.
 
